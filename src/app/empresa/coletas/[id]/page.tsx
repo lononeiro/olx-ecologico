@@ -8,6 +8,8 @@ import { AtualizarStatusColetaForm } from "./AtualizarStatusColetaForm";
 import { ChatBox } from "@/components/forms/ChatBox";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function EmpresaColetaDetailPage({
   params,
 }: {

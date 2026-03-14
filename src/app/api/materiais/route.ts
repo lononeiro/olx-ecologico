@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+export const dynamic = 'force-dynamic';
 
 // GET /api/materiais — lista todos os tipos de materiais (público)
 export async function GET() {

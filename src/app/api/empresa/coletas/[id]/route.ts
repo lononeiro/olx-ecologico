@@ -3,6 +3,7 @@ import { autorizarRota, getUserId } from "@/lib/route-guard";
 import { atualizarStatusColeta, buscarColetaPorId } from "@/services/coleta.service";
 import { coletaStatusSchema } from "@/lib/validations";
 import { prisma } from "@/lib/prisma";
+export const dynamic = 'force-dynamic';
 
 // GET /api/empresa/coletas/[id]
 export async function GET(

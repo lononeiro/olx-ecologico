@@ -5,6 +5,8 @@ import { listarColetasDaEmpresa } from "@/services/coleta.service";
 import { ColetaBadge } from "@/components/ui/StatusBadge";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function EmpresaDashboardPage() {
   const session = await getServerSession(authOptions);
   const userId = Number((session!.user as any).id);

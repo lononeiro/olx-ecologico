@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { autorizarRota, getUserId } from "@/lib/route-guard";
 import { buscarSolicitacaoPorId } from "@/services/solicitacao.service";
+export const dynamic = 'force-dynamic';
 
 // GET /api/solicitacoes/[id]
 export async function GET(

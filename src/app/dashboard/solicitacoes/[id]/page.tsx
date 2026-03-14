@@ -6,6 +6,8 @@ import { SolicitacaoBadge, ColetaBadge } from "@/components/ui/StatusBadge";
 import { ChatBox } from "@/components/forms/ChatBox";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function SolicitacaoDetailPage({
   params,
 }: {

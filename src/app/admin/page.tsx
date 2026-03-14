@@ -2,6 +2,8 @@ import { listarSolicitacoesPendentes } from "@/services/solicitacao.service";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboardPage() {
   const [pendentes, totalUsers, totalEmpresas] = await Promise.all([
     listarSolicitacoesPendentes(),

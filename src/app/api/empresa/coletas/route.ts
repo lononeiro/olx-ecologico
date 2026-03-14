@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { autorizarRota, getUserId } from "@/lib/route-guard";
 import { aceitarSolicitacao, listarColetasDaEmpresa } from "@/services/coleta.service";
 import { prisma } from "@/lib/prisma";
+export const dynamic = 'force-dynamic';
 
 // GET /api/empresa/coletas — lista coletas da empresa
 export async function GET(req: NextRequest) {

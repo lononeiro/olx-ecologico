@@ -8,6 +8,9 @@ import {
   listarSolicitacoesPendentes,
 } from "@/services/solicitacao.service";
 
+// Impede pré-renderização estática no build da Vercel
+export const dynamic = "force-dynamic";
+
 // GET /api/solicitacoes — retorna lista baseada no role do usuário
 export async function GET(req: NextRequest) {
   const { session, error } = await autorizarRota(["usuario", "admin", "empresa"]);

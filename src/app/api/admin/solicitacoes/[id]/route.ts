@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { autorizarRota } from "@/lib/route-guard";
 import { atualizarStatusSolicitacao } from "@/services/solicitacao.service";
 import { z } from "zod";
+export const dynamic = 'force-dynamic';
 
 const schema = z.object({
   aprovado: z.boolean(),

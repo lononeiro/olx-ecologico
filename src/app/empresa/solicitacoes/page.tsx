@@ -1,6 +1,8 @@
 import { listarSolicitacoesAprovadas } from "@/services/solicitacao.service";
 import { AceitarSolicitacaoButton } from "./AceitarSolicitacaoButton";
 
+export const dynamic = "force-dynamic";
+
 export default async function EmpresaSolicitacoesPage() {
   const solicitacoes = await listarSolicitacoesAprovadas();
 

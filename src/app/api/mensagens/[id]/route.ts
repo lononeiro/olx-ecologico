@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { autorizarRota, getUserId } from "@/lib/route-guard";
 import { enviarMensagem, listarMensagensColeta } from "@/services/mensagem.service";
 import { mensagemCreateSchema } from "@/lib/validations";
+export const dynamic = 'force-dynamic';
 
 // GET /api/mensagens/[coletaId] — lista mensagens de uma coleta
 export async function GET(
