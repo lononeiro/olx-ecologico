@@ -1,0 +1,41 @@
+{
+  "name": "recycling-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:seed": "ts-node -P tsconfig.seed.json prisma/seed.ts",
+    "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "ts-node -P tsconfig.seed.json prisma/seed.ts"
+  },
+  "dependencies": {
+    "@auth/prisma-adapter": "^2.7.2",
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "next": "^14.2.29",
+    "next-auth": "^4.24.11",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.14",
+    "@types/react-dom": "^18.3.5",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "prisma": "^5.22.0",
+    "tailwindcss": "^3.4.16",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}

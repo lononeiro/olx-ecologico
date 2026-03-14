@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  nome  String
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  nome       String
+  endereco   String?
+  telefone   String?
+  email      String    @unique
+  senhaHash  String
+  status     String    @default("ativo")
+  roleId     Int
+  createdAt  DateTime  @default(now())
+
+  role               Role                @relation(fields: [roleId], references: [id])
+  company            Company?
+  solicitacoes       SolicitacaoColeta[]
+  mensagensEnviadas  Mensagem[]
+
+  @@map("users")
+}
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  cnpj      String   @unique
+  descricao String?
+  createdAt DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id])
+  coletas Coleta[]
+
+  @@map("companies")
+}
+
+model MaterialTipo {
+  id           Int                 @id @default(autoincrement())
+  nome         String
+  solicitacoes SolicitacaoColeta[]
+
+  @@map("material_tipos")
+}
+
+model SolicitacaoColeta {
+  id         Int      @id @default(autoincrement())
+  titulo     String
+  descricao  String
+  quantidade String
+  endereco   String
+  status     String   @default("pendente")
+  aprovado   Boolean  @default(false)
+  userId     Int
+  materialId Int
+  createdAt  DateTime @default(now())
+
+  user     User         @relation(fields: [userId], references: [id])
+  material MaterialTipo @relation(fields: [materialId], references: [id])
+  imagens  SolicitacaoImagem[]
+  coleta   Coleta?
+
+  @@map("solicitacao_coleta")
+}
+
+model SolicitacaoImagem {
+  id            Int    @id @default(autoincrement())
+  solicitacaoId Int
+  url           String
+
+  solicitacao SolicitacaoColeta @relation(fields: [solicitacaoId], references: [id])
+
+  @@map("solicitacao_imagens")
+}
+
+model Coleta {
+  id                  Int       @id @default(autoincrement())
+  solicitacaoId       Int       @unique
+  companyId           Int
+  status              String    @default("aceita")
+  codigoConfirmacao   String?
+  dataAceite          DateTime  @default(now())
+  dataConclusao       DateTime?
+
+  solicitacao SolicitacaoColeta @relation(fields: [solicitacaoId], references: [id])
+  company     Company           @relation(fields: [companyId], references: [id])
+  mensagens   Mensagem[]
+
+  @@map("coletas")
+}
+
+model Mensagem {
+  id          Int      @id @default(autoincrement())
+  coletaId    Int
+  remetenteId Int
+  mensagem    String
+  createdAt   DateTime @default(now())
+
+  coleta    Coleta @relation(fields: [coletaId], references: [id])
+  remetente User   @relation(fields: [remetenteId], references: [id])
+
+  @@map("mensagens")
+}

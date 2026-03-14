@@ -1,0 +1,70 @@
+# ── Dependências ──────────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Build / Next.js ───────────────────────────────────────────────────────────
+.next/
+out/
+build/
+dist/
+.ts-node-out/
+
+# ── Variáveis de ambiente (NUNCA commitar) ────────────────────────────────────
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test.local
+.env.production
+.env.production.local
+
+# ── Prisma ────────────────────────────────────────────────────────────────────
+# Manter: prisma/schema.prisma, prisma/seed.ts, prisma/migrations/
+# Ignorar apenas o client gerado (é regenerado com prisma generate)
+prisma/generated/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# ── Cache ─────────────────────────────────────────────────────────────────────
+.npm
+.eslintcache
+.turbo
+*.tsbuildinfo
+next-env.d.ts
+
+# ── Sistema Operacional ───────────────────────────────────────────────────────
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+
+# ── IDEs e Editores ───────────────────────────────────────────────────────────
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# JetBrains (WebStorm, IntelliJ)
+.idea/
+*.iml
+
+# ── Uploads e arquivos temporários ───────────────────────────────────────────
+uploads/
+tmp/
+temp/
