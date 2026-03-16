@@ -2,37 +2,27 @@
 import { useState, useRef, useEffect } from "react";
 
 interface Mensagem {
-  id: number;
-  mensagem: string;
-  createdAt: string | Date;
+  id: number; mensagem: string; createdAt: string | Date;
   remetente: { id: number; nome: string };
 }
-
 interface Props {
-  coletaId: number;
-  currentUserId: number;
-  initialMessages: Mensagem[];
+  coletaId: number; currentUserId: number; initialMessages: Mensagem[];
 }
 
 export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
   const [mensagens, setMensagens] = useState<Mensagem[]>(initialMessages);
-  const [texto, setTexto] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [texto, setTexto]         = useState("");
+  const [loading, setLoading]     = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Faz scroll automático para a última mensagem
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensagens]);
 
-  // Polling leve para novas mensagens a cada 10 segundos
   useEffect(() => {
     const interval = setInterval(async () => {
       const res = await fetch(`/api/mensagens/${coletaId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setMensagens(data);
-      }
+      if (res.ok) setMensagens(await res.json());
     }, 10000);
     return () => clearInterval(interval);
   }, [coletaId]);
@@ -41,60 +31,64 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
     e.preventDefault();
     if (!texto.trim()) return;
     setLoading(true);
-
     const res = await fetch(`/api/mensagens/${coletaId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mensagem: texto.trim() }),
     });
-
     setLoading(false);
-
     if (res.ok) {
-      const nova = await res.json();
-      setMensagens((prev) => [...prev, nova]);
+      const novaMensagem = await res.json();
+      setMensagens(prev => [...prev, novaMensagem]);
       setTexto("");
     }
   }
 
   return (
-    <div className="flex flex-col">
-      {/* Lista de mensagens */}
-      <div className="h-64 overflow-y-auto space-y-3 mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+    <div style={{ display: "flex", flexDirection: "column", gap: ".75rem" }}>
+      {/* Messages */}
+      <div style={{
+        height: 300, overflowY: "auto", padding: "1rem",
+        background: "var(--surface-2)", borderRadius: "var(--radius-sm)",
+        border: "1px solid var(--border)",
+        display: "flex", flexDirection: "column", gap: ".6rem",
+      }}>
         {mensagens.length === 0 ? (
-          <p className="text-center text-gray-400 text-sm mt-8">
-            Nenhuma mensagem ainda. Inicie a conversa!
-          </p>
+          <div style={{
+            flex: 1, display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            color: "var(--text-faint)", fontSize: ".85rem", gap: ".5rem",
+          }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            Nenhuma mensagem ainda
+          </div>
         ) : (
-          mensagens.map((m) => {
+          mensagens.map(m => {
             const isOwn = m.remetente.id === currentUserId;
             return (
-              <div
-                key={m.id}
-                className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-xs lg:max-w-sm rounded-2xl px-4 py-2 text-sm shadow-sm ${
-                    isOwn
-                      ? "bg-green-600 text-white rounded-br-sm"
-                      : "bg-white text-gray-800 border border-gray-200 rounded-bl-sm"
-                  }`}
-                >
+              <div key={m.id} style={{ display: "flex", justifyContent: isOwn ? "flex-end" : "flex-start" }}>
+                <div style={{
+                  maxWidth: "72%", padding: ".6rem .9rem",
+                  borderRadius: isOwn ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                  background: isOwn ? "var(--green)" : "var(--surface)",
+                  color: isOwn ? "#fff" : "var(--text)",
+                  border: isOwn ? "none" : "1px solid var(--border)",
+                  boxShadow: "var(--shadow-sm)",
+                  fontSize: ".875rem", lineHeight: 1.5,
+                }}>
                   {!isOwn && (
-                    <p className="text-xs font-semibold mb-1 text-green-700">
+                    <p style={{ fontSize: ".7rem", fontWeight: 700,
+                      color: "var(--green)", marginBottom: ".25rem" }}>
                       {m.remetente.nome}
                     </p>
                   )}
-                  <p className="whitespace-pre-wrap break-words">{m.mensagem}</p>
-                  <p
-                    className={`text-xs mt-1 ${
-                      isOwn ? "text-green-200" : "text-gray-400"
-                    }`}
-                  >
-                    {new Date(m.createdAt).toLocaleTimeString("pt-BR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                  <p style={{ wordBreak: "break-word" }}>{m.mensagem}</p>
+                  <p style={{
+                    fontSize: ".65rem", marginTop: ".3rem", textAlign: "right",
+                    color: isOwn ? "rgba(255,255,255,.65)" : "var(--text-faint)",
+                  }}>
+                    {new Date(m.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
               </div>
@@ -104,21 +98,18 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input de mensagem */}
-      <form onSubmit={handleEnviar} className="flex gap-2">
+      {/* Input */}
+      <form onSubmit={handleEnviar} style={{ display: "flex", gap: ".5rem" }}>
         <input
-          type="text"
-          className="input-field flex-1"
-          placeholder="Digite uma mensagem..."
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          disabled={loading}
+          type="text" className="input-field" placeholder="Digite uma mensagem..."
+          value={texto} onChange={e => setTexto(e.target.value)} disabled={loading}
+          style={{ flex: 1 }}
         />
-        <button
-          type="submit"
-          disabled={loading || !texto.trim()}
-          className="btn-primary px-5"
-        >
+        <button type="submit" disabled={loading || !texto.trim()} className="btn btn-primary"
+          style={{ flexShrink: 0 }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+          </svg>
           {loading ? "..." : "Enviar"}
         </button>
       </form>

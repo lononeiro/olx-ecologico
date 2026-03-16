@@ -2,9 +2,9 @@ import { Navbar } from "@/components/ui/Navbar";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "2rem 1.5rem" }}>
         {children}
       </main>
     </div>

@@ -18,17 +18,11 @@ export type ColetaWithRelations = Coleta & {
   })[];
 };
 
-export type StatusColeta =
-  | "aceita"
-  | "a_caminho"
-  | "em_coleta"
-  | "concluida"
-  | "cancelada";
-
+export type StatusColeta = "aceita" | "a_caminho" | "em_coleta" | "concluida" | "cancelada";
 export type StatusSolicitacao = "pendente" | "aprovada" | "rejeitada";
 
 export const STATUS_COLETA_LABEL: Record<string, string> = {
-  aceita: "Aceita",
+  aceita:    "Aceita",
   a_caminho: "A Caminho",
   em_coleta: "Em Coleta",
   concluida: "Concluída",
@@ -36,21 +30,21 @@ export const STATUS_COLETA_LABEL: Record<string, string> = {
 };
 
 export const STATUS_SOLICITACAO_LABEL: Record<string, string> = {
-  pendente: "Pendente",
-  aprovada: "Aprovada",
+  pendente:  "Pendente",
+  aprovada:  "Aprovada",
   rejeitada: "Rejeitada",
 };
 
 export const STATUS_COLETA_COLOR: Record<string, string> = {
-  aceita: "bg-blue-100 text-blue-800",
-  a_caminho: "bg-yellow-100 text-yellow-800",
-  em_coleta: "bg-purple-100 text-purple-800",
-  concluida: "bg-green-100 text-green-800",
-  cancelada: "bg-red-100 text-red-800",
+  aceita:    "bg-blue-50 text-blue-700",
+  a_caminho: "bg-yellow-50 text-yellow-700",
+  em_coleta: "bg-purple-50 text-purple-700",
+  concluida: "bg-green-50 text-green-700",
+  cancelada: "bg-red-50 text-red-700",
 };
 
 export const STATUS_SOLICITACAO_COLOR: Record<string, string> = {
-  pendente: "bg-yellow-100 text-yellow-800",
-  aprovada: "bg-green-100 text-green-800",
-  rejeitada: "bg-red-100 text-red-800",
+  pendente:  "bg-yellow-50 text-yellow-700",
+  aprovada:  "bg-green-50 text-green-700",
+  rejeitada: "bg-red-50 text-red-700",
 };

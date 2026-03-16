@@ -13,15 +13,25 @@ export const registerSchema = z.object({
   descricao: z.string().optional(),
 });
 
-// ── Solicitação de Coleta ──────────────────────────────────────────────────────
+// ── Solicitação de Coleta ─────────────────────────────────────────────────────
 
 export const solicitacaoCreateSchema = z.object({
   titulo: z.string().min(3, "Título deve ter ao menos 3 caracteres"),
   descricao: z.string().min(10, "Descrição deve ter ao menos 10 caracteres"),
   quantidade: z.string().min(1, "Informe a quantidade"),
   endereco: z.string().min(5, "Endereço deve ter ao menos 5 caracteres"),
-  materialId: z.number().int().positive("Selecione um tipo de material"),
-  imagens: z.array(z.string().url()).optional(),
+
+  // Aceita number ou string numérica ("3" ou 3) — coerce converte automaticamente
+  materialId: z.coerce
+    .number({ invalid_type_error: "Selecione um tipo de material" })
+    .int()
+    .positive("Selecione um tipo de material"),
+
+  // Array de URLs — itens vazios são ignorados antes da validação
+  imagens: z
+    .array(z.string())
+    .optional()
+    .transform(arr => (arr ?? []).filter(u => u.trim() !== "")),
 });
 
 export const solicitacaoUpdateSchema = z.object({
@@ -44,6 +54,6 @@ export const coletaStatusSchema = z.object({
 // ── Mensagem ──────────────────────────────────────────────────────────────────
 
 export const mensagemCreateSchema = z.object({
-  coletaId: z.number().int().positive(),
+  coletaId: z.coerce.number().int().positive(),
   mensagem: z.string().min(1, "Mensagem não pode ser vazia"),
 });

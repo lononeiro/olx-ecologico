@@ -99,13 +99,13 @@ export default function LoginPage() {
           <div style={{ display:"flex", gap:"2rem", justifyContent:"center",
             marginTop:"3rem", paddingTop:"2rem",
             borderTop:"1px solid rgba(255,255,255,.06)" }}>
-            {[{n:"10+", l:"Materiais"},{n:"100%",l:"Gratuito"},{n:"3",l:"Perfis"}].map(s=>(
+            {/* {[{n:"10+", l:"Materiais"},{n:"100%",l:"Gratuito"},{n:"3",l:"Perfis"}].map(s=>(
               <div key={s.l} style={{ textAlign:"center" }}>
                 <div style={{ fontFamily:"var(--font-display)", fontSize:"1.5rem",
                   color:"#86d25a", fontWeight:700 }}>{s.n}</div>
                 <div style={{ color:"#3a5e36", fontSize:".75rem", marginTop:".2rem" }}>{s.l}</div>
               </div>
-            ))}
+            ))} */}
           </div>
         </div>
       </div>
