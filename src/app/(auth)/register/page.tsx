@@ -377,7 +377,7 @@ export default function RegisterPage() {
             </div>
           </form>
 
-          <p className="a6" style={{ color: "#2a4a2a", fontSize: ".75rem",
+          <p className="a6" style={{ color: "#c5f7ca", fontSize: ".75rem",
             textAlign: "center", marginTop: "1.5rem", lineHeight: 1.6 }}>
             Ao criar uma conta você concorda com os termos de uso da plataforma.
           </p>

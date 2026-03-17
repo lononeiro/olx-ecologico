@@ -1,439 +1,883 @@
-"use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+'use client';
 
-interface MaterialTipo { id: number; nome: string; }
-interface UserProfile  { nome: string; endereco: string | null; }
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { CldUploadWidget } from 'next-cloudinary';
 
-type ModoEndereco = "perfil" | "novo";
+interface Material {
+  id: number;
+  nome: string;
+  descricao?: string;
+  emoji?: string;
+}
 
-export default function NovaSolicitacaoPage() {
-  const router = useRouter();
+interface UserProfile {
+  nome: string;
+  endereco: string | null;
+}
 
-  const [materiais, setMateriais]   = useState<MaterialTipo[]>([]);
-  const [perfil, setPerfil]         = useState<UserProfile | null>(null);
-  const [modoEndereco, setModo]     = useState<ModoEndereco>("perfil");
+type ModoEndereco = 'perfil' | 'novo';
 
-  const [form, setForm] = useState({
-    titulo: "", descricao: "", quantidade: "", materialId: "", imagens: "",
+export default function CriarSolicitacaoPage() {
+  const [formData, setFormData] = useState({
+    titulo: '',
+    tipoMaterial: '',
+    quantidade: '',
+    descricao: ''
   });
 
-  // Campos separados do endereço novo
-  const [endNovo, setEndNovo] = useState({
-    rua: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "",
+  const [imagens, setImagens] = useState<string[]>([]);
+  
+  const [enderecoNovo, setEnderecoNovo] = useState({
+    rua: '',
+    numero: '',
+    complemento: '',
+    bairro: '',
+    cidade: '',
+    uf: ''
   });
 
-  const [erros, setErros]     = useState<Record<string, string[]>>({});
-  const [erro, setErro]       = useState("");
+  const [modoEndereco, setModoEndereco] = useState<ModoEndereco>('perfil');
+  const [materiais, setMateriais] = useState<Material[]>([]);
+  const [perfil, setPerfil] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
-  const [focused, setFocused] = useState<string | null>(null);
+  const [erro, setErro] = useState('');
+  const [sucesso, setSucesso] = useState('');
+  const [step, setStep] = useState(1);
+  const [loadingMateriais, setLoadingMateriais] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
-  // Busca materiais e perfil do usuário
+  // Carregar materiais e perfil
   useEffect(() => {
-    fetch("/api/materiais").then(r => r.json()).then(setMateriais);
-    fetch("/api/users/me").then(r => r.json()).then(data => {
-      setPerfil(data);
-      // Se não tiver endereço no perfil, já abre o formulário novo
-      if (!data.endereco) setModo("novo");
-    });
+    const carregarDados = async () => {
+      try {
+        const resMateriais = await fetch('/api/materiais');
+        const dataMateriais = await resMateriais.json();
+        const comEmoji = dataMateriais.map((m: Material) => ({
+          ...m,
+          emoji: {
+            'Borracha / Pneus': '🛞',
+            'Eletrônicos (e-lixo)': '📱',
+            'Madeira': '🌳',
+            'Metal / Alumínio': '🔩',
+            'Orgânico': '🌱',
+            'Papel / Papelão': '📄',
+            'Plástico': '♻️',
+            'Têxtil': '👕',
+            'Vidro': '🍾',
+            'Óleo de Cozinha': '🧴'
+          }[m.nome] || '📦'
+        }));
+        setMateriais(comEmoji);
+
+        const resPerfil = await fetch('/api/users/me');
+        const dataPerfil = await resPerfil.json();
+        setPerfil(dataPerfil);
+
+        if (!dataPerfil.endereco) {
+          setModoEndereco('novo');
+        }
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+        setErro('Erro ao carregar dados');
+      } finally {
+        setLoadingMateriais(false);
+      }
+    };
+    carregarDados();
   }, []);
 
-  /** Monta a string de endereço novo a partir dos campos separados */
-  function montarEnderecoNovo() {
-    const { rua, numero, complemento, bairro, cidade, uf } = endNovo;
+  // Monta endereço novo
+  const montarEnderecoNovo = () => {
+    const { rua, numero, complemento, bairro, cidade, uf } = enderecoNovo;
     return [
       rua && numero ? `${rua}, ${numero}` : rua,
       complemento,
       bairro,
       cidade && uf ? `${cidade} - ${uf}` : cidade || uf,
-    ].filter(Boolean).join(", ");
-  }
-
-  function getEnderecoFinal() {
-    if (modoEndereco === "perfil") return perfil?.endereco ?? "";
-    return montarEnderecoNovo();
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setErro(""); setErros({}); setLoading(true);
-
-    const endereco = getEnderecoFinal();
-    if (!endereco.trim()) {
-      setErro("Informe um endereço para a coleta.");
-      setLoading(false);
-      return;
-    }
-    if (endereco.trim().length < 5) {
-      setErro("O endereço cadastrado no perfil é muito curto. Use a opção \"Informar outro\" e preencha o endereço completo.");
-      setModo("novo");
-      setLoading(false);
-      return;
-    }
-
-    const imagens = form.imagens.split(/[\n,]/).map(u => u.trim()).filter(Boolean);
-
-    const res = await fetch("/api/solicitacoes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, materialId: Number(form.materialId), endereco, imagens }),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      if (typeof data.error === "object") {
-        setErros(data.error);
-        // Mostra resumo legível se disponível
-        if (data.resumo) setErro("Verifique os campos: " + data.resumo);
-      } else {
-        setErro(data.error ?? "Erro ao criar solicitação.");
-      }
-      return;
-    }
-    router.push(`/dashboard/solicitacoes/${data.id}`);
-  }
-
-  const f = (key: keyof typeof form) => ({
-    value: form[key],
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-      setForm({ ...form, [key]: e.target.value }),
-    onFocus: () => setFocused(key),
-    onBlur:  () => setFocused(null),
-  });
-
-  const fe = (key: keyof typeof endNovo) => ({
-    value: endNovo[key],
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-      setEndNovo({ ...endNovo, [key]: e.target.value }),
-    onFocus: () => setFocused(key),
-    onBlur:  () => setFocused(null),
-  });
-
-  const labelStyle: React.CSSProperties = {
-    display: "block", fontSize: ".78rem", fontWeight: 600,
-    color: "var(--text-muted)", textTransform: "uppercase",
-    letterSpacing: ".8px", marginBottom: ".4rem",
+    ].filter(Boolean).join(', ');
   };
 
-  const inputStyle = (name: string): React.CSSProperties => ({
-    width: "100%", fontFamily: "var(--font)", fontSize: ".92rem",
-    color: "var(--text)", background: "var(--surface)",
-    border: `1.5px solid ${focused === name ? "var(--green)" : "var(--border)"}`,
-    borderRadius: "var(--radius-sm)", padding: ".65rem 1rem",
-    outline: "none", transition: "var(--transition)", boxSizing: "border-box",
-    boxShadow: focused === name ? "0 0 0 3px rgba(45,138,62,.1)" : "none",
-  });
+  // Retorna endereço final
+  const getEnderecoFinal = () => {
+    if (modoEndereco === 'perfil') return perfil?.endereco ?? '';
+    return montarEnderecoNovo();
+  };
 
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleInputEnderecoNovo = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    let finalValue = value;
+
+    if (name === 'uf') {
+      finalValue = value.toUpperCase().slice(0, 2);
+    }
+
+    setEnderecoNovo({ ...enderecoNovo, [name]: finalValue });
+  };
+
+  // ✨ Handler para upload de imagem (Cloudinary)
+  const handleImageUpload = (result: any) => {
+    if (result.event === 'success') {
+      const imageUrl = result.info.secure_url;
+      setImagens([...imagens, imageUrl]);
+      console.log('Imagem uploaded com sucesso:', imageUrl);
+    }
+  };
+
+  // Remover imagem
+  const removerImagem = (index: number) => {
+    setImagens(imagens.filter((_, i) => i !== index));
+  };
+
+  const getMaterialEmoji = () => {
+    const material = materiais.find(m => m.id === parseInt(formData.tipoMaterial));
+    return material?.emoji || '📦';
+  };
+
+  const getMaterialNome = () => {
+    const material = materiais.find(m => m.id === parseInt(formData.tipoMaterial));
+    return material?.nome || '';
+  };
+
+  const validarStep = (stepNum: number) => {
+    setErro('');
+
+    if (stepNum === 1) {
+      if (!formData.titulo.trim()) {
+        setErro('Título é obrigatório');
+        return false;
+      }
+      if (formData.titulo.length < 3) {
+        setErro('Título deve ter no mínimo 3 caracteres');
+        return false;
+      }
+      if (!formData.tipoMaterial) {
+        setErro('Tipo de material é obrigatório');
+        return false;
+      }
+    }
+
+    if (stepNum === 2) {
+      if (!formData.quantidade) {
+        setErro('Quantidade é obrigatória');
+        return false;
+      }
+      if (!formData.descricao.trim()) {
+        setErro('Descrição é obrigatória');
+        return false;
+      }
+      if (formData.descricao.length < 10) {
+        setErro('Descrição deve ter no mínimo 10 caracteres');
+        return false;
+      }
+    }
+
+    if (stepNum === 3) {
+      const enderecoFinal = getEnderecoFinal();
+      if (!enderecoFinal.trim()) {
+        setErro('Informe um endereço para a coleta');
+        return false;
+      }
+      if (enderecoFinal.trim().length < 5) {
+        setErro('O endereço é muito curto. Preencha os dados completos');
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleProxima = () => {
+    if (validarStep(step)) {
+      setStep(step + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleVoltar = () => {
+    setStep(step - 1);
+    setErro('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validarStep(3)) return;
+
+    setLoading(true);
+    setErro('');
+    setSucesso('');
+
+    try {
+      const enderecoFinal = getEnderecoFinal();
+
+      const payload = {
+        titulo: formData.titulo,
+        materialId: parseInt(formData.tipoMaterial),
+        quantidade: formData.quantidade,
+        descricao: formData.descricao,
+        endereco: enderecoFinal,
+        imagens: imagens
+      };
+
+      console.log('Payload enviado:', payload);
+
+      const res = await fetch('/api/solicitacoes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setSucesso('✓ Solicitação criada com sucesso!');
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 2000);
+      } else {
+        let mensagemErro = 'Erro ao criar solicitação';
+
+        if (data.resumo && typeof data.resumo === 'string') {
+          mensagemErro = data.resumo;
+        } else if (typeof data.error === 'string') {
+          mensagemErro = data.error;
+        }
+
+        setErro(mensagemErro);
+      }
+    } catch (err) {
+      console.error('Erro ao processar solicitação:', err);
+      setErro('Erro ao processar solicitação');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const stepTitles = ['Informações', 'Detalhes', 'Endereço'];
+  const stepIcons = ['📝', '📦', '📍'];
   const enderecoNovoPreviw = montarEnderecoNovo();
 
   return (
-    <div style={{ maxWidth: 700 }}>
-
-      {/* Header */}
-      <div className="anim-fade-up" style={{ marginBottom: "2rem" }}>
-        <Link href="/dashboard" style={{
-          display: "inline-flex", alignItems: "center", gap: ".4rem",
-          fontSize: ".82rem", color: "var(--text-muted)", textDecoration: "none",
-          marginBottom: ".75rem", transition: "color .15s",
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-          Voltar ao painel
-        </Link>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text)" }}>
-          Nova Solicitação
-        </h1>
-        <p style={{ fontSize: ".88rem", color: "var(--text-muted)", marginTop: ".3rem" }}>
-          Preencha os dados do material que deseja reciclar.
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-blue-50">
+      {/* Background Decorativo */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse animation-delay-2000"></div>
+        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-green-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse animation-delay-4000"></div>
       </div>
 
-      {erro && (
-        <div className="anim-fade-up" style={{
-          background: "var(--red-light)", border: "1px solid rgba(192,57,43,.2)",
-          borderRadius: "var(--radius-sm)", padding: ".85rem 1rem",
-          color: "var(--red)", fontSize: ".88rem", marginBottom: "1.25rem",
-          display: "flex", alignItems: "center", gap: ".5rem",
-        }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
-          </svg>
-          {erro}
-        </div>
-      )}
+      <div className="relative z-10 py-12 px-4">
+        <div className="max-w-3xl mx-auto">
+          {/* Header */}
+          <div className="mb-12 text-center">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 mb-6 transition transform hover:scale-105"
+            >
+              <span className="text-xl">←</span> Voltar ao Dashboard
+            </Link>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-green-600 via-blue-600 to-green-600 bg-clip-text text-transparent mb-3">
+              ♻️ Nova Solicitação
+            </h1>
+            <p className="text-gray-600 text-lg">Descreva o que precisa ser coletado e conecte com empresas de reciclagem</p>
+          </div>
 
-      <div className="card anim-fade-up stagger-2">
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.35rem" }}>
-
-          {/* ── Informações do material ─────────────────────── */}
-          <div style={{ paddingBottom: "1.25rem", borderBottom: "1px solid var(--border)" }}>
-            <p className="section-label" style={{ marginBottom: "1rem" }}>Informações do material</p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
-              {/* Título */}
-              <div>
-                <label style={labelStyle}>Título <span style={{ color: "var(--red)" }}>*</span></label>
-                <input type="text" required placeholder="Ex: Papelão e revistas para reciclagem"
-                  style={inputStyle("titulo")} {...f("titulo")} />
-                {erros.titulo && <p style={{ fontSize: ".78rem", color: "var(--red)", marginTop: ".3rem" }}>{erros.titulo[0]}</p>}
-              </div>
-
-              {/* Material + Quantidade */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                <div>
-                  <label style={labelStyle}>Tipo de material <span style={{ color: "var(--red)" }}>*</span></label>
-                  <select required style={{ ...inputStyle("materialId"), cursor: "pointer" }} {...f("materialId")}>
-                    <option value="">Selecionar...</option>
-                    {materiais.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
-                  </select>
-                  {erros.materialId && <p style={{ fontSize: ".78rem", color: "var(--red)", marginTop: ".3rem" }}>{erros.materialId[0]}</p>}
+          {/* Progress Bar */}
+          <div className="mb-12">
+            <div className="flex justify-between gap-4 mb-6">
+              {[1, 2, 3].map((s) => (
+                <div key={s} className="flex-1">
+                  <div className={`flex items-center justify-center w-full h-2 rounded-full mb-2 overflow-hidden ${
+                    s <= step
+                      ? 'bg-gradient-to-r from-green-600 to-blue-600'
+                      : 'bg-gray-200'
+                  }`} />
+                  <div className="flex items-center justify-center">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+                      s <= step
+                        ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-lg scale-110'
+                        : s < step
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-300 text-gray-600'
+                    }`}>
+                      {s < step ? '✓' : stepIcons[s - 1]}
+                    </div>
+                  </div>
+                  <p className={`text-center text-sm font-semibold mt-2 ${
+                    s <= step ? 'text-green-600' : 'text-gray-600'
+                  }`}>
+                    {stepTitles[s - 1]}
+                  </p>
                 </div>
-                <div>
-                  <label style={labelStyle}>Quantidade <span style={{ color: "var(--red)" }}>*</span></label>
-                  <input type="text" required placeholder="Ex: 5 sacos, ~10 kg"
-                    style={inputStyle("quantidade")} {...f("quantidade")} />
-                  {erros.quantidade && <p style={{ fontSize: ".78rem", color: "var(--red)", marginTop: ".3rem" }}>{erros.quantidade[0]}</p>}
-                </div>
-              </div>
-
-              {/* Descrição */}
-              <div>
-                <label style={labelStyle}>Descrição <span style={{ color: "var(--red)" }}>*</span></label>
-                <textarea required rows={4}
-                  placeholder="Descreva o material, condições e informações relevantes..."
-                  style={{ ...inputStyle("descricao"), resize: "none" }}
-                  value={form.descricao}
-                  onChange={e => setForm({ ...form, descricao: e.target.value })}
-                  onFocus={() => setFocused("descricao")}
-                  onBlur={() => setFocused(null)}
-                />
-                {erros.descricao && <p style={{ fontSize: ".78rem", color: "var(--red)", marginTop: ".3rem" }}>{erros.descricao[0]}</p>}
-              </div>
-
-              {/* Imagens */}
-              <div>
-                <label style={labelStyle}>
-                  URLs de imagens{" "}
-                  <span style={{ textTransform: "none", fontWeight: 400, letterSpacing: 0, fontSize: ".75rem" }}>
-                    (opcional)
-                  </span>
-                </label>
-                <textarea rows={2}
-                  placeholder="https://exemplo.com/foto.jpg (uma por linha)"
-                  style={{ ...inputStyle("imagens"), resize: "none" }}
-                  value={form.imagens}
-                  onChange={e => setForm({ ...form, imagens: e.target.value })}
-                  onFocus={() => setFocused("imagens")}
-                  onBlur={() => setFocused(null)}
-                />
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* ── Endereço de coleta ──────────────────────────── */}
-          <div>
-            <p className="section-label" style={{ marginBottom: "1rem" }}>Endereço de coleta</p>
-
-            {/* Toggle */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".75rem", marginBottom: "1.25rem" }}>
-              {/* Opção: usar endereço do perfil */}
-              <button type="button"
-                onClick={() => setModo("perfil")}
-                disabled={!perfil?.endereco}
-                style={{
-                  padding: "1rem", borderRadius: "var(--radius-sm)",
-                  border: `1.5px solid ${modoEndereco === "perfil" ? "var(--green)" : "var(--border)"}`,
-                  background: modoEndereco === "perfil" ? "rgba(45,138,62,.06)" : "var(--surface)",
-                  cursor: perfil?.endereco ? "pointer" : "not-allowed",
-                  opacity: perfil?.endereco ? 1 : .45,
-                  transition: "var(--transition)", textAlign: "left",
-                  fontFamily: "var(--font)",
-                }}>
-                <div style={{ display: "flex", alignItems: "center", gap: ".5rem", marginBottom: ".4rem" }}>
-                  <div style={{
-                    width: 18, height: 18, borderRadius: "50%",
-                    border: `2px solid ${modoEndereco === "perfil" ? "var(--green)" : "var(--border)"}`,
-                    background: modoEndereco === "perfil" ? "var(--green)" : "transparent",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    transition: "var(--transition)",
-                  }}>
-                    {modoEndereco === "perfil" && (
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5">
-                        <path d="M20 6 9 17l-5-5"/>
-                      </svg>
-                    )}
-                  </div>
-                  <span style={{
-                    fontSize: ".85rem", fontWeight: 600,
-                    color: modoEndereco === "perfil" ? "var(--green-dark)" : "var(--text)",
-                  }}>
-                    Usar do perfil
-                  </span>
-                </div>
-                <p style={{
-                  fontSize: ".78rem", color: "var(--text-muted)", lineHeight: 1.5,
-                  paddingLeft: "1.6rem",
-                  overflow: "hidden", textOverflow: "ellipsis",
-                  display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const,
-                }}>
-                  {perfil?.endereco ?? "Sem endereço cadastrado"}
-                </p>
-              </button>
-
-              {/* Opção: informar novo endereço */}
-              <button type="button"
-                onClick={() => setModo("novo")}
-                style={{
-                  padding: "1rem", borderRadius: "var(--radius-sm)",
-                  border: `1.5px solid ${modoEndereco === "novo" ? "var(--green)" : "var(--border)"}`,
-                  background: modoEndereco === "novo" ? "rgba(45,138,62,.06)" : "var(--surface)",
-                  cursor: "pointer", transition: "var(--transition)", textAlign: "left",
-                  fontFamily: "var(--font)",
-                }}>
-                <div style={{ display: "flex", alignItems: "center", gap: ".5rem", marginBottom: ".4rem" }}>
-                  <div style={{
-                    width: 18, height: 18, borderRadius: "50%",
-                    border: `2px solid ${modoEndereco === "novo" ? "var(--green)" : "var(--border)"}`,
-                    background: modoEndereco === "novo" ? "var(--green)" : "transparent",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    transition: "var(--transition)",
-                  }}>
-                    {modoEndereco === "novo" && (
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5">
-                        <path d="M20 6 9 17l-5-5"/>
-                      </svg>
-                    )}
-                  </div>
-                  <span style={{
-                    fontSize: ".85rem", fontWeight: 600,
-                    color: modoEndereco === "novo" ? "var(--green-dark)" : "var(--text)",
-                  }}>
-                    Informar outro
-                  </span>
-                </div>
-                <p style={{ fontSize: ".78rem", color: "var(--text-muted)", lineHeight: 1.5, paddingLeft: "1.6rem" }}>
-                  Preencher um endereço diferente do perfil
-                </p>
-              </button>
+          {/* Error Message */}
+          {erro && (
+            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg animate-shake">
+              <p className="text-red-700 font-semibold flex items-center gap-2">
+                <span className="text-2xl">⚠️</span>
+                <span>{typeof erro === 'string' ? erro : 'Erro ao processar solicitação'}</span>
+              </p>
             </div>
+          )}
 
-            {/* Formulário de endereço novo */}
-            {modoEndereco === "novo" && (
-              <div className="anim-scale-in" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          {/* Success Message */}
+          {sucesso && (
+            <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg animate-pulse">
+              <p className="text-green-700 font-semibold flex items-center gap-2">
+                <span className="text-2xl">🎉</span> {sucesso}
+              </p>
+            </div>
+          )}
 
-                {/* Rua + Número */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 90px", gap: ".75rem" }}>
-                  <div>
-                    <label style={labelStyle}>Rua / Avenida</label>
-                    <input type="text" placeholder="Ex: Rua das Flores"
-                      style={inputStyle("rua")} {...fe("rua")} />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Número</label>
-                    <input type="text" placeholder="123"
-                      style={inputStyle("numero")} {...fe("numero")} />
-                  </div>
+          {/* Main Card */}
+          <div className="backdrop-blur-xl bg-white/90 rounded-2xl shadow-2xl overflow-hidden border border-white/20">
+            
+            {/* STEP 1: INFORMAÇÕES */}
+            {step === 1 && (
+              <div className="p-8 md:p-12 animate-fadeIn">
+                <div className="mb-8">
+                  <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3 mb-2">
+                    <span className="text-4xl">📝</span> Informações
+                  </h2>
+                  <p className="text-gray-600">Comece descrevendo sua necessidade de forma clara</p>
                 </div>
 
-                {/* Complemento */}
-                <div>
-                  <label style={labelStyle}>
-                    Complemento{" "}
-                    <span style={{ textTransform: "none", fontWeight: 400, letterSpacing: 0, fontSize: ".75rem" }}>
-                      (opcional)
-                    </span>
-                  </label>
-                  <input type="text" placeholder="Apto 42, Bloco B, Casa..."
-                    style={inputStyle("complemento")} {...fe("complemento")} />
-                </div>
-
-                {/* Bairro */}
-                <div>
-                  <label style={labelStyle}>Bairro</label>
-                  <input type="text" placeholder="Ex: Centro"
-                    style={inputStyle("bairro")} {...fe("bairro")} />
-                </div>
-
-                {/* Cidade + UF */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 80px", gap: ".75rem" }}>
+                <form className="space-y-6">
+                  {/* Título */}
                   <div>
-                    <label style={labelStyle}>Cidade</label>
-                    <input type="text" placeholder="Ex: São Paulo"
-                      style={inputStyle("cidade")} {...fe("cidade")} />
+                    <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                      Título <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        name="titulo"
+                        value={formData.titulo}
+                        onChange={handleInputChange}
+                        placeholder="Ex: Coleta de Plástico do Condomínio"
+                        className="w-full px-4 py-4 text-lg bg-gradient-to-br from-slate-50 to-green-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-600 focus:shadow-lg focus:from-green-50 transition-all duration-300"
+                        maxLength={100}
+                      />
+                      <span className="absolute right-4 top-4 text-sm text-gray-400">
+                        {formData.titulo.length}/100
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm text-gray-500">Seja conciso e descritivo</p>
                   </div>
+
+                  {/* Tipo de Material */}
                   <div>
-                    <label style={labelStyle}>UF</label>
-                    <input type="text" placeholder="SP" maxLength={2}
-                      style={{ ...inputStyle("uf"), textTransform: "uppercase" }}
-                      value={endNovo.uf}
-                      onChange={e => setEndNovo({ ...endNovo, uf: e.target.value.toUpperCase() })}
-                      onFocus={() => setFocused("uf")}
-                      onBlur={() => setFocused(null)}
+                    <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                      Tipo de Material <span className="text-red-500">*</span>
+                    </label>
+                    {loadingMateriais ? (
+                      <div className="flex items-center justify-center py-4">
+                        <p className="text-gray-600">Carregando materiais...</p>
+                      </div>
+                    ) : (
+                      <select
+                        name="tipoMaterial"
+                        value={formData.tipoMaterial}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-4 text-lg bg-gradient-to-br from-slate-50 to-green-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-600 focus:shadow-lg transition-all duration-300 appearance-none cursor-pointer"
+                      >
+                        <option value="">Selecionar...</option>
+                        {materiais.map((material) => (
+                          <option key={material.id} value={material.id}>
+                            {material.emoji || '📦'} {material.nome}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  {/* Dica */}
+                  <div className="bg-gradient-to-r from-green-50 to-cyan-50 border-l-4 border-green-500 rounded-lg p-4">
+                    <p className="text-sm text-green-900">
+                      <strong>💡 Dica:</strong> Escolha o tipo de material com precisão para melhor matching com empresas de reciclagem.
+                    </p>
+                  </div>
+                </form>
+
+                {/* Botões */}
+                <div className="mt-10 flex justify-end gap-4">
+                  <Link
+                    href="/dashboard"
+                    className="px-6 py-3 text-gray-700 border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition font-semibold"
+                  >
+                    Cancelar
+                  </Link>
+                  <button
+                    onClick={handleProxima}
+                    className="px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl hover:shadow-xl hover:scale-105 transition font-semibold flex items-center gap-2"
+                  >
+                    Próximo <span>→</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: DETALHES */}
+            {step === 2 && (
+              <div className="p-8 md:p-12 animate-fadeIn">
+                <div className="mb-8">
+                  <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3 mb-2">
+                    <span className="text-4xl">📦</span> Detalhes da Solicitação
+                  </h2>
+                  <p className="text-gray-600">Complete as informações sobre quantidade, descrição e imagens</p>
+                </div>
+
+                <form className="space-y-6">
+                  {/* Quantidade */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                      Quantidade <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="quantidade"
+                      value={formData.quantidade}
+                      onChange={handleInputChange}
+                      placeholder="Ex: 50.5 kg, 10 sacos, etc"
+                      className="w-full px-4 py-4 text-lg bg-gradient-to-br from-slate-50 to-green-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-600 focus:shadow-lg focus:from-green-50 transition-all duration-300"
                     />
+                    <p className="mt-2 text-sm text-gray-500">Descreva a quantidade (kg, sacos, etc)</p>
                   </div>
+
+                  {/* Descrição */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                      Descrição <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      name="descricao"
+                      value={formData.descricao}
+                      onChange={handleInputChange}
+                      placeholder="Descreva em detalhes: Quanto tem? Onde está? Qual é a urgência? Há restrições de acesso?"
+                      rows={6}
+                      className="w-full px-4 py-4 text-base bg-gradient-to-br from-slate-50 to-green-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-600 focus:shadow-lg focus:from-green-50 transition-all duration-300 resize-none"
+                      maxLength={500}
+                    />
+                    <div className="flex justify-between mt-2">
+                      <p className="text-sm text-gray-500">Mínimo 10 caracteres</p>
+                      <span className="text-sm text-gray-400">{formData.descricao.length}/500</span>
+                    </div>
+                  </div>
+
+                  {/* Upload de Imagens com Cloudinary */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                      Fotos do Material <span className="text-gray-400 font-normal">(opcional)</span>
+                    </label>
+
+                    {/* Widget Cloudinary */}
+                    <CldUploadWidget
+                      uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+                      onSuccess={handleImageUpload}
+                      onEvent={(event) => {
+                        if (event === 'queues-start') setUploadingImage(true);
+                        if (event === 'queues-end') setUploadingImage(false);
+                      }}
+                    >
+                      {({ open }) => (
+                        <button
+                          type="button"
+                          onClick={() => open()}
+                          disabled={uploadingImage}
+                          className="w-full px-4 py-4 border-2 border-dashed border-green-600 rounded-xl hover:bg-green-50 transition text-green-600 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {uploadingImage ? '📤 Uploadando...' : '📸 Adicionar Fotos'}
+                        </button>
+                      )}
+                    </CldUploadWidget>
+
+                    <p className="mt-2 text-sm text-gray-500">
+                      Clique para selecionar fotos do seu computador
+                    </p>
+
+                    {/* Preview das imagens */}
+                    {imagens.length > 0 && (
+                      <div className="mt-6">
+                        <p className="text-sm font-semibold text-gray-700 mb-3">
+                          {imagens.length} foto(s) adicionada(s)
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          {imagens.map((url, idx) => (
+                            <div key={idx} className="relative group">
+                              <img
+                                src={url}
+                                alt={`Preview ${idx + 1}`}
+                                className="w-full h-40 object-cover rounded-lg border-2 border-gray-200"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removerImagem(idx)}
+                                className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Dica */}
+                  <div className="bg-gradient-to-r from-green-50 to-cyan-50 border-l-4 border-green-500 rounded-lg p-4">
+                    <p className="text-sm text-green-900">
+                      <strong>💡 Dica:</strong> Fotos nítidas aumentam as chances de sua solicitação ser aceita pelas empresas de reciclagem.
+                    </p>
+                  </div>
+                </form>
+
+                {/* Botões */}
+                <div className="mt-10 flex justify-between gap-4">
+                  <button
+                    onClick={handleVoltar}
+                    className="px-6 py-3 text-gray-700 border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition font-semibold"
+                  >
+                    ← Voltar
+                  </button>
+                  <button
+                    onClick={handleProxima}
+                    className="px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl hover:shadow-xl hover:scale-105 transition font-semibold flex items-center gap-2"
+                  >
+                    Próximo <span>→</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: ENDEREÇO */}
+            {step === 3 && (
+              <div className="p-8 md:p-12 animate-fadeIn">
+                <div className="mb-8">
+                  <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3 mb-2">
+                    <span className="text-4xl">📍</span> Endereço de Coleta
+                  </h2>
+                  <p className="text-gray-600">Confirme ou adicione o endereço para coleta do material</p>
                 </div>
 
-                {/* Preview */}
-                {enderecoNovoPreviw && (
-                  <div style={{
-                    background: "rgba(45,138,62,.05)", border: "1px solid rgba(45,138,62,.15)",
-                    borderRadius: "var(--radius-sm)", padding: ".7rem 1rem",
-                  }}>
-                    <p style={{ fontSize: ".72rem", fontWeight: 700, color: "var(--text-faint)",
-                      textTransform: "uppercase", letterSpacing: "1px", marginBottom: ".3rem" }}>
-                      Prévia do endereço
-                    </p>
-                    <p style={{ fontSize: ".88rem", color: "var(--green-dark)", fontWeight: 500 }}>
-                      {enderecoNovoPreviw}
-                    </p>
+                {/* Seletor de modo */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                  {/* Opção: usar endereço do perfil */}
+                  <button
+                    type="button"
+                    onClick={() => setModoEndereco('perfil')}
+                    disabled={!perfil?.endereco}
+                    className={`p-5 rounded-xl border-2 transition-all ${
+                      modoEndereco === 'perfil'
+                        ? 'border-green-600 bg-green-50'
+                        : 'border-gray-200 bg-gray-50'
+                    } ${perfil?.endereco ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                        modoEndereco === 'perfil'
+                          ? 'border-green-600 bg-green-600'
+                          : 'border-gray-300'
+                      }`}>
+                        {modoEndereco === 'perfil' && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <p className={`font-semibold ${
+                          modoEndereco === 'perfil' ? 'text-green-700' : 'text-gray-700'
+                        }`}>
+                          Usar do Perfil
+                        </p>
+                        <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                          {perfil?.endereco || 'Sem endereço cadastrado'}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Opção: informar novo endereço */}
+                  <button
+                    type="button"
+                    onClick={() => setModoEndereco('novo')}
+                    className={`p-5 rounded-xl border-2 transition-all cursor-pointer ${
+                      modoEndereco === 'novo'
+                        ? 'border-green-600 bg-green-50'
+                        : 'border-gray-200 bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                        modoEndereco === 'novo'
+                          ? 'border-green-600 bg-green-600'
+                          : 'border-gray-300'
+                      }`}>
+                        {modoEndereco === 'novo' && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <p className={`font-semibold ${
+                          modoEndereco === 'novo' ? 'text-green-700' : 'text-gray-700'
+                        }`}>
+                          Informar Outro
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Preencher um endereço diferente
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Formulário de endereço novo */}
+                {modoEndereco === 'novo' && (
+                  <form className="space-y-4 mb-8 p-6 bg-gradient-to-br from-slate-50 to-green-50 rounded-xl border border-gray-200">
+                    {/* Rua + Número */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="md:col-span-3">
+                        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">
+                          Rua / Avenida
+                        </label>
+                        <input
+                          type="text"
+                          name="rua"
+                          value={enderecoNovo.rua}
+                          onChange={handleInputEnderecoNovo}
+                          placeholder="Ex: Rua das Flores"
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600 transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">
+                          Número
+                        </label>
+                        <input
+                          type="text"
+                          name="numero"
+                          value={enderecoNovo.numero}
+                          onChange={handleInputEnderecoNovo}
+                          placeholder="123"
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600 transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Complemento */}
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">
+                        Complemento <span className="text-gray-400 font-normal">(opcional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="complemento"
+                        value={enderecoNovo.complemento}
+                        onChange={handleInputEnderecoNovo}
+                        placeholder="Apto 42, Bloco B..."
+                        className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600 transition-all"
+                      />
+                    </div>
+
+                    {/* Bairro */}
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">
+                        Bairro
+                      </label>
+                      <input
+                        type="text"
+                        name="bairro"
+                        value={enderecoNovo.bairro}
+                        onChange={handleInputEnderecoNovo}
+                        placeholder="Ex: Centro"
+                        className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600 transition-all"
+                      />
+                    </div>
+
+                    {/* Cidade + UF */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="md:col-span-3">
+                        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">
+                          Cidade
+                        </label>
+                        <input
+                          type="text"
+                          name="cidade"
+                          value={enderecoNovo.cidade}
+                          onChange={handleInputEnderecoNovo}
+                          placeholder="Ex: São Paulo"
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600 transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider">
+                          UF
+                        </label>
+                        <input
+                          type="text"
+                          name="uf"
+                          value={enderecoNovo.uf}
+                          onChange={handleInputEnderecoNovo}
+                          placeholder="SP"
+                          maxLength={2}
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-600 transition-all uppercase"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Preview */}
+                    {enderecoNovoPreviw && (
+                      <div className="mt-4 p-4 bg-white border-2 border-green-300 rounded-lg">
+                        <p className="text-xs font-bold text-green-600 uppercase tracking-widest mb-2">
+                          📍 Prévia do Endereço
+                        </p>
+                        <p className="text-green-700 font-semibold">
+                          {enderecoNovoPreviw}
+                        </p>
+                      </div>
+                    )}
+                  </form>
+                )}
+
+                {/* Endereço do perfil selecionado */}
+                {modoEndereco === 'perfil' && perfil?.endereco && (
+                  <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-cyan-50 border-l-4 border-green-600 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-600 flex-shrink-0 mt-1">
+                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                      <div>
+                        <p className="font-semibold text-green-700 mb-1">Endereço Selecionado</p>
+                        <p className="text-green-600">
+                          {perfil.endereco}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* Erro de validação do endereço */}
-            {erros.endereco && (
-              <p style={{ fontSize: ".82rem", color: "var(--red)",
-                display: "flex", alignItems: "center", gap: ".35rem" }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
-                </svg>
-                {erros.endereco[0]}
-              </p>
-            )}
+                {/* Preview da solicitação */}
+                <div className="bg-gradient-to-br from-green-50 via-white to-blue-50 rounded-xl border-2 border-green-200 p-6 mb-8">
+                  <p className="text-xs font-bold text-green-600 uppercase tracking-widest mb-4">✓ Resumo da Solicitação</p>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-sm text-gray-600">Título:</span>
+                      <p className="font-semibold text-gray-800">{formData.titulo}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Material:</span>
+                      <p className="font-semibold text-gray-800">{getMaterialEmoji()} {getMaterialNome()}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Quantidade:</span>
+                      <p className="font-semibold text-gray-800">{formData.quantidade}</p>
+                    </div>
+                    {imagens.length > 0 && (
+                      <div>
+                        <span className="text-sm text-gray-600">Imagens:</span>
+                        <p className="font-semibold text-gray-800">📸 {imagens.length} foto(s)</p>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-sm text-gray-600">Endereço:</span>
+                      <p className="font-semibold text-gray-800">{getEnderecoFinal()}</p>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Endereço do perfil selecionado */}
-            {modoEndereco === "perfil" && perfil?.endereco && (
-              <div className="anim-scale-in" style={{
-                background: "rgba(45,138,62,.05)", border: "1px solid rgba(45,138,62,.15)",
-                borderRadius: "var(--radius-sm)", padding: ".85rem 1rem",
-                display: "flex", alignItems: "flex-start", gap: ".6rem",
-              }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" style={{ flexShrink: 0, marginTop: "2px" }}>
-                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                  <circle cx="12" cy="10" r="3"/>
-                </svg>
-                <p style={{ fontSize: ".88rem", color: "var(--green-dark)", fontWeight: 500, lineHeight: 1.5 }}>
-                  {perfil.endereco}
-                </p>
+                {/* Info Box */}
+                <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-8">
+                  <p className="text-sm text-blue-800">
+                    <strong>✨ Verificou tudo?</strong> Sua solicitação será enviada para empresas de reciclagem que poderão coletar o material.
+                  </p>
+                </div>
+
+                {/* Botões */}
+                <div className="flex justify-between gap-4">
+                  <button
+                    onClick={handleVoltar}
+                    className="px-6 py-3 text-gray-700 border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition font-semibold"
+                  >
+                    ← Voltar
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:shadow-xl hover:scale-105 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <span className="animate-spin">⚙️</span> Criando...
+                      </>
+                    ) : (
+                      <>🚀 Criar Solicitação</>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </div>
-
-          {/* ── Ações ───────────────────────────────────────── */}
-          <div style={{ display: "flex", gap: ".75rem", paddingTop: ".25rem" }}>
-            <button type="submit" disabled={loading} className="btn btn-primary">
-              {loading ? "Enviando..." : "Criar solicitação"}
-            </button>
-            <button type="button" onClick={() => router.back()} className="btn btn-secondary">
-              Cancelar
-            </button>
-          </div>
-
-        </form>
+        </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+
+        .animate-shake {
+          animation: shake 0.5s ease-in-out;
+        }
+
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   );
 }

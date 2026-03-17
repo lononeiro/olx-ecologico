@@ -64,7 +64,7 @@ export default function Home() {
           ♻ ECOleta
         </span>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          <TransitionLink href="/login" style={{ color: "#a8c9a0", fontSize: "1.5rem", textDecoration: "none" }}>
+          <TransitionLink href="/login" style={{ color: "#a8c9a0", fontSize: "1rem", textDecoration: "none" }}>
               Entrar
           </TransitionLink>
 
@@ -73,7 +73,7 @@ export default function Home() {
             style={{
               background: "rgba(134,210,90,.12)", border: "1px solid rgba(134,210,90,.4)",
               color: "#86d25a", padding: ".45rem 1.1rem", borderRadius: "50px",
-              fontSize: "1.25rem", textDecoration: "none"
+              fontSize: "1rem", textDecoration: "none"
             }}>
             Criar conta
           </TransitionLink>
