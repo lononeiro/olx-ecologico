@@ -488,19 +488,14 @@ export default function CriarSolicitacaoPage() {
                     <CldUploadWidget
                       uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
                       onSuccess={handleImageUpload}
-                      onEvent={(event) => {
-                        if (event === 'queues-start') setUploadingImage(true);
-                        if (event === 'queues-end') setUploadingImage(false);
-                      }}
                     >
-                      {({ open }) => (
+                      {({ open }: { open: () => void }) => (
                         <button
                           type="button"
                           onClick={() => open()}
-                          disabled={uploadingImage}
-                          className="w-full px-4 py-4 border-2 border-dashed border-green-600 rounded-xl hover:bg-green-50 transition text-green-600 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full px-4 py-4 border-2 border-dashed border-green-600 rounded-xl hover:bg-green-50 transition text-green-600 font-semibold"
                         >
-                          {uploadingImage ? '📤 Uploadando...' : '📸 Adicionar Fotos'}
+                          📸 Adicionar Fotos
                         </button>
                       )}
                     </CldUploadWidget>
