@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listarColetasDaEmpresa } from "@/services/coleta.service";
-import { ColetaBadge } from "@/components/ui/StatusBadge";
+import { SolicitacaoCardVisual } from "@/components/cards/SolicitacaoCardVisual";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -93,27 +93,27 @@ export default async function EmpresaDashboardPage() {
           <Link href="/empresa/solicitacoes" className="btn btn-blue">Ver disponíveis</Link>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: ".75rem" }}>
-          {coletas.slice(0, 5).map((c, i) => (
-            <div key={c.id} className="card card-hover anim-fade-up" style={{ animationDelay: `${i * 0.07}s`, padding: "1.1rem 1.25rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: ".5rem", marginBottom: ".3rem" }}>
-                    <ColetaBadge status={c.status} />
-                    <span style={{ fontSize: ".75rem", color: "var(--text-faint)" }}>#{c.id}</span>
-                  </div>
-                  <p style={{ fontWeight: 600, fontSize: ".92rem", color: "var(--text)", marginBottom: ".2rem",
-                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {c.solicitacao.titulo}
-                  </p>
-                  <p style={{ fontSize: ".8rem", color: "var(--text-muted)" }}>
-                    {c.solicitacao.user.nome} · {c.solicitacao.material.nome}
-                  </p>
-                </div>
-                <Link href={`/empresa/coletas/${c.id}`} className="btn btn-secondary" style={{ fontSize: ".82rem", flexShrink: 0 }}>
-                  Detalhes
-                </Link>
-              </div>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gap: "1.1rem",
+        }}>
+          {coletas.slice(0, 6).map((c, i) => (
+            <div key={c.id} className="anim-fade-up" style={{ animationDelay: `${i * 0.07}s` }}>
+              <SolicitacaoCardVisual
+                id={c.solicitacao.id}
+                titulo={c.solicitacao.titulo}
+                quantidade={c.solicitacao.quantidade}
+                endereco={c.solicitacao.endereco}
+                status={c.solicitacao.status}
+                createdAt={c.solicitacao.createdAt}
+                material={c.solicitacao.material}
+                imagens={c.solicitacao.imagens}
+                solicitanteNome={c.solicitacao.user.nome}
+                coletaStatus={c.status}
+                dataAceite={c.dataAceite}
+                detailsHref={`/empresa/coletas/${c.id}`}
+              />
             </div>
           ))}
         </div>

@@ -12,29 +12,63 @@ export default async function SolicitacoesPage() {
   const solicitacoes = await listarSolicitacoesDoUsuario(userId);
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Minhas Solicitações</h1>
-        <Link href="/dashboard/solicitacoes/nova" className="btn-primary">
-          + Nova
+    <div className="page-enter">
+      {/* Header */}
+      <div style={{
+        display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+        flexWrap: "wrap", gap: "1rem", marginBottom: "2rem",
+      }}>
+        <div>
+          <p className="section-label">Minhas Solicitações</p>
+          <h1 style={{
+            fontSize: "clamp(1.3rem, 3vw, 1.65rem)",
+            fontWeight: 800, color: "var(--text)", letterSpacing: "-.4px",
+          }}>
+            Histórico completo
+          </h1>
+          <p style={{ fontSize: ".84rem", color: "var(--text-muted)", marginTop: ".3rem" }}>
+            {solicitacoes.length} solicitaç{solicitacoes.length === 1 ? "ão" : "ões"} no total
+          </p>
+        </div>
+        <Link href="/dashboard/solicitacoes/nova" className="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nova Solicitação
         </Link>
       </div>
 
       {solicitacoes.length === 0 ? (
-        <div className="card text-center py-16">
-          <p className="text-gray-400 mb-4">Nenhuma solicitação criada ainda.</p>
-          <Link href="/dashboard/solicitacoes/nova" className="btn-primary">
-            Criar solicitação
+        <div className="card empty-state" style={{
+          background: "linear-gradient(135deg, var(--surface), var(--surface-3))",
+        }}>
+          <div className="empty-state-icon">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--green-mid)" strokeWidth="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--text)", marginBottom: ".3rem" }}>
+              Nenhuma solicitação criada ainda
+            </p>
+            <p style={{ fontSize: ".86rem", color: "var(--text-muted)", maxWidth: 340, margin: "0 auto" }}>
+              Solicite uma coleta de recicláveis e acompanhe tudo por aqui.
+            </p>
+          </div>
+          <Link href="/dashboard/solicitacoes/nova" className="btn btn-primary">
+            Criar primeira solicitação
           </Link>
         </div>
       ) : (
-        <div className="space-y-4">
-          {solicitacoes.map((s) => (
-            <SolicitacaoCard
-              key={s.id}
-              solicitacao={s as any}
-              href={`/dashboard/solicitacoes/${s.id}`}
-            />
+        <div style={{ display: "flex", flexDirection: "column", gap: ".65rem" }}>
+          {solicitacoes.map((s, i) => (
+            <div key={s.id} className="anim-fade-up" style={{ animationDelay: `${i * 0.06}s` }}>
+              <SolicitacaoCard
+                solicitacao={s as any}
+                href={`/dashboard/solicitacoes/${s.id}`}
+              />
+            </div>
           ))}
         </div>
       )}

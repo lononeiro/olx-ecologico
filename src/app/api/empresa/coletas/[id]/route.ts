@@ -67,6 +67,21 @@ export async function PATCH(
       return NextResponse.json({ error: "Empresa não encontrada" }, { status: 404 });
     }
 
+    // Quando concluir, valida o codigo de confirmacao do usuario
+    if (parsed.data.status === "concluida") {
+      const codigoEnviado = parsed.data.codigoConfirmacao?.trim().toUpperCase();
+      if (!codigoEnviado) {
+        return NextResponse.json({ error: "Codigo de confirmacao obrigatorio para concluir." }, { status: 400 });
+      }
+      const coleta = await prisma.coleta.findFirst({ where: { id, companyId: company.id } });
+      if (!coleta) {
+        return NextResponse.json({ error: "Coleta nao encontrada." }, { status: 404 });
+      }
+      if (coleta.codigoConfirmacao !== codigoEnviado) {
+        return NextResponse.json({ error: "Codigo de confirmacao invalido." }, { status: 400 });
+      }
+    }
+
     const coleta = await atualizarStatusColeta(id, company.id, parsed.data.status);
     return NextResponse.json(coleta);
   } catch (err: any) {

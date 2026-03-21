@@ -49,6 +49,7 @@ export const coletaStatusSchema = z.object({
     "concluida",
     "cancelada",
   ]),
+  codigoConfirmacao: z.string().optional(),
 });
 
 // ── Mensagem ──────────────────────────────────────────────────────────────────

@@ -44,10 +44,10 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: ".75rem" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: ".75rem", flex: 1, minHeight: 0 }}>
       {/* Messages */}
       <div style={{
-        height: 300, overflowY: "auto", padding: "1rem",
+        flex: 1, minHeight: 260, maxHeight: 480, overflowY: "auto", padding: "1rem",
         background: "var(--surface-2)", borderRadius: "var(--radius-sm)",
         border: "1px solid var(--border)",
         display: "flex", flexDirection: "column", gap: ".6rem",

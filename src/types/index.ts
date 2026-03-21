@@ -36,15 +36,15 @@ export const STATUS_SOLICITACAO_LABEL: Record<string, string> = {
 };
 
 export const STATUS_COLETA_COLOR: Record<string, string> = {
-  aceita:    "bg-blue-50 text-blue-700",
-  a_caminho: "bg-yellow-50 text-yellow-700",
-  em_coleta: "bg-purple-50 text-purple-700",
-  concluida: "bg-green-50 text-green-700",
-  cancelada: "bg-red-50 text-red-700",
+  aceita:    "badge-blue",
+  a_caminho: "badge-yellow",
+  em_coleta: "badge-purple",
+  concluida: "badge-green",
+  cancelada: "badge-red",
 };
 
 export const STATUS_SOLICITACAO_COLOR: Record<string, string> = {
-  pendente:  "bg-yellow-50 text-yellow-700",
-  aprovada:  "bg-green-50 text-green-700",
-  rejeitada: "bg-red-50 text-red-700",
+  pendente:  "badge-yellow",
+  aprovada:  "badge-green",
+  rejeitada: "badge-red",
 };

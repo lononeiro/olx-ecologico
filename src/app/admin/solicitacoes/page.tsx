@@ -1,4 +1,5 @@
 import { listarSolicitacoesPendentes } from "@/services/solicitacao.service";
+import { SolicitacaoCardVisual } from "@/components/cards/SolicitacaoCardVisual";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -7,56 +8,61 @@ export default async function AdminSolicitacoesPage() {
   const solicitacoes = await listarSolicitacoesPendentes();
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Aprovar Solicitações</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Analise e aprove (ou rejeite) as solicitações pendentes.
+    <div className="page-enter">
+      <div style={{ marginBottom: "2rem" }}>
+        <p className="section-label">Admin</p>
+        <h1 style={{ fontSize: "clamp(1.3rem, 3vw, 1.65rem)", fontWeight: 800, color: "var(--text)", letterSpacing: "-.4px" }}>
+          Aprovar Solicitacoes
+        </h1>
+        <p style={{ fontSize: ".84rem", color: "var(--text-muted)", marginTop: ".3rem" }}>
+          {solicitacoes.length === 0
+            ? "Nenhuma solicitacao pendente."
+            : `${solicitacoes.length} solicitac${solicitacoes.length === 1 ? "ao" : "oes"} aguardando analise.`}
         </p>
       </div>
 
       {solicitacoes.length === 0 ? (
-        <div className="card text-center py-16">
-          <p className="text-2xl mb-2">🎉</p>
-          <p className="text-green-700 font-medium">Nenhuma solicitação pendente!</p>
+        <div className="card empty-state" style={{ background: "linear-gradient(135deg, var(--surface), var(--surface-3))" }}>
+          <div className="empty-state-icon">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.5">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+          </div>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--text)", marginBottom: ".3rem" }}>
+              Tudo em dia
+            </p>
+            <p style={{ fontSize: ".86rem", color: "var(--text-muted)", maxWidth: 340, margin: "0 auto" }}>
+              Todas as solicitacoes foram processadas.
+            </p>
+          </div>
         </div>
       ) : (
-        <div className="space-y-4">
-          {solicitacoes.map((s) => (
-            <div key={s.id} className="card">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="badge bg-yellow-100 text-yellow-800">Pendente</span>
-                    <span className="text-xs text-gray-400">
-                      #{s.id} · {new Date(s.createdAt).toLocaleDateString("pt-BR")}
-                    </span>
-                  </div>
-                  <h3 className="font-semibold text-gray-800">{s.titulo}</h3>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 mt-1">
-                    <span>👤 {s.user.nome}</span>
-                    <span>📦 {s.material.nome}</span>
-                    <span>⚖️ {s.quantidade}</span>
-                    <span>📍 {s.endereco}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">{s.descricao}</p>
-                </div>
-                {s.imagens[0] && (
-                  <img
-                    src={s.imagens[0].url}
-                    alt="imagem"
-                    className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                  />
-                )}
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2">
-                <Link
-                  href={`/admin/solicitacoes/${s.id}`}
-                  className="btn-secondary text-sm"
-                >
-                  Ver detalhes
-                </Link>
-              </div>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+          gap: "1.25rem",
+        }}>
+          {solicitacoes.map((s, i) => (
+            <div key={s.id} className="anim-fade-up" style={{ animationDelay: `${i * 0.06}s` }}>
+              <SolicitacaoCardVisual
+                id={s.id}
+                titulo={s.titulo}
+                descricao={s.descricao}
+                quantidade={s.quantidade}
+                endereco={s.endereco}
+                status={s.status}
+                createdAt={s.createdAt}
+                material={s.material}
+                imagens={s.imagens}
+                solicitanteNome={s.user.nome}
+                detailsHref={`/admin/solicitacoes/${s.id}`}
+                actions={
+                  <Link href={`/admin/solicitacoes/${s.id}`} className="btn btn-secondary" style={{ fontSize: ".82rem", flex: 1, justifyContent: "center" }}>
+                    Analisar solicitacao
+                  </Link>
+                }
+              />
             </div>
           ))}
         </div>

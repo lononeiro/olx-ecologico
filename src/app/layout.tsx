@@ -1,9 +1,22 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Outfit, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const inter = Inter({ subsets: ["latin"] });
+// next/font faz self-host automático, sem requisição externa bloqueante
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font",
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["700"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "ReciclaFácil — Sistema de Coleta de Recicláveis",
@@ -16,8 +29,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
-      <body className={`${inter.className} bg-gray-50 min-h-screen`}>
+    <html lang="pt-BR" className={`${outfit.variable} ${playfair.variable}`}>
+      <body style={{ fontFamily: "var(--font)" }}>
         <Providers>{children}</Providers>
       </body>
     </html>

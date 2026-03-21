@@ -1,5 +1,6 @@
 import { listarSolicitacoesPendentes } from "@/services/solicitacao.service";
 import { prisma } from "@/lib/prisma";
+import { SolicitacaoCardVisual } from "@/components/cards/SolicitacaoCardVisual";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -77,32 +78,26 @@ export default async function AdminDashboardPage() {
           </p>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: ".75rem" }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gap: "1.1rem",
+        }}>
           {pendentes.slice(0, 6).map((s, i) => (
-            <div key={s.id} className="card card-hover anim-fade-up" style={{ animationDelay: `${i * 0.06}s`, padding: "1.1rem 1.25rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                <div style={{
-                  width: 40, height: 40, borderRadius: 10, flexShrink: 0,
-                  background: "var(--yellow-light)", border: "1px solid rgba(212,134,10,.15)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
-                  </svg>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontWeight: 600, fontSize: ".92rem", color: "var(--text)",
-                    marginBottom: ".2rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {s.titulo}
-                  </p>
-                  <p style={{ fontSize: ".8rem", color: "var(--text-muted)" }}>
-                    {s.user.nome} · {s.material.nome} · {s.quantidade}
-                  </p>
-                </div>
-                <Link href={`/admin/solicitacoes/${s.id}`} className="btn btn-secondary" style={{ fontSize: ".82rem", flexShrink: 0 }}>
-                  Analisar
-                </Link>
-              </div>
+            <div key={s.id} className="anim-fade-up" style={{ animationDelay: `${i * 0.06}s` }}>
+              <SolicitacaoCardVisual
+                id={s.id}
+                titulo={s.titulo}
+                descricao={s.descricao}
+                quantidade={s.quantidade}
+                endereco={s.endereco}
+                status={s.status}
+                createdAt={s.createdAt}
+                material={s.material}
+                imagens={s.imagens}
+                solicitanteNome={s.user.nome}
+                detailsHref={`/admin/solicitacoes/${s.id}`}
+              />
             </div>
           ))}
         </div>

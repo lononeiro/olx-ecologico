@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listarColetasDaEmpresa } from "@/services/coleta.service";
-import { ColetaBadge } from "@/components/ui/StatusBadge";
+import { SolicitacaoCardVisual } from "@/components/cards/SolicitacaoCardVisual";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -12,58 +12,71 @@ export default async function EmpresaColetasPage() {
   const userId = Number((session!.user as any).id);
 
   const company = await prisma.company.findUnique({ where: { userId } });
-  if (!company) return <p>Empresa não configurada.</p>;
+  if (!company) return <p>Empresa nao configurada.</p>;
 
   const coletas = await listarColetasDaEmpresa(company.id);
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Minhas Coletas</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Gerencie todas as coletas aceitas pela sua empresa.
+    <div className="page-enter">
+      <div style={{ marginBottom: "2rem" }}>
+        <p className="section-label">Empresa</p>
+        <h1 style={{ fontSize: "clamp(1.3rem, 3vw, 1.65rem)", fontWeight: 800, color: "var(--text)", letterSpacing: "-.4px" }}>
+          Minhas Coletas
+        </h1>
+        <p style={{ fontSize: ".84rem", color: "var(--text-muted)", marginTop: ".3rem" }}>
+          {coletas.length} coleta{coletas.length !== 1 ? "s" : ""} no total
         </p>
       </div>
 
       {coletas.length === 0 ? (
-        <div className="card text-center py-16">
-          <p className="text-gray-400 mb-4">Nenhuma coleta realizada ainda.</p>
-          <Link href="/empresa/solicitacoes" className="btn-primary">
-            Ver solicitações disponíveis
+        <div className="card empty-state" style={{ background: "linear-gradient(135deg, var(--surface), var(--surface-3))" }}>
+          <div className="empty-state-icon">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--green-mid)" strokeWidth="1.5">
+              <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
+              <rect x="9" y="11" width="14" height="10" rx="2"/>
+              <circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            </svg>
+          </div>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--text)", marginBottom: ".3rem" }}>
+              Nenhuma coleta ainda
+            </p>
+            <p style={{ fontSize: ".86rem", color: "var(--text-muted)", maxWidth: 340, margin: "0 auto" }}>
+              Aceite uma solicitacao para iniciar sua primeira coleta.
+            </p>
+          </div>
+          <Link href="/empresa/solicitacoes" className="btn btn-blue">
+            Ver solicitacoes disponiveis
           </Link>
         </div>
       ) : (
-        <div className="space-y-4">
-          {coletas.map((c) => (
-            <div key={c.id} className="card">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <ColetaBadge status={c.status} />
-                    <span className="text-xs text-gray-400">
-                      Coleta #{c.id} · Aceita em{" "}
-                      {new Date(c.dataAceite).toLocaleDateString("pt-BR")}
-                    </span>
-                  </div>
-                  <h3 className="font-semibold text-gray-800">{c.solicitacao.titulo}</h3>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 mt-1">
-                    <span>📦 {c.solicitacao.material.nome}</span>
-                    <span>⚖️ {c.solicitacao.quantidade}</span>
-                    <span>👤 {c.solicitacao.user.nome}</span>
-                    <span>📍 {c.solicitacao.endereco}</span>
-                  </div>
-                  {c.dataConclusao && (
-                    <p className="text-xs text-green-600 mt-1">
-                      Concluída em {new Date(c.dataConclusao).toLocaleDateString("pt-BR")}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <Link href={`/empresa/coletas/${c.id}`} className="btn-secondary text-sm">
-                  Gerenciar coleta →
-                </Link>
-              </div>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+          gap: "1.25rem",
+        }}>
+          {coletas.map((c, i) => (
+            <div key={c.id} className="anim-fade-up" style={{ animationDelay: `${i * 0.06}s` }}>
+              <SolicitacaoCardVisual
+                id={c.solicitacao.id}
+                titulo={c.solicitacao.titulo}
+                quantidade={c.solicitacao.quantidade}
+                endereco={c.solicitacao.endereco}
+                status={c.solicitacao.status}
+                createdAt={c.solicitacao.createdAt}
+                material={c.solicitacao.material}
+                imagens={c.solicitacao.imagens}
+                solicitanteNome={c.solicitacao.user.nome}
+                coletaStatus={c.status}
+                dataAceite={c.dataAceite}
+                dataConclusao={c.dataConclusao ?? undefined}
+                detailsHref={`/empresa/coletas/${c.id}`}
+                actions={
+                  <Link href={`/empresa/coletas/${c.id}`} className="btn btn-secondary" style={{ fontSize: ".82rem", flex: 1, justifyContent: "center" }}>
+                    Gerenciar coleta
+                  </Link>
+                }
+              />
             </div>
           ))}
         </div>
