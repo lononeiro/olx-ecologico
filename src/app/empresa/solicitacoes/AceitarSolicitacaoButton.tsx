@@ -58,14 +58,34 @@ export function AceitarSolicitacaoButton({
       {modalAberto && (
         <Portal>
           <style>{`
-            @keyframes slideUp {
-              from { transform: translateY(30px); opacity: 0; }
+            @keyframes modalFadeIn {
+              from { opacity: 0; transform: scale(.97); }
+              to   { opacity: 1; transform: scale(1); }
+            }
+            @keyframes slideUpMobile {
+              from { transform: translateY(100%); opacity: 0; }
               to   { transform: translateY(0);    opacity: 1; }
             }
-            .modal-painel {
+            .modal-overlay {
               position: fixed;
-              bottom: 0; left: 0; right: 0;
+              inset: 0;
+              z-index: 200;
+              background: rgba(10,25,12,.5);
+              backdrop-filter: blur(3px);
+              /* Centraliza o painel no desktop com flexbox */
+              display: flex;
+              align-items: flex-end;
+              justify-content: center;
+            }
+            @media (min-width: 680px) {
+              .modal-overlay {
+                align-items: center;
+              }
+            }
+            .modal-painel {
+              position: relative;
               z-index: 201;
+              width: 100%;
               max-height: 92vh;
               background: var(--surface);
               border-radius: 20px 20px 0 0;
@@ -74,31 +94,22 @@ export function AceitarSolicitacaoButton({
               display: flex;
               flex-direction: column;
               overflow: hidden;
-              animation: slideUp .25s ease both;
+              animation: slideUpMobile .25s ease both;
             }
             @media (min-width: 680px) {
               .modal-painel {
-                top: 50%;
-                left: 50%;
-                right: auto;
-                bottom: auto;
-                transform: translate(-50%, -50%);
                 width: min(900px, 92vw);
-                max-height: 92vh;
                 border-radius: 20px;
+                animation: modalFadeIn .2s ease both;
               }
             }
           `}</style>
 
-          {/* Overlay */}
+          {/* Overlay + Painel centralizados por flexbox */}
           <div
-            onClick={() => !loading && setModalAberto(false)}
-            style={{
-              position: "fixed", inset: 0, zIndex: 200,
-              background: "rgba(10,25,12,.5)",
-              backdropFilter: "blur(3px)",
-            }}
-          />
+            className="modal-overlay"
+            onClick={(e) => { if (e.target === e.currentTarget && !loading) setModalAberto(false); }}
+          >
 
           {/* Painel */}
           <div className="modal-painel">
@@ -224,6 +235,7 @@ export function AceitarSolicitacaoButton({
             </div>
 
           </div>
+          </div>{/* fim modal-overlay */}
         </Portal>
       )}
     </>
