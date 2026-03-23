@@ -80,7 +80,7 @@ export function Navbar() {
               fontFamily: "var(--font)", fontWeight: 800, fontSize: "1rem",
               color: "var(--text)", letterSpacing: "-.4px",
             }}>
-              Recicla<span style={{ color: "var(--green)" }}>Fácil</span>
+              <span style={{ color: "var(--green)" }}>ECO</span>necta
             </span>
           </Link>
 
