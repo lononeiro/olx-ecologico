@@ -53,11 +53,27 @@ export function MapaEndereco({ endereco }: Props) {
     let isMounted = true;
 
     async function init() {
-      // Carrega Leaflet dinamicamente
+      // 1. Injeta o CSS do Leaflet no <head> se ainda não estiver lá
+      //    Sem isso as tiles ficam fora de posição (blocos brancos)
+      if (!document.getElementById("leaflet-css")) {
+        const link = document.createElement("link");
+        link.id   = "leaflet-css";
+        link.rel  = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(link);
+        // Aguarda o CSS carregar antes de inicializar
+        await new Promise<void>(resolve => {
+          link.onload = () => resolve();
+          link.onerror = () => resolve(); // continua mesmo se falhar
+          setTimeout(resolve, 1500);      // timeout de segurança
+        });
+      }
+
+      // 2. Carrega Leaflet dinamicamente
       const L = (await import("leaflet" as any)).default;
       if (!isMounted || !mapRef.current) return;
 
-      // Corrige ícones padrão do Leaflet (problema conhecido com bundlers)
+      // 3. Corrige ícones padrão do Leaflet (problema conhecido com bundlers)
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -65,7 +81,7 @@ export function MapaEndereco({ endereco }: Props) {
         shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
       });
 
-      // Evita re-inicializar se já existir instância
+      // 4. Evita re-inicializar se já existir instância
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -85,6 +101,10 @@ export function MapaEndereco({ endereco }: Props) {
         result.precisao === "exata" ? 16 : 13
       );
       mapInstanceRef.current = map;
+
+      // 5. Força recálculo de tamanho (necessário quando o mapa está dentro de modal)
+      setTimeout(() => { if (isMounted) map.invalidateSize(); }, 100);
+      setTimeout(() => { if (isMounted) map.invalidateSize(); }, 400);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
