@@ -1,13 +1,42 @@
 import { getServerSession } from "next-auth";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ChatBox } from "@/components/forms/ChatBox";
+import { RequestImageGallery } from "@/components/ui/RequestImageGallery";
+import { ColetaStatusTracker } from "@/components/ui/ColetaStatusTracker";
+import { ColetaBadge } from "@/components/ui/StatusBadge";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
-import { ColetaBadge } from "@/components/ui/StatusBadge";
-import { ColetaStatusTracker } from "@/components/ui/ColetaStatusTracker";
-import { ChatBox } from "@/components/forms/ChatBox";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
+
+const STATUS_COPY: Record<string, { title: string; description: string; tone: string }> = {
+  aceita: {
+    title: "Coleta confirmada",
+    description: "A empresa assumiu a solicitacao e pode alinhar os proximos passos com o solicitante.",
+    tone: "border-blue-200 bg-blue-50 text-blue-800",
+  },
+  a_caminho: {
+    title: "Equipe a caminho",
+    description: "A coleta esta em deslocamento e o solicitante pode acompanhar o atendimento em andamento.",
+    tone: "border-indigo-200 bg-indigo-50 text-indigo-800",
+  },
+  em_coleta: {
+    title: "Coleta em execucao",
+    description: "O material esta sendo atendido no local, com o fluxo operacional ja em andamento.",
+    tone: "border-violet-200 bg-violet-50 text-violet-800",
+  },
+  concluida: {
+    title: "Coleta concluida",
+    description: "Atendimento finalizado com registro completo da solicitacao e da comunicacao.",
+    tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  },
+  cancelada: {
+    title: "Coleta cancelada",
+    description: "O fluxo foi encerrado antes da conclusao. Consulte o historico da conversa se precisar revisar o contexto.",
+    tone: "border-red-200 bg-red-50 text-red-800",
+  },
+};
 
 export default async function EmpresaColetaDetailPage({
   params,
@@ -40,123 +69,244 @@ export default async function EmpresaColetaDetailPage({
   ]);
 
   if (!company || !coleta || coleta.companyId !== company.id) notFound();
+
   const s = coleta.solicitacao;
+  const statusCopy = STATUS_COPY[coleta.status] ?? {
+    title: coleta.status,
+    description: "Acompanhe os dados operacionais desta coleta em uma visualizacao mais organizada.",
+    tone: "border-slate-200 bg-slate-50 text-slate-700",
+  };
 
   return (
-    <div className="page-enter">
-      {/* ── Header ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: ".75rem", marginBottom: "1.75rem", flexWrap: "wrap" }}>
-        <Link href="/empresa/coletas" className="btn btn-ghost" style={{ padding: ".35rem .65rem", fontSize: ".82rem" }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-          Voltar
-        </Link>
-        <div style={{ flex: 1 }}>
-          <p className="section-label">Coleta #{coleta.id}</p>
-          <h1 style={{ fontSize: "clamp(1.1rem, 3vw, 1.4rem)", fontWeight: 800, color: "var(--text)", letterSpacing: "-.3px", lineHeight: 1.2 }}>
-            {s.titulo}
-          </h1>
+    <div
+      className="page-enter"
+      style={{
+        minHeight: "100vh",
+        background:
+          "linear-gradient(180deg, rgba(248,250,252,1) 0%, rgba(241,245,249,1) 100%)",
+        padding: "1.5rem 0 3rem",
+      }}
+    >
+      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 1rem" }}>
+        <div
+          style={{
+            maxWidth: 920,
+            margin: "0 auto 1rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: ".75rem",
+            flexWrap: "wrap",
+          }}
+        >
+          <Link
+            href="/empresa/coletas"
+            className="btn btn-ghost"
+            style={{ padding: ".45rem .8rem", fontSize: ".82rem" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Voltar para coletas
+          </Link>
+          <p
+            style={{
+              fontSize: ".74rem",
+              color: "var(--text-faint)",
+              letterSpacing: "1.6px",
+              textTransform: "uppercase",
+              fontWeight: 700,
+            }}
+          >
+            Visao operacional
+          </p>
         </div>
-        <ColetaBadge status={coleta.status} />
-      </div>
 
-      {/* ── Status tracker ── */}
-      <div className="card anim-fade-up stagger-1" style={{ marginBottom: "1.25rem" }}>
-        <p className="section-label" style={{ marginBottom: "1.25rem" }}>Progresso da Coleta</p>
-        <ColetaStatusTracker coletaId={coleta.id} statusAtual={coleta.status} isEmpresa />
-      </div>
-
-      {/* ── Grid responsivo (mesmo padrão do dashboard) ── */}
-      <div className="detail-grid">
-
-        {/* COLUNA ESQUERDA */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-
-          {/* Material */}
-          <div className="card anim-fade-up stagger-3">
-            <p className="section-label" style={{ marginBottom: ".75rem" }}>Material</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".75rem" }}>
-              <Field label="Tipo" value={s.material.nome} />
-              <Field label="Quantidade" value={s.quantidade} />
-              <Field label="Aceita em" value={new Date(coleta.dataAceite).toLocaleDateString("pt-BR")} />
-              {coleta.dataConclusao && <Field label="Concluida em" value={new Date(coleta.dataConclusao).toLocaleDateString("pt-BR")} />}
-              <Field label="Endereco" value={s.endereco} full />
-              {s.descricao && <Field label="Descricao" value={s.descricao} full muted />}
-            </div>
-
-            {s.imagens.length > 0 && (
-              <div style={{ marginTop: ".75rem", paddingTop: ".75rem", borderTop: "1.5px solid var(--border)" }}>
-                <p className="section-label" style={{ marginBottom: ".5rem" }}>Fotos</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: ".4rem" }}>
-                  {s.imagens.map(img => (
-                    <a key={img.id} href={img.url} target="_blank" rel="noopener noreferrer">
-                      <img src={img.url} alt="" className="img-thumb" style={{
-                        width: 60, height: 60, objectFit: "cover",
-                        borderRadius: 8, border: "1.5px solid var(--border)",
-                      }} />
-                    </a>
-                  ))}
+        <div style={{ maxWidth: 920, margin: "0 auto" }}>
+          <article
+            style={{
+              background: "#fff",
+              borderRadius: 32,
+              border: "1px solid rgba(148,163,184,.18)",
+              boxShadow: "0 24px 60px rgba(15,23,42,.08)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                padding: "2rem 2rem 1.4rem",
+                borderBottom: "1px solid rgba(226,232,240,.9)",
+                background:
+                  "linear-gradient(180deg, rgba(248,250,252,.95) 0%, rgba(255,255,255,1) 100%)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: "1rem",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 260 }}>
+                  <p
+                    style={{
+                      fontSize: ".72rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "1.8px",
+                      color: "var(--text-faint)",
+                      fontWeight: 700,
+                      marginBottom: ".7rem",
+                    }}
+                  >
+                    Coleta #{coleta.id}
+                  </p>
+                  <h1
+                    style={{
+                      fontSize: "clamp(1.5rem, 3vw, 2.1rem)",
+                      lineHeight: 1.15,
+                      letterSpacing: "-.04em",
+                      fontWeight: 800,
+                      color: "var(--text)",
+                    }}
+                  >
+                    {s.titulo}
+                  </h1>
+                  <p
+                    style={{
+                      marginTop: ".75rem",
+                      maxWidth: 600,
+                      fontSize: ".92rem",
+                      lineHeight: 1.6,
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Painel detalhado da coleta com anexos, dados da solicitacao e informacoes do solicitante em uma visualizacao mais limpa e profissional.
+                  </p>
                 </div>
+                <ColetaBadge status={coleta.status} />
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Solicitante */}
-          <div className="card anim-fade-up stagger-4">
-            <p className="section-label" style={{ marginBottom: ".75rem" }}>Solicitante</p>
-            <div style={{ display: "flex", alignItems: "center", gap: ".75rem", marginBottom: ".65rem" }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: "50%", flexShrink: 0,
-                background: "linear-gradient(135deg, var(--green), var(--green-light))",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: ".9rem", fontWeight: 800, color: "#fff",
-              }}>
-                {s.user.nome[0].toUpperCase()}
-              </div>
-              <div>
-                <p style={{ fontWeight: 700, fontSize: ".9rem", color: "var(--text)" }}>{s.user.nome}</p>
-                <p style={{ fontSize: ".78rem", color: "var(--text-muted)" }}>{s.user.email}</p>
-              </div>
+            <div style={{ padding: "1.5rem 1.5rem 0" }}>
+              <RequestImageGallery images={s.imagens} title={s.titulo} />
             </div>
-            {(s.user as any).telefone && (
-              <div style={{ display: "flex", alignItems: "center", gap: ".4rem", fontSize: ".82rem", color: "var(--text-muted)" }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                {(s.user as any).telefone}
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* COLUNA DIREITA — chat */}
-        <div className="card anim-fade-up stagger-2 chat-col" style={{ padding: 0, overflow: "hidden" }}>
-          <div style={{
-            padding: "1rem 1.25rem",
-            borderBottom: "1.5px solid var(--border)",
-            display: "flex", alignItems: "center", gap: ".6rem",
-            background: "var(--surface-3)",
-            flexShrink: 0,
-          }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
-              background: "linear-gradient(135deg, var(--green), var(--green-light))",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
+            <div style={{ padding: "0 2rem" }}>
+              <div
+                style={{
+                  height: 1,
+                  marginTop: "1.75rem",
+                  background:
+                    "linear-gradient(90deg, rgba(226,232,240,0), rgba(226,232,240,1), rgba(226,232,240,0))",
+                }}
+              />
             </div>
-            <div>
-              <p style={{ fontWeight: 700, fontSize: ".88rem", color: "var(--text)", lineHeight: 1.2 }}>
-                Chat com {s.user.nome.split(" ")[0]}
-              </p>
-              <p style={{ fontSize: ".7rem", color: "var(--text-faint)" }}>Solicitante</p>
+
+            <div style={{ padding: "1.75rem 2rem 2rem" }}>
+              <SectionHeading
+                eyebrow="Dados"
+                title="Informacoes da coleta"
+                description="Leitura organizada para a equipe da empresa, sem remover nenhuma informacao importante do fluxo atual."
+              />
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                  gap: "1rem",
+                }}
+              >
+                <DocumentField label="Material" value={s.material.nome} />
+                <DocumentField label="Quantidade" value={s.quantidade} />
+                <DocumentField
+                  label="Solicitacao criada em"
+                  value={new Date(s.createdAt).toLocaleString("pt-BR")}
+                />
+                <DocumentField
+                  label="Aceita em"
+                  value={new Date(coleta.dataAceite).toLocaleDateString("pt-BR")}
+                />
+                <DocumentField label="Status operacional" value={statusCopy.title} />
+                {coleta.dataConclusao && (
+                  <DocumentField
+                    label="Concluida em"
+                    value={new Date(coleta.dataConclusao).toLocaleDateString("pt-BR")}
+                  />
+                )}
+                <DocumentField label="Endereco da coleta" value={s.endereco} full />
+                {s.descricao && (
+                  <DocumentField label="Descricao do material" value={s.descricao} full muted />
+                )}
+
+                <StatusSummary
+                  title={statusCopy.title}
+                  description={statusCopy.description}
+                  tone={statusCopy.tone}
+                />
+
+                <DocumentField label="Solicitante" value={s.user.nome} />
+                <DocumentField label="Email" value={s.user.email} />
+                {(s.user as any).telefone && (
+                  <DocumentField label="Telefone" value={(s.user as any).telefone} />
+                )}
+                {s.user.endereco && (
+                  <DocumentField label="Endereco do perfil" value={s.user.endereco} full />
+                )}
+              </div>
             </div>
-          </div>
-          <div style={{ padding: "1rem 1.25rem", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-            <ChatBox
-              coletaId={coleta.id}
-              currentUserId={userId}
-              initialMessages={coleta.mensagens as any}
-            />
+          </article>
+
+          <div style={{ marginTop: "1.25rem", display: "grid", gap: "1rem" }}>
+            <section
+              className="card"
+              style={{
+                background: "rgba(255,255,255,.88)",
+                border: "1px solid rgba(148,163,184,.18)",
+                boxShadow: "0 16px 40px rgba(15,23,42,.06)",
+              }}
+            >
+              <SectionHeading
+                eyebrow="Acompanhamento"
+                title="Progresso da coleta"
+                description="O fluxo operacional segue disponivel abaixo da ficha principal, com os controles da empresa preservados."
+              />
+              <ColetaStatusTracker coletaId={coleta.id} statusAtual={coleta.status} isEmpresa />
+            </section>
+
+            <section
+              className="card"
+              style={{
+                padding: 0,
+                overflow: "hidden",
+                background: "rgba(255,255,255,.88)",
+                border: "1px solid rgba(148,163,184,.18)",
+                boxShadow: "0 16px 40px rgba(15,23,42,.06)",
+              }}
+            >
+              <div
+                style={{
+                  padding: "1rem 1.25rem",
+                  borderBottom: "1px solid rgba(226,232,240,.9)",
+                  background: "linear-gradient(180deg, rgba(248,250,252,.9) 0%, rgba(255,255,255,1) 100%)",
+                }}
+              >
+                <SectionHeading
+                  eyebrow="Comunicacao"
+                  title={`Chat com ${s.user.nome.split(" ")[0]}`}
+                  description="Conversa vinculada a esta coleta."
+                  compact
+                />
+              </div>
+              <div style={{ padding: "1rem 1.25rem" }}>
+                <ChatBox
+                  coletaId={coleta.id}
+                  currentUserId={userId}
+                  initialMessages={coleta.mensagens as any}
+                />
+              </div>
+            </section>
           </div>
         </div>
       </div>
@@ -164,13 +314,138 @@ export default async function EmpresaColetaDetailPage({
   );
 }
 
-function Field({ label, value, full, muted }: { label: string; value: string; full?: boolean; muted?: boolean }) {
+function SectionHeading({
+  eyebrow,
+  title,
+  description,
+  compact,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  compact?: boolean;
+}) {
   return (
-    <div style={{ gridColumn: full ? "1 / -1" : undefined }}>
-      <p className="section-label">{label}</p>
-      <p style={{ fontSize: ".85rem", fontWeight: muted ? 400 : 600, color: muted ? "var(--text-muted)" : "var(--text)", marginTop: ".15rem", lineHeight: 1.5 }}>
+    <div style={{ marginBottom: compact ? ".2rem" : "1.2rem" }}>
+      <p
+        style={{
+          fontSize: ".72rem",
+          textTransform: "uppercase",
+          letterSpacing: "1.8px",
+          color: "var(--text-faint)",
+          fontWeight: 700,
+          marginBottom: ".45rem",
+        }}
+      >
+        {eyebrow}
+      </p>
+      <h2
+        style={{
+          fontSize: compact ? "1rem" : "1.3rem",
+          lineHeight: 1.2,
+          fontWeight: 700,
+          color: "var(--text)",
+          marginBottom: description ? ".2rem" : 0,
+        }}
+      >
+        {title}
+      </h2>
+      {description && (
+        <p
+          style={{
+            fontSize: compact ? ".78rem" : ".86rem",
+            color: "var(--text-muted)",
+            lineHeight: 1.55,
+          }}
+        >
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function DocumentField({
+  label,
+  value,
+  full,
+  muted,
+}: {
+  label: string;
+  value: string;
+  full?: boolean;
+  muted?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        gridColumn: full ? "1 / -1" : undefined,
+        padding: "1rem 1.05rem",
+        borderRadius: 20,
+        border: "1px solid rgba(226,232,240,.9)",
+        background: muted ? "rgba(248,250,252,.8)" : "#fff",
+      }}
+    >
+      <p
+        style={{
+          fontSize: ".7rem",
+          textTransform: "uppercase",
+          letterSpacing: "1.5px",
+          color: "var(--text-faint)",
+          fontWeight: 700,
+          marginBottom: ".45rem",
+        }}
+      >
+        {label}
+      </p>
+      <p
+        style={{
+          fontSize: ".95rem",
+          lineHeight: 1.6,
+          color: muted ? "var(--text-muted)" : "var(--text)",
+          fontWeight: muted ? 400 : 600,
+          whiteSpace: "pre-line",
+        }}
+      >
         {value}
       </p>
+    </div>
+  );
+}
+
+function StatusSummary({
+  title,
+  description,
+  tone,
+}: {
+  title: string;
+  description: string;
+  tone: string;
+}) {
+  return (
+    <div
+      className={tone}
+      style={{
+        gridColumn: "1 / -1",
+        borderRadius: 20,
+        borderWidth: 1,
+        padding: "1rem 1.05rem",
+      }}
+    >
+      <p
+        style={{
+          fontSize: ".7rem",
+          textTransform: "uppercase",
+          letterSpacing: "1.5px",
+          fontWeight: 700,
+          marginBottom: ".45rem",
+          opacity: 0.8,
+        }}
+      >
+        Situacao atual
+      </p>
+      <p style={{ fontSize: ".96rem", fontWeight: 700, marginBottom: ".25rem" }}>{title}</p>
+      <p style={{ fontSize: ".85rem", lineHeight: 1.55 }}>{description}</p>
     </div>
   );
 }

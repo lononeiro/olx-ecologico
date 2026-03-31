@@ -61,9 +61,9 @@ export default async function SolicitacoesPage() {
           </Link>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: ".65rem" }}>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {solicitacoes.map((s, i) => (
-            <div key={s.id} className="anim-fade-up" style={{ animationDelay: `${i * 0.06}s` }}>
+            <div key={s.id} className="anim-fade-up h-full" style={{ animationDelay: `${i * 0.06}s` }}>
               <SolicitacaoCard
                 solicitacao={s as any}
                 href={`/dashboard/solicitacoes/${s.id}`}

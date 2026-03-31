@@ -204,9 +204,9 @@ export default async function DashboardPage() {
             )}
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: ".65rem" }}>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {solicitacoes.slice(0, 5).map((s, i) => (
-              <div key={s.id} className="anim-fade-up" style={{ animationDelay: `${.3 + i * 0.07}s` }}>
+              <div key={s.id} className="anim-fade-up h-full" style={{ animationDelay: `${.3 + i * 0.07}s` }}>
                 <SolicitacaoCard
                   solicitacao={s as any}
                   href={`/dashboard/solicitacoes/${s.id}`}
