@@ -1,10 +1,20 @@
 import { z } from "zod";
 
-// ── Autenticação ──────────────────────────────────────────────────────────────
+const MAX_SOLICITACAO_IMAGENS = 5;
+
+const normalizarImagensSolicitacao = (value: unknown) => {
+  if (value == null) return [];
+  if (!Array.isArray(value)) return value;
+
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
 
 export const registerSchema = z.object({
   nome: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
-  email: z.string().email("Email inválido"),
+  email: z.string().email("Email invalido"),
   senha: z.string().min(6, "Senha deve ter ao menos 6 caracteres"),
   endereco: z.string().optional(),
   telefone: z.string().optional(),
@@ -13,33 +23,30 @@ export const registerSchema = z.object({
   descricao: z.string().optional(),
 });
 
-// ── Solicitação de Coleta ─────────────────────────────────────────────────────
-
 export const solicitacaoCreateSchema = z.object({
-  titulo: z.string().min(3, "Título deve ter ao menos 3 caracteres"),
-  descricao: z.string().min(10, "Descrição deve ter ao menos 10 caracteres"),
+  titulo: z.string().min(3, "Titulo deve ter ao menos 3 caracteres"),
+  descricao: z.string().min(10, "Descricao deve ter ao menos 10 caracteres"),
   quantidade: z.string().min(1, "Informe a quantidade"),
-  endereco: z.string().min(5, "Endereço deve ter ao menos 5 caracteres"),
-
-  // Aceita number ou string numérica ("3" ou 3) — coerce converte automaticamente
+  endereco: z.string().min(5, "Endereco deve ter ao menos 5 caracteres"),
   materialId: z.coerce
     .number({ invalid_type_error: "Selecione um tipo de material" })
     .int()
     .positive("Selecione um tipo de material"),
-
-  // Array de URLs — itens vazios são ignorados antes da validação
-  imagens: z
-    .array(z.string())
-    .optional()
-    .transform(arr => (arr ?? []).filter(u => u.trim() !== "")),
+  imagens: z.preprocess(
+    normalizarImagensSolicitacao,
+    z
+      .array(z.string().url("Cada imagem precisa ter uma URL valida"))
+      .max(
+        MAX_SOLICITACAO_IMAGENS,
+        `Voce pode adicionar no maximo ${MAX_SOLICITACAO_IMAGENS} imagens por solicitacao`
+      )
+  ),
 });
 
 export const solicitacaoUpdateSchema = z.object({
   status: z.enum(["pendente", "aprovada", "rejeitada"]).optional(),
   aprovado: z.boolean().optional(),
 });
-
-// ── Coleta ────────────────────────────────────────────────────────────────────
 
 export const coletaStatusSchema = z.object({
   status: z.enum([
@@ -52,9 +59,7 @@ export const coletaStatusSchema = z.object({
   codigoConfirmacao: z.string().optional(),
 });
 
-// ── Mensagem ──────────────────────────────────────────────────────────────────
-
 export const mensagemCreateSchema = z.object({
   coletaId: z.coerce.number().int().positive(),
-  mensagem: z.string().min(1, "Mensagem não pode ser vazia"),
+  mensagem: z.string().min(1, "Mensagem nao pode ser vazia"),
 });

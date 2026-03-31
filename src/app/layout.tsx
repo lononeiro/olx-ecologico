@@ -19,7 +19,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "ReciclaFácil — Sistema de Coleta de Recicláveis",
+  title: "ECOnecta — Sistema de Coleta de Recicláveis",
   description: "Conectando cidadãos e empresas de reciclagem",
 };
 

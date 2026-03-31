@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
 
+const MAX_SOLICITACAO_IMAGENS = 5;
+
 /**
- * Cria uma nova solicitação de coleta para o usuário autenticado.
+ * Cria uma nova solicitacao de coleta para o usuario autenticado.
  */
 export async function criarSolicitacao(
   userId: number,
@@ -14,7 +16,22 @@ export async function criarSolicitacao(
     imagens?: string[];
   }
 ) {
-  const { imagens, ...rest } = data;
+  const imagens = Array.from(
+    new Set(
+      (data.imagens ?? [])
+        .filter((url): url is string => typeof url === "string")
+        .map((url) => url.trim())
+        .filter(Boolean)
+    )
+  );
+
+  if (imagens.length > MAX_SOLICITACAO_IMAGENS) {
+    throw new Error(
+      `Voce pode adicionar no maximo ${MAX_SOLICITACAO_IMAGENS} imagens por solicitacao.`
+    );
+  }
+
+  const { imagens: _imagens, ...rest } = data;
 
   const solicitacao = await prisma.solicitacaoColeta.create({
     data: {
@@ -22,7 +39,7 @@ export async function criarSolicitacao(
       userId,
       status: "pendente",
       aprovado: false,
-      imagens: imagens?.length
+      imagens: imagens.length
         ? { create: imagens.map((url) => ({ url })) }
         : undefined,
     },
@@ -33,7 +50,7 @@ export async function criarSolicitacao(
 }
 
 /**
- * Lista todas as solicitações de um usuário específico.
+ * Lista todas as solicitacoes de um usuario especifico.
  */
 export async function listarSolicitacoesDoUsuario(userId: number) {
   return prisma.solicitacaoColeta.findMany({
@@ -48,7 +65,7 @@ export async function listarSolicitacoesDoUsuario(userId: number) {
 }
 
 /**
- * Retorna uma solicitação pelo id, verificando permissão de acesso.
+ * Retorna uma solicitacao pelo id, verificando permissao de acesso.
  */
 export async function buscarSolicitacaoPorId(id: number, userId?: number) {
   const where = userId ? { id, userId } : { id };
@@ -60,7 +77,9 @@ export async function buscarSolicitacaoPorId(id: number, userId?: number) {
       imagens: true,
       coleta: {
         include: {
-          company: { include: { user: { select: { id: true, nome: true, email: true } } } },
+          company: {
+            include: { user: { select: { id: true, nome: true, email: true } } },
+          },
           mensagens: {
             include: { remetente: { select: { id: true, nome: true } } },
             orderBy: { createdAt: "asc" },
@@ -72,7 +91,7 @@ export async function buscarSolicitacaoPorId(id: number, userId?: number) {
 }
 
 /**
- * Lista todas as solicitações pendentes de aprovação (acesso Admin).
+ * Lista todas as solicitacoes pendentes de aprovacao (acesso Admin).
  */
 export async function listarSolicitacoesPendentes() {
   return prisma.solicitacaoColeta.findMany({
@@ -87,7 +106,7 @@ export async function listarSolicitacoesPendentes() {
 }
 
 /**
- * Aprova ou rejeita uma solicitação (acesso Admin).
+ * Aprova ou rejeita uma solicitacao (acesso Admin).
  */
 export async function atualizarStatusSolicitacao(
   id: number,
@@ -103,7 +122,7 @@ export async function atualizarStatusSolicitacao(
 }
 
 /**
- * Lista todas as solicitações aprovadas e disponíveis (sem coleta) — acesso Empresa.
+ * Lista todas as solicitacoes aprovadas e disponiveis (sem coleta) - acesso Empresa.
  */
 export async function listarSolicitacoesAprovadas() {
   return prisma.solicitacaoColeta.findMany({
