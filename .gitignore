@@ -68,3 +68,9 @@ $RECYCLE.BIN/
 uploads/
 tmp/
 temp/
+
+# ── Tipos de arquivos ───────────────────────────────────────────
+*.zip
+*.tar.gz
+*.rar
+*.7z
