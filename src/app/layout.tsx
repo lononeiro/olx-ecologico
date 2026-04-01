@@ -29,7 +29,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={`${outfit.variable} ${playfair.variable}`}>
+    <html
+      lang="pt-BR"
+      className={`${outfit.variable} ${playfair.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                try {
+                  var theme = localStorage.getItem("theme");
+                  if (theme !== "dark" && theme !== "light") theme = "light";
+                  document.documentElement.classList.toggle("dark", theme === "dark");
+                  document.documentElement.style.colorScheme = theme;
+                } catch (error) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body style={{ fontFamily: "var(--font)" }}>
         <Providers>{children}</Providers>
       </body>

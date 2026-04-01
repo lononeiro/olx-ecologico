@@ -57,6 +57,89 @@
 
   /* Font */
   --font:         'Outfit', system-ui, sans-serif;
+  --surface-overlay: rgba(255,255,255,.95);
+  --landing-bg: #f5fbf3;
+  --landing-panel: #ffffff;
+  --landing-panel-2: #eef7ec;
+  --landing-text: #122114;
+  --landing-muted: #537156;
+  --landing-soft: #6f8d73;
+  --landing-accent: #2f8d47;
+  --landing-accent-2: #58b875;
+  --landing-border: rgba(15,31,18,.08);
+  --auth-bg: #f4faf3;
+  --auth-panel: #eef8ed;
+  --auth-panel-2: #e6f4e5;
+  --auth-surface: rgba(255,255,255,.88);
+  --auth-border: rgba(30,122,50,.12);
+  --auth-border-soft: rgba(15,31,18,.07);
+  --auth-text: #122114;
+  --auth-muted: #537156;
+  --auth-soft: #6f8d73;
+  --auth-accent: #2f8d47;
+  --auth-accent-2: #58b875;
+  --auth-danger: #f87171;
+  --auth-danger-bg: rgba(239,68,68,.1);
+  --auth-danger-border: rgba(239,68,68,.3);
+  --auth-button-text: #ffffff;
+  --auth-autofill: #ffffff;
+}
+
+html.dark {
+  color-scheme: dark;
+  --bg:           #08110c;
+  --bg-pattern:   url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2386d25a' fill-opacity='0.045'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  --surface:      #0f1914;
+  --surface-2:    #14231b;
+  --surface-3:    #102019;
+  --border:       #244334;
+  --border-focus: #86d25a;
+  --green-dark:   #c6f4b3;
+  --green:        #86d25a;
+  --green-mid:    #67be63;
+  --green-light:  #a8ea73;
+  --green-xlight: #1f3423;
+  --blue:         #72b5e8;
+  --blue-light:   #132939;
+  --blue-mid:     #53a7d8;
+  --purple:       #c3a5f0;
+  --purple-light: #241a35;
+  --red:          #ff978d;
+  --red-light:    #331917;
+  --red-mid:      #ef6f65;
+  --yellow:       #f2bf59;
+  --yellow-light: #34270f;
+  --yellow-mid:   #efb845;
+  --text:         #ecf7ef;
+  --text-muted:   #9ab7a3;
+  --text-faint:   #6e8c77;
+  --shadow-xs:    0 1px 2px rgba(0,0,0,.24);
+  --shadow-sm:    0 1px 8px rgba(0,0,0,.30), 0 0 0 1px rgba(255,255,255,.02);
+  --shadow:       0 6px 24px rgba(0,0,0,.34), 0 1px 4px rgba(0,0,0,.22);
+  --shadow-lg:    0 18px 48px rgba(0,0,0,.40), 0 4px 12px rgba(0,0,0,.24);
+  --shadow-green: 0 4px 18px rgba(134,210,90,.18);
+  --surface-overlay: rgba(12,19,15,.88);
+  --landing-bg: #08110c;
+  --landing-panel: #101a12;
+  --landing-panel-2: #112015;
+  --landing-text: #f0f7ec;
+  --landing-muted: #8caf82;
+  --landing-soft: #53724e;
+  --landing-accent: #86d25a;
+  --landing-accent-2: #4ade80;
+  --landing-border: rgba(255,255,255,.07);
+  --auth-bg: #08110c;
+  --auth-panel: #0f1d11;
+  --auth-panel-2: #132114;
+  --auth-surface: rgba(255,255,255,.04);
+  --auth-border: rgba(255,255,255,.10);
+  --auth-border-soft: rgba(255,255,255,.07);
+  --auth-text: #f0f7ec;
+  --auth-muted: #7ba172;
+  --auth-soft: #55724f;
+  --auth-accent: #86d25a;
+  --auth-accent-2: #4ade80;
+  --auth-autofill: #132014;
 }
 
 /* ── Base ───────────────────────────────────────────────────── */
@@ -72,6 +155,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+  transition: background-color .3s var(--ease), color .3s var(--ease);
+}
+
+body * {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: .3s;
+  transition-timing-function: var(--ease);
 }
 
 /* ── Animations ─────────────────────────────────────────────── */
@@ -133,7 +223,7 @@ body {
 .skeleton {
   background: linear-gradient(90deg,
     var(--surface-2) 25%,
-    #e4f0e4 50%,
+    var(--surface-3) 50%,
     var(--surface-2) 75%
   );
   background-size: 600px 100%;
@@ -196,7 +286,7 @@ body {
     border: 1.5px solid rgba(184,50,40,.18);
   }
   .btn-danger:hover:not(:disabled) {
-    background: #fce8e7;
+    background: rgba(184,50,40,.14);
     border-color: rgba(184,50,40,.35);
     transform: translateY(-1px);
   }
@@ -229,7 +319,7 @@ body {
   .card-hover { cursor: pointer; }
   .card-hover:hover {
     box-shadow: var(--shadow);
-    border-color: #bcd9bc;
+    border-color: var(--green-mid);
     transform: translateY(-2px);
   }
   .card-hover:active { transform: translateY(0); }

@@ -14,17 +14,17 @@ const STATUS_COPY: Record<string, { title: string; description: string; tone: st
   pendente: {
     title: "Aguardando aprovacao",
     description: "Sua solicitacao esta em analise pela administracao.",
-    tone: "border-yellow-200 bg-yellow-50 text-yellow-800",
+    tone: "border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-900/60 dark:bg-yellow-950/40 dark:text-yellow-200",
   },
   aprovada: {
     title: "Aguardando empresa",
     description: "A solicitacao foi aprovada e aguarda uma empresa aceitar a coleta.",
-    tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    tone: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
   },
   rejeitada: {
     title: "Solicitacao rejeitada",
     description: "Entre em contato com o suporte caso precise de mais informacoes.",
-    tone: "border-red-200 bg-red-50 text-red-800",
+    tone: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200",
   },
 };
 
@@ -59,7 +59,7 @@ export default async function SolicitacaoDetailPage({
   const statusCopy = STATUS_COPY[s.status] ?? {
     title: s.status,
     description: "Acompanhe os dados atualizados desta solicitacao.",
-    tone: "border-slate-200 bg-slate-50 text-slate-700",
+    tone: "border-slate-200 bg-slate-50 text-slate-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
   };
 
   return (
@@ -67,8 +67,7 @@ export default async function SolicitacaoDetailPage({
       className="page-enter"
       style={{
         minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, rgba(248,250,252,1) 0%, rgba(241,245,249,1) 100%)",
+        background: "linear-gradient(180deg, var(--surface-3) 0%, var(--bg) 100%)",
         padding: "1.5rem 0 3rem",
       }}
     >
@@ -110,19 +109,18 @@ export default async function SolicitacaoDetailPage({
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <article
             style={{
-              background: "#fff",
+              background: "var(--surface)",
               borderRadius: 32,
-              border: "1px solid rgba(148,163,184,.18)",
-              boxShadow: "0 24px 60px rgba(15,23,42,.08)",
+              border: "1px solid var(--border)",
+              boxShadow: "var(--shadow-lg)",
               overflow: "hidden",
             }}
           >
             <div
               style={{
                 padding: "2rem 2rem 1.4rem",
-                borderBottom: "1px solid rgba(226,232,240,.9)",
-                background:
-                  "linear-gradient(180deg, rgba(248,250,252,.95) 0%, rgba(255,255,255,1) 100%)",
+                borderBottom: "1px solid var(--border)",
+                background: "linear-gradient(180deg, var(--surface-3) 0%, var(--surface) 100%)",
               }}
             >
               <div
@@ -183,8 +181,7 @@ export default async function SolicitacaoDetailPage({
                 style={{
                   height: 1,
                   marginTop: "1.75rem",
-                  background:
-                    "linear-gradient(90deg, rgba(226,232,240,0), rgba(226,232,240,1), rgba(226,232,240,0))",
+                  background: "linear-gradient(90deg, transparent, var(--border), transparent)",
                 }}
               />
             </div>
@@ -255,9 +252,9 @@ export default async function SolicitacaoDetailPage({
               <section
                 className="card"
                 style={{
-                  background: "rgba(255,255,255,.88)",
-                  border: "1px solid rgba(148,163,184,.18)",
-                  boxShadow: "0 16px 40px rgba(15,23,42,.06)",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  boxShadow: "var(--shadow)",
                 }}
               >
                 <SectionHeading
@@ -273,16 +270,16 @@ export default async function SolicitacaoDetailPage({
                 style={{
                   padding: 0,
                   overflow: "hidden",
-                  background: "rgba(255,255,255,.88)",
-                  border: "1px solid rgba(148,163,184,.18)",
-                  boxShadow: "0 16px 40px rgba(15,23,42,.06)",
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  boxShadow: "var(--shadow)",
                 }}
               >
                 <div
                   style={{
                     padding: "1rem 1.25rem",
-                    borderBottom: "1px solid rgba(226,232,240,.9)",
-                    background: "linear-gradient(180deg, rgba(248,250,252,.9) 0%, rgba(255,255,255,1) 100%)",
+                    borderBottom: "1px solid var(--border)",
+                    background: "linear-gradient(180deg, var(--surface-3) 0%, var(--surface) 100%)",
                   }}
                 >
                   <SectionHeading
@@ -378,8 +375,8 @@ function DocumentField({
         gridColumn: full ? "1 / -1" : undefined,
         padding: "1rem 1.05rem",
         borderRadius: 20,
-        border: "1px solid rgba(226,232,240,.9)",
-        background: muted ? "rgba(248,250,252,.8)" : "#fff",
+        border: "1px solid var(--border)",
+        background: muted ? "var(--surface-3)" : "var(--surface)",
       }}
     >
       <p

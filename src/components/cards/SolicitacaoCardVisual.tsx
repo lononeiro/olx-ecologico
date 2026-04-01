@@ -99,7 +99,7 @@ export function SolicitacaoCardVisual({
                       style={{
                         width: i === imgIndex ? 16 : 6,
                         height: 6, borderRadius: 99,
-                        background: i === imgIndex ? "#fff" : "rgba(255,255,255,.5)",
+                        background: i === imgIndex ? "var(--surface)" : "rgba(255,255,255,.5)",
                         border: "none", cursor: "pointer", padding: 0,
                         transition: "all .2s ease",
                       }}
@@ -112,7 +112,7 @@ export function SolicitacaoCardVisual({
             {imagens.length > 1 && (
               <div style={{
                 position: "absolute", top: 10, right: 10,
-                background: "rgba(0,0,0,.5)", backdropFilter: "blur(4px)",
+                background: "rgba(0,0,0,.58)", backdropFilter: "blur(4px)",
                 borderRadius: 99, padding: ".2rem .55rem",
                 fontSize: ".7rem", fontWeight: 700, color: "#fff",
                 letterSpacing: ".5px",
@@ -223,8 +223,8 @@ function arrowStyle(side: "left" | "right"): React.CSSProperties {
     position: "absolute", top: "50%", transform: "translateY(-50%)",
     [side]: 10,
     width: 32, height: 32, borderRadius: "50%",
-    background: "rgba(0,0,0,.45)", backdropFilter: "blur(4px)",
-    border: "1.5px solid rgba(255,255,255,.2)",
+    background: "rgba(0,0,0,.58)", backdropFilter: "blur(4px)",
+    border: "1.5px solid rgba(255,255,255,.16)",
     display: "flex", alignItems: "center", justifyContent: "center",
     cursor: "pointer", transition: "background .15s",
     zIndex: 2,

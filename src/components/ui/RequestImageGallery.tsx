@@ -155,22 +155,22 @@ export function RequestImageGallery({ images, title }: Props) {
 
   if (!hasImages) {
     return (
-      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:border-zinc-800 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
         <div className="flex min-h-[340px] flex-col items-center justify-center px-8 py-12 text-center">
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-500">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <rect x="3" y="3" width="18" height="18" rx="2" />
               <circle cx="8.5" cy="8.5" r="1.5" />
               <path d="m21 15-5-5L5 21" />
             </svg>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-zinc-500">
             Anexo visual
           </p>
-          <h3 className="mt-3 text-2xl font-semibold text-slate-800">
+          <h3 className="mt-3 text-2xl font-semibold text-slate-800 dark:text-zinc-100">
             Nenhuma imagem anexada
           </h3>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-500">
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-500 dark:text-zinc-400">
             Esta solicitacao nao possui fotos do material. Os dados abaixo continuam disponiveis para consulta.
           </p>
         </div>
@@ -189,7 +189,7 @@ export function RequestImageGallery({ images, title }: Props) {
       <button
         type="button"
         onClick={closeLightbox}
-        className="absolute right-3 top-3 z-[110] flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/80 bg-white/95 text-slate-950 shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-white"
+        className="absolute right-3 top-3 z-[110] flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/75 text-white shadow-lg backdrop-blur-md transition hover:scale-105 hover:bg-black/90"
         aria-label="Fechar visualizacao"
       >
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
@@ -210,14 +210,14 @@ export function RequestImageGallery({ images, title }: Props) {
             <p className="mt-1 text-sm text-white/80">{title}</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-slate-950 shadow-sm">
+            <div className="rounded-full bg-black/75 px-3 py-1 text-xs font-semibold text-white shadow-sm">
               {currentIndex + 1} / {images.length}
             </div>
-            <div className="flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/95 p-1 text-slate-950 shadow-lg backdrop-blur-sm">
+            <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/75 p-1 text-white shadow-lg backdrop-blur-sm">
               <button
                 type="button"
                 onClick={zoomOut}
-                className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Diminuir zoom"
                 disabled={zoomLevel <= MIN_ZOOM}
               >
@@ -228,7 +228,7 @@ export function RequestImageGallery({ images, title }: Props) {
               <button
                 type="button"
                 onClick={resetZoom}
-                className="rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-[0.12em] text-slate-950 transition hover:bg-slate-100"
+                className="rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-[0.12em] text-white transition hover:bg-white/10"
                 aria-label="Redefinir zoom"
               >
                 {Math.round(zoomLevel * 100)}%
@@ -236,7 +236,7 @@ export function RequestImageGallery({ images, title }: Props) {
               <button
                 type="button"
                 onClick={zoomIn}
-                className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Aumentar zoom"
                 disabled={zoomLevel >= MAX_ZOOM}
               >
@@ -285,7 +285,7 @@ export function RequestImageGallery({ images, title }: Props) {
                 type="button"
                 onClick={showPrevious}
                 aria-label="Imagem anterior"
-                className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/92 text-slate-700 shadow-lg transition hover:scale-105 hover:bg-white"
+                className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white shadow-lg transition hover:scale-105 hover:bg-black/85"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                   <path d="m15 18-6-6 6-6" />
@@ -295,7 +295,7 @@ export function RequestImageGallery({ images, title }: Props) {
                 type="button"
                 onClick={showNext}
                 aria-label="Proxima imagem"
-                className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/92 text-slate-700 shadow-lg transition hover:scale-105 hover:bg-white"
+                className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white shadow-lg transition hover:scale-105 hover:bg-black/85"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                   <path d="m9 18 6-6-6-6" />
@@ -343,17 +343,17 @@ export function RequestImageGallery({ images, title }: Props) {
   return (
     <>
       <div className="space-y-4">
-        <div className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100 shadow-[0_18px_40px_rgba(15,23,42,0.08)]">
+        <div className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100 shadow-[0_18px_40px_rgba(15,23,42,0.08)] dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-[0_18px_40px_rgba(0,0,0,0.32)]">
           <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between p-5">
-            <div className="rounded-full bg-slate-950/70 px-3 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur-sm">
+            <div className="rounded-full bg-slate-950/70 px-3 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur-sm dark:bg-black/75">
               Clique para ampliar
             </div>
-            <div className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+            <div className="rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white shadow-sm">
               {currentIndex + 1} / {images.length}
             </div>
           </div>
 
-          <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-200 md:aspect-[16/8]">
+          <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-200 dark:bg-zinc-950 md:aspect-[16/8]">
             <button
               type="button"
               onClick={openLightbox}
@@ -372,21 +372,21 @@ export function RequestImageGallery({ images, title }: Props) {
             {images.length > 1 && (
               <>
                 <button
-                  type="button"
-                  onClick={showPrevious}
-                  aria-label="Imagem anterior"
-                  className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/92 text-slate-700 shadow-lg transition hover:scale-105 hover:bg-white"
-                >
+                type="button"
+                onClick={showPrevious}
+                aria-label="Imagem anterior"
+                className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white shadow-lg transition hover:scale-105 hover:bg-black/85"
+              >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                     <path d="m15 18-6-6 6-6" />
                   </svg>
                 </button>
                 <button
-                  type="button"
-                  onClick={showNext}
-                  aria-label="Proxima imagem"
-                  className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/92 text-slate-700 shadow-lg transition hover:scale-105 hover:bg-white"
-                >
+                type="button"
+                onClick={showNext}
+                aria-label="Proxima imagem"
+                className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white shadow-lg transition hover:scale-105 hover:bg-black/85"
+              >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                     <path d="m9 18 6-6-6-6" />
                   </svg>
@@ -407,8 +407,8 @@ export function RequestImageGallery({ images, title }: Props) {
                   onClick={() => goTo(index)}
                   className={`group relative h-24 min-w-[96px] overflow-hidden rounded-2xl border transition ${
                     active
-                      ? "border-slate-900 shadow-md"
-                      : "border-slate-200 hover:border-slate-300"
+                      ? "border-slate-900 shadow-md dark:border-zinc-200"
+                      : "border-slate-200 hover:border-slate-300 dark:border-zinc-800 dark:hover:border-zinc-700"
                   }`}
                   aria-label={`Ver imagem ${index + 1}`}
                 >
@@ -419,7 +419,7 @@ export function RequestImageGallery({ images, title }: Props) {
                   />
                   <div
                     className={`absolute inset-0 transition ${
-                      active ? "bg-transparent" : "bg-slate-900/10 group-hover:bg-transparent"
+                      active ? "bg-transparent" : "bg-slate-900/10 group-hover:bg-transparent dark:bg-black/30"
                     }`}
                   />
                 </button>

@@ -29,7 +29,7 @@ interface CardVisualState {
 }
 
 const FALLBACK_IMAGE_BG =
-  "linear-gradient(135deg, rgba(212,240,196,.75), rgba(227,242,251,.75))";
+  "linear-gradient(135deg, var(--green-xlight), var(--blue-light))";
 
 function getCardVisualState(status: string, coletaStatus?: string | null): CardVisualState {
   if (coletaStatus === "concluida") {
@@ -135,27 +135,27 @@ export function SolicitacaoCard({ solicitacao: s, href, actions }: Props) {
 
   const cardContent = (
     <div
-      className="group relative h-full overflow-hidden rounded-[30px] border bg-white transition-all duration-200"
+      className="group relative h-full overflow-hidden rounded-[30px] border transition-all duration-200"
       style={{
-        borderColor: "rgba(214,234,214,.95)",
-        boxShadow: "0 8px 26px rgba(15,50,20,.08)",
+        background: "var(--surface)",
+        borderColor: "var(--border)",
+        boxShadow: "var(--shadow)",
         transform: "translateY(0) scale(1)",
       }}
       onMouseEnter={(event) => {
         event.currentTarget.style.transform = "translateY(-4px) scale(1.01)";
-        event.currentTarget.style.boxShadow = "0 18px 40px rgba(15,50,20,.12)";
+        event.currentTarget.style.boxShadow = "var(--shadow-lg)";
       }}
       onMouseLeave={(event) => {
         event.currentTarget.style.transform = "translateY(0) scale(1)";
-        event.currentTarget.style.boxShadow = "0 8px 26px rgba(15,50,20,.08)";
+        event.currentTarget.style.boxShadow = "var(--shadow)";
       }}
     >
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "linear-gradient(135deg, rgba(248,252,248,.6) 0%, rgba(255,255,255,0) 55%)",
+          background: "linear-gradient(135deg, rgba(134,210,90,.08) 0%, rgba(255,255,255,0) 55%)",
           pointerEvents: "none",
         }}
       />
@@ -188,13 +188,13 @@ export function SolicitacaoCard({ solicitacao: s, href, actions }: Props) {
                   width: 72,
                   height: 72,
                   borderRadius: 24,
-                  background: "rgba(255,255,255,.85)",
-                  border: "1px solid rgba(214,234,214,.95)",
+                  background: "var(--surface-overlay)",
+                  border: "1px solid var(--border)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   color: "var(--green)",
-                  boxShadow: "0 10px 24px rgba(15,50,20,.08)",
+                  boxShadow: "var(--shadow)",
                 }}
               >
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -220,23 +220,23 @@ export function SolicitacaoCard({ solicitacao: s, href, actions }: Props) {
               style={{
                 padding: ".38rem .72rem",
                 borderRadius: 999,
-                background: "rgba(255,255,255,.92)",
+                background: "var(--surface-overlay)",
                 color: "var(--text)",
                 fontSize: ".7rem",
                 fontWeight: 700,
                 letterSpacing: ".08em",
                 textTransform: "uppercase",
-                boxShadow: "0 8px 20px rgba(15,50,20,.10)",
+                boxShadow: "var(--shadow-sm)",
               }}
             >
               {s.material.nome}
             </span>
             <span
               style={{
-                padding: ".38rem .72rem",
-                borderRadius: 999,
-                background: "rgba(15,31,18,.72)",
-                color: "#fff",
+              padding: ".38rem .72rem",
+              borderRadius: 999,
+              background: "rgba(15,31,18,.72)",
+              color: "#fff",
                 fontSize: ".7rem",
                 fontWeight: 700,
               }}
@@ -392,7 +392,7 @@ export function SolicitacaoCard({ solicitacao: s, href, actions }: Props) {
             style={{
               marginTop: ".15rem",
               paddingTop: ".95rem",
-              borderTop: "1px solid rgba(214,234,214,.95)",
+              borderTop: "1px solid var(--border)",
             }}
           >
             <div
@@ -457,7 +457,7 @@ export function SolicitacaoCard({ solicitacao: s, href, actions }: Props) {
               style={{
                 marginTop: ".15rem",
                 paddingTop: "1rem",
-                borderTop: "1px solid rgba(214,234,214,.95)",
+                borderTop: "1px solid var(--border)",
                 display: "flex",
                 gap: ".6rem",
                 flexWrap: "wrap",
@@ -498,8 +498,8 @@ function InfoTile({
         gap: ".75rem",
         padding: ".9rem .95rem",
         borderRadius: 18,
-        background: "linear-gradient(180deg, rgba(248,252,248,1) 0%, rgba(255,255,255,1) 100%)",
-        border: "1px solid rgba(214,234,214,.9)",
+        background: "linear-gradient(180deg, var(--surface-3) 0%, var(--surface) 100%)",
+        border: "1px solid var(--border)",
       }}
     >
       <div

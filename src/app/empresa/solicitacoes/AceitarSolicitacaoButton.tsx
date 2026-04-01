@@ -101,10 +101,10 @@ export function AceitarSolicitacaoButton({
               z-index: 201;
               width: 100%;
               max-height: 92vh;
-              background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%);
+              background: linear-gradient(180deg, var(--surface) 0%, var(--surface-3) 100%);
               border-radius: 26px 26px 0 0;
-              border: 1px solid rgba(214,234,214,.95);
-              box-shadow: 0 24px 70px rgba(15, 23, 42, .20);
+              border: 1px solid var(--border);
+              box-shadow: var(--shadow-lg);
               display: flex;
               flex-direction: column;
               overflow: hidden;
@@ -133,10 +133,9 @@ export function AceitarSolicitacaoButton({
                   justifyContent: "space-between",
                   gap: "1rem",
                   padding: "1.35rem 1.4rem 1.2rem",
-                  borderBottom: "1px solid rgba(226,232,240,.9)",
+                  borderBottom: "1px solid var(--border)",
                   flexShrink: 0,
-                  background:
-                    "linear-gradient(180deg, rgba(248,250,252,.95) 0%, rgba(255,255,255,1) 100%)",
+                  background: "linear-gradient(180deg, var(--surface-3) 0%, var(--surface) 100%)",
                 }}
               >
                 <div>
@@ -172,10 +171,10 @@ export function AceitarSolicitacaoButton({
                     width: 44,
                     height: 44,
                     borderRadius: 16,
-                    border: "1px solid rgba(214,234,214,.95)",
-                    background: "rgba(255,255,255,.92)",
+                    border: "1px solid var(--border)",
+                    background: "var(--surface-overlay)",
                     color: "var(--text-muted)",
-                    boxShadow: "0 10px 24px rgba(15,23,42,.06)",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                   aria-label="Fechar"
                 >
@@ -192,9 +191,9 @@ export function AceitarSolicitacaoButton({
                     marginBottom: "1.2rem",
                     borderRadius: 24,
                     overflow: "hidden",
-                    border: "1px solid rgba(214,234,214,.95)",
-                    background: "#fff",
-                    boxShadow: "0 12px 28px rgba(15,23,42,.05)",
+                    border: "1px solid var(--border)",
+                    background: "var(--surface)",
+                    boxShadow: "var(--shadow)",
                   }}
                 >
                   <div style={{ padding: "1rem 1rem .8rem" }}>
@@ -263,9 +262,9 @@ export function AceitarSolicitacaoButton({
                             display: "block",
                             borderRadius: 18,
                             overflow: "hidden",
-                            border: "1px solid rgba(214,234,214,.95)",
-                            background: "#fff",
-                            boxShadow: "0 10px 20px rgba(15,23,42,.05)",
+                            border: "1px solid var(--border)",
+                            background: "var(--surface)",
+                            boxShadow: "var(--shadow-xs)",
                           }}
                         >
                           <img
@@ -288,7 +287,7 @@ export function AceitarSolicitacaoButton({
                 <div
                   style={{
                     padding: ".9rem 1rem",
-                    background: "linear-gradient(180deg, rgba(235,245,255,1) 0%, rgba(223,239,252,1) 100%)",
+                    background: "var(--blue-light)",
                     border: "1px solid rgba(29,111,168,.18)",
                     borderRadius: 18,
                     fontSize: ".84rem",
@@ -303,12 +302,12 @@ export function AceitarSolicitacaoButton({
               <div
                 style={{
                   padding: "1rem 1.4rem 1.25rem",
-                  borderTop: "1px solid rgba(226,232,240,.9)",
+                  borderTop: "1px solid var(--border)",
                   display: "flex",
                   flexDirection: "column",
                   gap: ".6rem",
                   flexShrink: 0,
-                  background: "rgba(255,255,255,.92)",
+                  background: "var(--surface-overlay)",
                   backdropFilter: "blur(10px)",
                 }}
               >
@@ -382,9 +381,9 @@ function InfoField({
         gridColumn: full ? "1 / -1" : undefined,
         padding: "1rem 1.05rem",
         borderRadius: 20,
-        border: "1px solid rgba(214,234,214,.9)",
-        background: muted ? "rgba(248,250,252,.85)" : "#fff",
-        boxShadow: "0 10px 22px rgba(15,23,42,.04)",
+        border: "1px solid var(--border)",
+        background: muted ? "var(--surface-3)" : "var(--surface)",
+        boxShadow: "var(--shadow-xs)",
       }}
     >
       <p

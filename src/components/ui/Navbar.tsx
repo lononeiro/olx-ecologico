@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -47,12 +48,12 @@ export function Navbar() {
   return (
     <>
       <header style={{
-        background: scrolled ? "rgba(255,255,255,.95)" : "var(--surface)",
+        background: scrolled ? "var(--surface-overlay)" : "var(--surface)",
         borderBottom: "1.5px solid var(--border)",
         position: "sticky", top: 0, zIndex: 100,
         backdropFilter: scrolled ? "blur(12px)" : "none",
         transition: "background .25s ease, box-shadow .25s ease",
-        boxShadow: scrolled ? "0 1px 12px rgba(15,50,20,.08)" : "none",
+        boxShadow: scrolled ? "var(--shadow-sm)" : "none",
       }}>
         <div style={{
           maxWidth: 1200, margin: "0 auto",
@@ -119,6 +120,7 @@ export function Navbar() {
           {/* Desktop User area */}
           {session ? (
             <div className="hide-mobile" style={{ display: "flex", alignItems: "center", gap: ".65rem", flexShrink: 0 }}>
+              <ThemeToggle compact />
               <div style={{
                 display: "flex", alignItems: "center", gap: ".5rem",
                 padding: ".3rem .7rem .3rem .4rem",
@@ -151,9 +153,12 @@ export function Navbar() {
               </button>
             </div>
           ) : (
-            <Link href="/login" className="btn btn-primary hide-mobile" style={{ fontSize: ".85rem" }}>
-              Entrar
-            </Link>
+            <div className="hide-mobile" style={{ display: "flex", alignItems: "center", gap: ".65rem" }}>
+              <ThemeToggle compact />
+              <Link href="/login" className="btn btn-primary" style={{ fontSize: ".85rem" }}>
+                Entrar
+              </Link>
+            </div>
           )}
 
           {/* Hamburger (mobile) */}
@@ -179,6 +184,9 @@ export function Navbar() {
             padding: "1rem 1.25rem 1.5rem",
             display: "flex", flexDirection: "column", gap: ".3rem",
           }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: ".25rem" }}>
+              <ThemeToggle compact />
+            </div>
             {session && (
               <div style={{
                 display: "flex", alignItems: "center", gap: ".6rem",

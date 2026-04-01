@@ -14,27 +14,27 @@ const STATUS_COPY: Record<string, { title: string; description: string; tone: st
   aceita: {
     title: "Coleta confirmada",
     description: "A empresa assumiu a solicitacao e pode alinhar os proximos passos com o solicitante.",
-    tone: "border-blue-200 bg-blue-50 text-blue-800",
+    tone: "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200",
   },
   a_caminho: {
     title: "Equipe a caminho",
     description: "A coleta esta em deslocamento e o solicitante pode acompanhar o atendimento em andamento.",
-    tone: "border-indigo-200 bg-indigo-50 text-indigo-800",
+    tone: "border-indigo-200 bg-indigo-50 text-indigo-800 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-200",
   },
   em_coleta: {
     title: "Coleta em execucao",
     description: "O material esta sendo atendido no local, com o fluxo operacional ja em andamento.",
-    tone: "border-violet-200 bg-violet-50 text-violet-800",
+    tone: "border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/40 dark:text-violet-200",
   },
   concluida: {
     title: "Coleta concluida",
     description: "Atendimento finalizado com registro completo da solicitacao e da comunicacao.",
-    tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    tone: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
   },
   cancelada: {
     title: "Coleta cancelada",
     description: "O fluxo foi encerrado antes da conclusao. Consulte o historico da conversa se precisar revisar o contexto.",
-    tone: "border-red-200 bg-red-50 text-red-800",
+    tone: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200",
   },
 };
 
@@ -74,7 +74,7 @@ export default async function EmpresaColetaDetailPage({
   const statusCopy = STATUS_COPY[coleta.status] ?? {
     title: coleta.status,
     description: "Acompanhe os dados operacionais desta coleta em uma visualizacao mais organizada.",
-    tone: "border-slate-200 bg-slate-50 text-slate-700",
+    tone: "border-slate-200 bg-slate-50 text-slate-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
   };
 
   return (
@@ -82,8 +82,7 @@ export default async function EmpresaColetaDetailPage({
       className="page-enter"
       style={{
         minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, rgba(248,250,252,1) 0%, rgba(241,245,249,1) 100%)",
+        background: "linear-gradient(180deg, var(--surface-3) 0%, var(--bg) 100%)",
         padding: "1.5rem 0 3rem",
       }}
     >
@@ -125,19 +124,18 @@ export default async function EmpresaColetaDetailPage({
         <div style={{ maxWidth: 920, margin: "0 auto" }}>
           <article
             style={{
-              background: "#fff",
+              background: "var(--surface)",
               borderRadius: 32,
-              border: "1px solid rgba(148,163,184,.18)",
-              boxShadow: "0 24px 60px rgba(15,23,42,.08)",
+              border: "1px solid var(--border)",
+              boxShadow: "var(--shadow-lg)",
               overflow: "hidden",
             }}
           >
             <div
               style={{
                 padding: "2rem 2rem 1.4rem",
-                borderBottom: "1px solid rgba(226,232,240,.9)",
-                background:
-                  "linear-gradient(180deg, rgba(248,250,252,.95) 0%, rgba(255,255,255,1) 100%)",
+                borderBottom: "1px solid var(--border)",
+                background: "linear-gradient(180deg, var(--surface-3) 0%, var(--surface) 100%)",
               }}
             >
               <div
@@ -198,8 +196,7 @@ export default async function EmpresaColetaDetailPage({
                 style={{
                   height: 1,
                   marginTop: "1.75rem",
-                  background:
-                    "linear-gradient(90deg, rgba(226,232,240,0), rgba(226,232,240,1), rgba(226,232,240,0))",
+                  background: "linear-gradient(90deg, transparent, var(--border), transparent)",
                 }}
               />
             </div>
@@ -262,9 +259,9 @@ export default async function EmpresaColetaDetailPage({
             <section
               className="card"
               style={{
-                background: "rgba(255,255,255,.88)",
-                border: "1px solid rgba(148,163,184,.18)",
-                boxShadow: "0 16px 40px rgba(15,23,42,.06)",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                boxShadow: "var(--shadow)",
               }}
             >
               <SectionHeading
@@ -280,16 +277,16 @@ export default async function EmpresaColetaDetailPage({
               style={{
                 padding: 0,
                 overflow: "hidden",
-                background: "rgba(255,255,255,.88)",
-                border: "1px solid rgba(148,163,184,.18)",
-                boxShadow: "0 16px 40px rgba(15,23,42,.06)",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                boxShadow: "var(--shadow)",
               }}
             >
               <div
                 style={{
                   padding: "1rem 1.25rem",
-                  borderBottom: "1px solid rgba(226,232,240,.9)",
-                  background: "linear-gradient(180deg, rgba(248,250,252,.9) 0%, rgba(255,255,255,1) 100%)",
+                  borderBottom: "1px solid var(--border)",
+                  background: "linear-gradient(180deg, var(--surface-3) 0%, var(--surface) 100%)",
                 }}
               >
                 <SectionHeading
@@ -382,8 +379,8 @@ function DocumentField({
         gridColumn: full ? "1 / -1" : undefined,
         padding: "1rem 1.05rem",
         borderRadius: 20,
-        border: "1px solid rgba(226,232,240,.9)",
-        background: muted ? "rgba(248,250,252,.8)" : "#fff",
+        border: "1px solid var(--border)",
+        background: muted ? "var(--surface-3)" : "var(--surface)",
       }}
     >
       <p

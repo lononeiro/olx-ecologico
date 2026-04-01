@@ -1,7 +1,7 @@
-import { buscarSolicitacaoPorId } from "@/services/solicitacao.service";
-import { notFound } from "next/navigation";
-import { AdminActionButtons } from "./AdminActionButtons";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { buscarSolicitacaoPorId } from "@/services/solicitacao.service";
+import { AdminActionButtons } from "./AdminActionButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -17,79 +17,83 @@ export default async function AdminSolicitacaoDetailPage({
   return (
     <div className="max-w-3xl">
       <div className="mb-6 flex items-center gap-3">
-        <Link href="/admin/solicitacoes" className="text-gray-400 hover:text-gray-600 text-sm">
-          ← Voltar
+        <Link
+          href="/admin/solicitacoes"
+          className="text-sm text-gray-400 hover:text-gray-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+        >
+          Voltar
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 flex-1">
-          Analisar Solicitação #{s.id}
+        <h1 className="flex-1 text-2xl font-bold text-gray-900 dark:text-zinc-100">
+          Analisar Solicitacao #{s.id}
         </h1>
-        <span className="badge bg-yellow-100 text-yellow-800">Pendente</span>
+        <span className="badge bg-yellow-100 text-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-200">
+          Pendente
+        </span>
       </div>
 
-      {/* Dados do usuário */}
       <div className="card mb-4">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
           Dados do Solicitante
         </h2>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <span className="text-gray-500">Nome</span>
-            <p className="font-medium text-gray-800">{s.user.nome}</p>
+            <span className="text-gray-500 dark:text-zinc-400">Nome</span>
+            <p className="font-medium text-gray-800 dark:text-zinc-100">{s.user.nome}</p>
           </div>
           <div>
-            <span className="text-gray-500">Email</span>
-            <p className="font-medium text-gray-800">{s.user.email}</p>
+            <span className="text-gray-500 dark:text-zinc-400">Email</span>
+            <p className="font-medium text-gray-800 dark:text-zinc-100">{s.user.email}</p>
           </div>
           {(s.user as any).telefone && (
             <div>
-              <span className="text-gray-500">Telefone</span>
-              <p className="font-medium text-gray-800">{(s.user as any).telefone}</p>
+              <span className="text-gray-500 dark:text-zinc-400">Telefone</span>
+              <p className="font-medium text-gray-800 dark:text-zinc-100">
+                {(s.user as any).telefone}
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Dados da solicitação */}
       <div className="card mb-4">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-          Detalhes da Solicitação
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+          Detalhes da Solicitacao
         </h2>
         <div className="space-y-3 text-sm">
           <div>
-            <span className="text-gray-500">Título</span>
-            <p className="font-semibold text-gray-800 text-base">{s.titulo}</p>
+            <span className="text-gray-500 dark:text-zinc-400">Titulo</span>
+            <p className="text-base font-semibold text-gray-800 dark:text-zinc-100">{s.titulo}</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <span className="text-gray-500">Tipo de Material</span>
-              <p className="font-medium text-gray-800">{s.material.nome}</p>
+              <span className="text-gray-500 dark:text-zinc-400">Tipo de Material</span>
+              <p className="font-medium text-gray-800 dark:text-zinc-100">{s.material.nome}</p>
             </div>
             <div>
-              <span className="text-gray-500">Quantidade</span>
-              <p className="font-medium text-gray-800">{s.quantidade}</p>
+              <span className="text-gray-500 dark:text-zinc-400">Quantidade</span>
+              <p className="font-medium text-gray-800 dark:text-zinc-100">{s.quantidade}</p>
             </div>
           </div>
           <div>
-            <span className="text-gray-500">Endereço de Coleta</span>
-            <p className="font-medium text-gray-800">{s.endereco}</p>
+            <span className="text-gray-500 dark:text-zinc-400">Endereco de Coleta</span>
+            <p className="font-medium text-gray-800 dark:text-zinc-100">{s.endereco}</p>
           </div>
           <div>
-            <span className="text-gray-500">Descrição</span>
-            <p className="text-gray-700 whitespace-pre-line mt-1">{s.descricao}</p>
+            <span className="text-gray-500 dark:text-zinc-400">Descricao</span>
+            <p className="mt-1 whitespace-pre-line text-gray-700 dark:text-zinc-300">{s.descricao}</p>
           </div>
           <div>
-            <span className="text-gray-500">Data da Solicitação</span>
-            <p className="font-medium text-gray-800">
+            <span className="text-gray-500 dark:text-zinc-400">Data da Solicitacao</span>
+            <p className="font-medium text-gray-800 dark:text-zinc-100">
               {new Date(s.createdAt).toLocaleString("pt-BR")}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Imagens */}
       {s.imagens.length > 0 && (
         <div className="card mb-6">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-400">
             Imagens Enviadas
           </h2>
           <div className="flex flex-wrap gap-3">
@@ -98,7 +102,7 @@ export default async function AdminSolicitacaoDetailPage({
                 <img
                   src={img.url}
                   alt="imagem"
-                  className="w-32 h-32 object-cover rounded-lg border border-gray-200 hover:opacity-80"
+                  className="h-32 w-32 rounded-lg border border-gray-200 object-cover hover:opacity-80 dark:border-zinc-700"
                 />
               </a>
             ))}
@@ -106,14 +110,13 @@ export default async function AdminSolicitacaoDetailPage({
         </div>
       )}
 
-      {/* Ações */}
-      <div className="card bg-gray-50">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">
-          Decisão do Administrador
+      <div className="card bg-gray-50 dark:bg-zinc-900">
+        <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-zinc-200">
+          Decisao do Administrador
         </h2>
-        <p className="text-sm text-gray-500 mb-4">
-          Ao aprovar, a solicitação ficará visível para as empresas parceiras. Ao rejeitar,
-          o usuário será notificado.
+        <p className="mb-4 text-sm text-gray-500 dark:text-zinc-400">
+          Ao aprovar, a solicitacao ficara visivel para as empresas parceiras. Ao rejeitar,
+          o usuario sera notificado.
         </p>
         <AdminActionButtons solicitacaoId={s.id} />
       </div>

@@ -2,13 +2,15 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-zinc-950">
       <div className="text-center">
-        <div className="text-6xl mb-4">🔍</div>
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">404</h1>
-        <p className="text-gray-500 mb-6">Página não encontrada.</p>
-        <Link href="/" className="btn-primary">
-          Voltar ao início
+        <div className="mb-4 text-6xl">404</div>
+        <h1 className="mb-2 text-4xl font-bold text-gray-800 dark:text-zinc-100">Pagina nao encontrada</h1>
+        <p className="mb-6 text-gray-500 dark:text-zinc-400">
+          O conteudo que voce tentou abrir nao existe ou mudou de endereco.
+        </p>
+        <Link href="/" className="btn btn-primary">
+          Voltar ao inicio
         </Link>
       </div>
     </div>
