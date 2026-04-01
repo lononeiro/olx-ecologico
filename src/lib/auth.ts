@@ -1,6 +1,6 @@
+import bcrypt from "bcryptjs";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
@@ -29,6 +29,7 @@ export const authOptions: NextAuthOptions = {
           credentials.password,
           user.senhaHash
         );
+
         if (!senhaValida) return null;
 
         return {
@@ -42,19 +43,38 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      // Na criação do token, adiciona role e id do usuário
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        token.name = user.name;
+        token.email = user.email;
       }
+
+      if (token.id) {
+        const refreshedUser = await prisma.user.findUnique({
+          where: { id: Number(token.id) },
+          include: { role: true },
+        });
+
+        if (refreshedUser) {
+          token.name = refreshedUser.nome;
+          token.email = refreshedUser.email;
+          token.role = refreshedUser.role.nome;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
-      // Expõe id e role na sessão do cliente
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        session.user.name =
+          typeof token.name === "string" ? token.name : session.user.name;
+        session.user.email =
+          typeof token.email === "string" ? token.email : session.user.email;
       }
+
       return session;
     },
   },

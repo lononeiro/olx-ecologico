@@ -1,6 +1,11 @@
 import { z } from "zod";
 
 const MAX_SOLICITACAO_IMAGENS = 5;
+const optionalTrimmedString = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}, z.string().nullable().optional());
 
 const normalizarImagensSolicitacao = (value: unknown) => {
   if (value == null) return [];
@@ -62,4 +67,14 @@ export const coletaStatusSchema = z.object({
 export const mensagemCreateSchema = z.object({
   coletaId: z.coerce.number().int().positive(),
   mensagem: z.string().min(1, "Mensagem nao pode ser vazia"),
+});
+
+export const profileUpdateSchema = z.object({
+  nome: z
+    .string()
+    .trim()
+    .min(2, "Nome deve ter ao menos 2 caracteres")
+    .max(120, "Nome muito longo"),
+  telefone: optionalTrimmedString,
+  endereco: optionalTrimmedString,
 });

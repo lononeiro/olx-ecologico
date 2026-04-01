@@ -1,214 +1,258 @@
-# ♻️ ReciclaFácil — Sistema de Coleta de Recicláveis
+# ECOnecta
 
-Sistema web full-stack para gerenciar solicitações de coleta de materiais recicláveis, conectando cidadãos, administradores e empresas de reciclagem.
+Sistema web full-stack para gerenciamento de solicitacoes de coleta de reciclaveis, conectando cidadaos, administradores e empresas.
 
----
+## Visao geral
 
-## 📐 Arquitetura
+O projeto foi construido com Next.js App Router, Prisma, NextAuth e PostgreSQL. A aplicacao possui tres perfis principais:
 
-```
+- `usuario`: cria solicitacoes, acompanha status, conversa com a empresa e gerencia o proprio perfil
+- `admin`: aprova ou rejeita solicitacoes pendentes
+- `empresa`: visualiza solicitacoes aprovadas, aceita coletas, atualiza o andamento e conversa com o solicitante
+
+## Funcionalidades atuais
+
+- autenticacao com NextAuth via credenciais
+- autorizacao por role em rotas e endpoints
+- cadastro de usuario e empresa
+- criacao de solicitacao com upload de ate 5 imagens via Cloudinary
+- visualizacao detalhada de solicitacoes com galeria ampliada
+- fluxo de aprovacao administrativo
+- aceite e acompanhamento operacional da coleta pela empresa
+- chat entre usuario e empresa por coleta
+- pagina `/me` para visualizar e editar o proprio perfil
+- tema claro/escuro com persistencia em `localStorage`
+
+## Stack
+
+- Next.js 14
+- React 18
+- TypeScript
+- Tailwind CSS
+- Prisma
+- PostgreSQL
+- NextAuth.js
+- Zod
+- next-cloudinary
+- Leaflet
+
+## Estrutura principal
+
+```text
 src/
-├── app/                        # Next.js App Router
-│   ├── (auth)/                 # Rotas públicas (login, register)
-│   ├── api/                    # API Routes (REST endpoints)
-│   │   ├── auth/               # NextAuth + registro
-│   │   ├── solicitacoes/       # CRUD de solicitações
-│   │   ├── admin/              # Aprovação/rejeição (admin)
-│   │   ├── empresa/coletas/    # Aceitar/atualizar coletas (empresa)
-│   │   ├── mensagens/          # Chat por coleta
-│   │   └── materiais/          # Listagem de tipos
-│   ├── dashboard/              # Área do usuário comum
-│   ├── admin/                  # Área do administrador
-│   └── empresa/                # Área da empresa
-├── components/
-│   ├── cards/                  # SolicitacaoCard
-│   ├── forms/                  # ChatBox
-│   └── ui/                     # Navbar, StatusBadge
-├── lib/                        # prisma.ts, auth.ts, validations.ts, route-guard.ts
-├── services/                   # Lógica de negócio separada
-│   ├── solicitacao.service.ts
-│   ├── coleta.service.ts
-│   └── mensagem.service.ts
-└── types/                      # TypeScript types e constantes
+|- app/
+|  |- (auth)/                  # login e cadastro
+|  |- admin/                   # area administrativa
+|  |- api/                     # endpoints REST
+|  |- dashboard/               # area do usuario
+|  |- empresa/                 # area da empresa
+|  |- me/                      # meu perfil
+|  |- layout.tsx
+|  |- page.tsx
+|- components/
+|  |- cards/
+|  |- forms/
+|  |- ui/
+|- lib/
+|  |- auth.ts
+|  |- prisma.ts
+|  |- route-guard.ts
+|  |- validations.ts
+|- services/
+|- types/
+prisma/
+|- schema.prisma
+|- seed.ts
 ```
 
-### Papéis (Roles)
+## Modelo de dados
 
-| Role      | Permissões |
-|-----------|-----------|
-| `usuario` | Criar/visualizar solicitações, trocar mensagens |
-| `admin`   | Aprovar/rejeitar solicitações pendentes |
-| `empresa` | Ver aprovadas, aceitar coletas, atualizar status, chat |
+Relacoes principais definidas no `schema.prisma`:
 
-### Fluxo de Status
-
+```text
+Role -> User (1:N)
+User -> Company (1:1)
+User -> SolicitacaoColeta (1:N)
+User -> Mensagem (1:N)
+SolicitacaoColeta -> SolicitacaoImagem (1:N)
+SolicitacaoColeta -> Coleta (1:1)
+Company -> Coleta (1:N)
+Coleta -> Mensagem (1:N)
 ```
-Solicitação:  pendente → [admin] → aprovada / rejeitada
-Coleta:       aceita → a_caminho → em_coleta → concluida
-                                              → cancelada
+
+## Fluxos de status
+
+```text
+Solicitacao: pendente -> aprovada | rejeitada
+Coleta:      aceita -> a_caminho -> em_coleta -> concluida
+                                          -> cancelada
 ```
 
----
+## Rotas de interface
 
-## 🚀 Configuração e Execução
+- `/`: landing page
+- `/login`: autenticacao
+- `/register`: cadastro
+- `/dashboard`: painel do usuario
+- `/dashboard/solicitacoes`: lista de solicitacoes do usuario
+- `/dashboard/solicitacoes/nova`: nova solicitacao
+- `/dashboard/solicitacoes/[id]`: detalhe da solicitacao
+- `/admin`: painel do administrador
+- `/admin/solicitacoes`: fila de aprovacao
+- `/admin/solicitacoes/[id]`: detalhe para analise
+- `/empresa`: painel da empresa
+- `/empresa/solicitacoes`: solicitacoes aprovadas disponiveis
+- `/empresa/coletas`: coletas aceitas
+- `/empresa/coletas/[id]`: detalhe operacional da coleta
+- `/me`: perfil do usuario autenticado
 
-### Pré-requisitos
+## Principais endpoints
+
+### Autenticacao
+
+- `POST /api/auth/register`
+- `POST /api/auth/[...nextauth]`
+
+### Usuario autenticado
+
+- `GET /api/users/me`
+- `PATCH /api/users/me`
+
+### Solicitacoes
+
+- `GET /api/solicitacoes`
+- `POST /api/solicitacoes`
+- `GET /api/solicitacoes/[id]`
+
+### Admin
+
+- `PATCH /api/admin/solicitacoes/[id]`
+
+### Empresa / Coletas
+
+- `GET /api/empresa/coletas`
+- `POST /api/empresa/coletas`
+- `GET /api/empresa/coletas/[id]`
+- `PATCH /api/empresa/coletas/[id]`
+
+### Mensagens
+
+- `GET /api/mensagens/[id]`
+- `POST /api/mensagens/[id]`
+
+### Materiais
+
+- `GET /api/materiais`
+
+## Perfil `/me`
+
+A rota `/me` sempre usa o usuario autenticado da sessao atual.
+
+Dados exibidos:
+
+- `id`
+- `nome`
+- `email`
+- `telefone`
+- `endereco`
+- `status`
+- `createdAt`
+- `role`
+- `company`, quando houver relacao
+
+Campos editaveis:
+
+- `nome`
+- `telefone`
+- `endereco`
+
+Campos sensiveis permanecem somente leitura.
+
+## Tema claro/escuro
+
+O projeto usa `darkMode: "class"` no Tailwind e aplica o tema no elemento `html`.
+
+- chave salva: `theme`
+- valores: `light` e `dark`
+- comportamento: persistencia da escolha e reaplicacao automatica ao reabrir a aplicacao
+
+## Upload de imagens
+
+O cadastro de solicitacao suporta:
+
+- selecao multipla
+- ate 5 imagens por solicitacao
+- preview antes do envio
+- remocao individual
+- upload via Cloudinary
+
+## Requisitos
 
 - Node.js 18+
-- Conta no [Neon](https://neon.tech) (PostgreSQL serverless gratuito) ou qualquer PostgreSQL
+- banco PostgreSQL
 
-### 1. Clone e instale as dependências
+## Configuracao local
+
+### 1. Instalar dependencias
 
 ```bash
-git clone <repo-url>
-cd recycling-system
 npm install
 ```
 
-### 2. Configure as variáveis de ambiente
+### 2. Configurar variaveis de ambiente
 
-```bash
-cp .env.example .env
-```
-
-Edite o arquivo `.env`:
+Crie um arquivo `.env` com os valores necessarios:
 
 ```env
-# String de conexão do Neon (ou outro PostgreSQL)
 DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
-
-# Segredo para JWT do NextAuth — gere com:
-# openssl rand -base64 32
-NEXTAUTH_SECRET="seu-segredo-aqui"
-
-# URL da aplicação
+NEXTAUTH_SECRET="seu-segredo"
 NEXTAUTH_URL="http://localhost:3000"
+
+# Cloudinary
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="seu-cloud-name"
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="seu-upload-preset"
 ```
 
-### 3. Configure o banco de dados
+Observacao: se o projeto usar outras variaveis locais no seu ambiente, mantenha-as tambem.
+
+### 3. Prisma
 
 ```bash
-# Gera o Prisma Client
 npm run db:generate
-
-# Aplica as migrations (cria as tabelas)
 npm run db:migrate
-
-# Popula o banco com dados iniciais
 npm run db:seed
 ```
 
-### 4. Execute o servidor de desenvolvimento
+### 4. Desenvolvimento
 
 ```bash
 npm run dev
 ```
 
-Acesse: **http://localhost:3000**
+Aplicacao disponivel em `http://localhost:3000`.
 
----
-
-## 🔑 Credenciais de Acesso (Seed)
-
-| Tipo    | Email                   | Senha        |
-|---------|-------------------------|--------------|
-| Admin   | admin@recicla.com       | admin123     |
-| Usuário | joao@example.com        | user123      |
-| Empresa | empresa@recicla.com     | empresa123   |
-
----
-
-## 📡 API Endpoints
-
-### Autenticação
-| Método | Rota                          | Descrição            | Acesso   |
-|--------|-------------------------------|----------------------|----------|
-| POST   | `/api/auth/register`          | Cadastro de usuário  | Público  |
-| POST   | `/api/auth/[...nextauth]`     | Login/logout         | Público  |
-
-### Solicitações
-| Método | Rota                          | Descrição                        | Acesso            |
-|--------|-------------------------------|----------------------------------|-------------------|
-| GET    | `/api/solicitacoes`           | Lista (por role)                 | Autenticado       |
-| POST   | `/api/solicitacoes`           | Cria solicitação                 | Usuário           |
-| GET    | `/api/solicitacoes/:id`       | Detalhe                          | Autenticado       |
-
-### Admin
-| Método | Rota                              | Descrição              | Acesso |
-|--------|-----------------------------------|------------------------|--------|
-| PATCH  | `/api/admin/solicitacoes/:id`     | Aprovar/Rejeitar       | Admin  |
-
-### Empresa / Coletas
-| Método | Rota                          | Descrição                | Acesso  |
-|--------|-------------------------------|--------------------------|---------|
-| GET    | `/api/empresa/coletas`        | Lista coletas da empresa | Empresa |
-| POST   | `/api/empresa/coletas`        | Aceitar solicitação      | Empresa |
-| GET    | `/api/empresa/coletas/:id`    | Detalhe da coleta        | Empresa / Usuário |
-| PATCH  | `/api/empresa/coletas/:id`    | Atualizar status         | Empresa |
-
-### Mensagens
-| Método | Rota                      | Descrição           | Acesso            |
-|--------|---------------------------|---------------------|-------------------|
-| GET    | `/api/mensagens/:coletaId`| Lista mensagens     | Autenticado       |
-| POST   | `/api/mensagens/:coletaId`| Envia mensagem      | Usuário / Empresa |
-
-### Materiais
-| Método | Rota             | Descrição             | Acesso  |
-|--------|------------------|-----------------------|---------|
-| GET    | `/api/materiais` | Lista tipos           | Público |
-
----
-
-## 🛡️ Segurança
-
-- **Senhas** hashadas com `bcryptjs` (salt rounds: 12)
-- **Autenticação** via JWT com NextAuth.js
-- **Autorização** por role em cada endpoint via `route-guard.ts`
-- **Middleware** de proteção de rotas (`/dashboard`, `/admin`, `/empresa`)
-- **Validação de inputs** com Zod em todas as ações
-- **Headers de segurança** configurados em `next.config.js` (X-Frame-Options, X-XSS-Protection, etc.)
-- **CSRF**: protegido nativamente pelo Next.js App Router (Server Actions e API Routes com SameSite cookies)
-
----
-
-## 🗃️ Schema do Banco de Dados
-
-```prisma
-Role → Users (1:N)
-Users → Companies (1:1)
-Users → SolicitacaoColeta (1:N)
-SolicitacaoColeta → SolicitacaoImagens (1:N)
-SolicitacaoColeta → Coletas (1:1)
-Companies → Coletas (1:N)
-Coletas → Mensagens (1:N)
-```
-
----
-
-## 🛠️ Scripts Disponíveis
+## Scripts
 
 ```bash
-npm run dev          # Servidor de desenvolvimento
-npm run build        # Build de produção
-npm run start        # Servidor de produção
-npm run db:generate  # Gera Prisma Client
-npm run db:migrate   # Aplica migrations
-npm run db:push      # Sincroniza schema sem migrations
-npm run db:seed      # Popula dados iniciais
-npm run db:studio    # Abre Prisma Studio (UI do banco)
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run db:generate
+npm run db:migrate
+npm run db:push
+npm run db:seed
+npm run db:studio
 ```
 
----
+## Seguranca
 
-## 📦 Tecnologias
+- senhas com hash via `bcryptjs`
+- sessao JWT com NextAuth
+- validacao com Zod
+- autorizacao por role em endpoints protegidos
+- usuario autenticado resolvido no backend pela sessao, sem confiar em ID vindo do front
 
-| Tecnologia | Versão | Uso |
-|------------|--------|-----|
-| Next.js    | 14     | Framework full-stack (App Router) |
-| NextAuth.js | 4     | Autenticação e sessões |
-| Prisma     | 5      | ORM para PostgreSQL |
-| Neon DB    | —      | PostgreSQL serverless |
-| Tailwind CSS | 3    | Estilização |
-| Zod        | 3      | Validação de schemas |
-| bcryptjs   | 2      | Hash de senhas |
-| TypeScript | 5      | Tipagem estática |
+## Seed
+
+O projeto possui `prisma/seed.ts` para popular dados iniciais. Consulte esse arquivo para as credenciais e registros gerados no ambiente local.
