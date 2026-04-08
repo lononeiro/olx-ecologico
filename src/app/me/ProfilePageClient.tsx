@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   buildAddressString,
@@ -49,6 +49,7 @@ export function ProfilePageClient({ initialProfile }: Props) {
   const [addressDraft, setAddressDraft] = useState<AddressFields>(EMPTY_ADDRESS_FIELDS);
   const [cepLoading, setCepLoading] = useState(false);
   const [cepMessage, setCepMessage] = useState("");
+  const lastFetchedCepRef = useRef("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -146,6 +147,7 @@ export function ProfilePageClient({ initialProfile }: Props) {
 
     setCepLoading(true);
     setCepMessage("");
+    lastFetchedCepRef.current = cep;
 
     try {
       const response = await fetch(`/api/cep/${cep}`);
@@ -173,6 +175,15 @@ export function ProfilePageClient({ initialProfile }: Props) {
       setCepLoading(false);
     }
   };
+
+  useEffect(() => {
+    const cep = normalizeCep(addressDraft.cep);
+    if (!showAddressBuilder || cep.length !== 8 || cepLoading || lastFetchedCepRef.current === cep) {
+      return;
+    }
+
+    void buscarCep();
+  }, [addressDraft.cep, showAddressBuilder, cepLoading]);
 
   const handleAddressDraftChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;

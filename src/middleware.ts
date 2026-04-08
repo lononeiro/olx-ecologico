@@ -1,5 +1,5 @@
 import { withAuth } from "next-auth/middleware";
-import { NextRequest, NextResponse } from "next/server";
+import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
 import { applyCorsHeaders } from "@/lib/cors";
 
 const protectedPagesMiddleware = withAuth(
@@ -34,7 +34,7 @@ const protectedPagesMiddleware = withAuth(
   }
 );
 
-export default function middleware(req: NextRequest) {
+export default function middleware(req: NextRequest, event: NextFetchEvent) {
   if (req.nextUrl.pathname.startsWith("/api")) {
     if (req.method === "OPTIONS") {
       const response = new NextResponse(null, { status: 204 });
@@ -47,7 +47,7 @@ export default function middleware(req: NextRequest) {
     return response;
   }
 
-  return protectedPagesMiddleware(req);
+  return protectedPagesMiddleware(req, event);
 }
 
 export const config = {

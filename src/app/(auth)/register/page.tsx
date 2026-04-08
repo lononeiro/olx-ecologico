@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Playfair_Display, DM_Sans } from "next/font/google";
 import { TransitionLink } from "@/components/ui/TransitionLink";
@@ -41,6 +41,7 @@ export default function RegisterPage() {
   const [focused, setFocused] = useState<string | null>(null);
   const [cepLoading, setCepLoading] = useState(false);
   const [cepMensagem, setCepMensagem] = useState("");
+  const lastFetchedCepRef = useRef("");
 
   const passwordIssues = useMemo(() => getStrongPasswordIssues(form.senha), [form.senha]);
   const enderecoPreview = useMemo(() => buildAddressString(endereco), [endereco]);
@@ -101,6 +102,7 @@ export default function RegisterPage() {
 
     setCepLoading(true);
     setCepMensagem("");
+    lastFetchedCepRef.current = cep;
 
     try {
       const response = await fetch(`/api/cep/${cep}`);
@@ -128,6 +130,15 @@ export default function RegisterPage() {
       setCepLoading(false);
     }
   }
+
+  useEffect(() => {
+    const cep = normalizeCep(endereco.cep);
+    if (!incluirEndereco || cep.length !== 8 || cepLoading || lastFetchedCepRef.current === cep) {
+      return;
+    }
+
+    void buscarCep();
+  }, [endereco.cep, incluirEndereco, cepLoading]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

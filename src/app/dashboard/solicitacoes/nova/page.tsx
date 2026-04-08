@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   CldUploadWidget,
@@ -85,6 +85,7 @@ export default function CriarSolicitacaoPage() {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepMensagem, setCepMensagem] = useState('');
   const [savingProfileAddress, setSavingProfileAddress] = useState(false);
+  const lastFetchedCepRef = useRef('');
 
   const remainingSlots = MAX_IMAGES - imagens.length;
   const stepTitles = ['Informacoes', 'Detalhes', 'Endereco'];
@@ -179,6 +180,7 @@ export default function CriarSolicitacaoPage() {
 
     setCepLoading(true);
     setCepMensagem('');
+    lastFetchedCepRef.current = cep;
 
     try {
       const response = await fetch(`/api/cep/${cep}`);
@@ -207,6 +209,15 @@ export default function CriarSolicitacaoPage() {
       setCepLoading(false);
     }
   };
+
+  useEffect(() => {
+    const cep = normalizeCep(enderecoNovo.cep);
+    if (modoEndereco !== 'novo' || cep.length !== 8 || cepLoading || lastFetchedCepRef.current === cep) {
+      return;
+    }
+
+    void buscarCep();
+  }, [enderecoNovo.cep, modoEndereco, cepLoading]);
 
   const salvarEnderecoNoPerfil = async () => {
     const missing = getMissingAddressFields(enderecoNovo);
