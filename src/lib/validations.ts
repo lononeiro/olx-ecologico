@@ -1,3 +1,17 @@
+import {
+  coletaStatusSchema,
+  mensagemCreateSchema,
+  profileUpdateSchema,
+  registerSchema as sharedRegisterSchema,
+  solicitacaoCreateSchema,
+  solicitacaoUpdateSchema,
+} from "../../packages/shared/src/validations";
+import { applyStrongPasswordRules } from "@/lib/password";
+
+const registerSchema = sharedRegisterSchema.superRefine(({ senha }, ctx) => {
+  applyStrongPasswordRules(senha, ctx, ["senha"]);
+});
+
 export {
   coletaStatusSchema,
   mensagemCreateSchema,
@@ -5,4 +19,4 @@ export {
   registerSchema,
   solicitacaoCreateSchema,
   solicitacaoUpdateSchema,
-} from "@shared/validations";
+};

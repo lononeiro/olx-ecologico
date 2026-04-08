@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const prismaMock = {
+const { prismaMock } = vi.hoisted(() => ({
+  prismaMock: {
   solicitacaoColeta: {
     create: vi.fn(),
     findMany: vi.fn(),
     findFirst: vi.fn(),
     update: vi.fn(),
   },
-};
+  },
+}));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: prismaMock,
@@ -17,6 +19,8 @@ import {
   atualizarStatusSolicitacao,
   buscarSolicitacaoPorId,
   criarSolicitacao,
+  getAdminSolicitacaoScope,
+  listarSolicitacoesAdmin,
   listarSolicitacoesAprovadas,
   listarSolicitacoesDoUsuario,
   listarSolicitacoesPendentes,
@@ -151,6 +155,41 @@ describe("solicitacao.service", () => {
         imagens: true,
       },
       orderBy: { createdAt: "desc" },
+    });
+  });
+
+  it("lista a fila operacional da admin", async () => {
+    const now = new Date("2026-04-08T12:00:00.000Z");
+    await listarSolicitacoesAdmin();
+
+    expect(prismaMock.solicitacaoColeta.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: {
+          user: { select: { id: true, nome: true, email: true } },
+          material: true,
+          imagens: true,
+          coleta: {
+            select: {
+              id: true,
+              status: true,
+              dataAceite: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      })
+    );
+
+    expect(getAdminSolicitacaoScope(now)).toEqual({
+      OR: [
+        { status: "rejeitada" },
+        { status: "aprovada", aprovado: true, coleta: null },
+        {
+          status: "pendente",
+          aprovado: false,
+          createdAt: { lte: new Date("2026-04-07T12:00:00.000Z") },
+        },
+      ],
     });
   });
 

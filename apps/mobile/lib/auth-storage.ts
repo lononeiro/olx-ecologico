@@ -59,6 +59,10 @@ export async function saveAuthSession(session: MobileAuthResponse) {
   ]);
 }
 
+export async function saveStoredUser(user: StoredUser) {
+  await setItem(USER_KEY, JSON.stringify(user));
+}
+
 export async function clearAuthSession() {
   await Promise.all([
     deleteItem(ACCESS_TOKEN_KEY),

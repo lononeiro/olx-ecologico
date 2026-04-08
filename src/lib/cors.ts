@@ -23,15 +23,18 @@ function resolveAllowOrigin(request: NextRequest) {
   return getAllowedOrigins().has(origin) ? origin : "null";
 }
 
-export function applyCors(request: NextRequest, response: NextResponse) {
-  response.headers.set("Access-Control-Allow-Origin", resolveAllowOrigin(request));
-  response.headers.set("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS");
-  response.headers.set(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization"
-  );
-  response.headers.set("Vary", "Origin");
+export function applyCorsHeaders(request: NextRequest, headers: Headers) {
+  headers.set("Access-Control-Allow-Origin", resolveAllowOrigin(request));
+  headers.set("Access-Control-Allow-Methods", "GET,POST,PATCH,PUT,DELETE,OPTIONS");
+  headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  headers.set("Access-Control-Max-Age", "86400");
+  headers.set("Vary", "Origin");
 
+  return headers;
+}
+
+export function applyCors(request: NextRequest, response: NextResponse) {
+  applyCorsHeaders(request, response.headers);
   return response;
 }
 

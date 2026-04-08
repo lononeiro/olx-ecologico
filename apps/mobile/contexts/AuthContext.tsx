@@ -15,6 +15,7 @@ import {
   getStoredRefreshToken,
   getStoredUser,
   saveAuthSession,
+  saveStoredUser,
 } from "@/lib/auth-storage";
 
 type SessionUser = MobileAuthResponse["user"];
@@ -23,9 +24,10 @@ type AuthContextValue = {
   isLoading: boolean;
   user: SessionUser | null;
   accessToken: string | null;
-  signIn: (email: string, senha: string) => Promise<void>;
+  signIn: (email: string, senha: string) => Promise<SessionUser>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<string | null>;
+  updateUser: (nextUser: SessionUser) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -45,6 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await clearAuthSession();
     setUser(null);
     setAccessToken(null);
+  }, []);
+
+  const updateUser = useCallback(async (nextUser: SessionUser) => {
+    await saveStoredUser(nextUser);
+    setUser(nextUser);
   }, []);
 
   const refreshSession = useCallback(async () => {
@@ -68,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, senha: string) => {
       const session = await loginMobile(email, senha);
       await applySession(session);
+      return session.user;
     },
     [applySession]
   );
@@ -110,8 +118,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signOut,
       refreshSession,
+      updateUser,
     }),
-    [accessToken, isLoading, refreshSession, signIn, signOut, user]
+    [accessToken, isLoading, refreshSession, signIn, signOut, updateUser, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

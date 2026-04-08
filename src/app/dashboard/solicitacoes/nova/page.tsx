@@ -9,6 +9,15 @@ import {
   type CloudinaryUploadWidgetResults,
 } from 'next-cloudinary';
 import { useTheme } from '@/components/ui/ThemeProvider';
+import {
+  buildAddressString,
+  EMPTY_ADDRESS_FIELDS,
+  formatCep,
+  getMissingAddressFields,
+  normalizeCep,
+  type AddressFields,
+  type CepLookupResult,
+} from '@/lib/address';
 
 const MAX_IMAGES = 5;
 
@@ -20,6 +29,7 @@ interface Material {
 
 interface UserProfile {
   nome: string;
+  telefone: string | null;
   endereco: string | null;
 }
 
@@ -46,9 +56,9 @@ const materialBadge = (nome: string) => {
 };
 
 const widgetErrorText = (error: CloudinaryUploadWidgetError) => {
-  if (!error) return 'Nao foi possivel enviar as imagens agora.';
+  if (!error) return 'Não foi possível enviar as imagens agora.';
   if (typeof error === 'string') return error;
-  return error.statusText || error.status || 'Nao foi possivel enviar as imagens agora.';
+  return error.statusText || error.status || 'Não foi possível enviar as imagens agora.';
 };
 
 const secureUrlFromResult = (result: CloudinaryUploadWidgetResults) => {
@@ -61,9 +71,7 @@ export default function CriarSolicitacaoPage() {
   const { theme } = useTheme();
   const [formData, setFormData] = useState({ titulo: '', tipoMaterial: '', quantidade: '', descricao: '' });
   const [imagens, setImagens] = useState<string[]>([]);
-  const [enderecoNovo, setEnderecoNovo] = useState({
-    rua: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '',
-  });
+  const [enderecoNovo, setEnderecoNovo] = useState<AddressFields>(EMPTY_ADDRESS_FIELDS);
   const [modoEndereco, setModoEndereco] = useState<ModoEndereco>('perfil');
   const [materiais, setMateriais] = useState<Material[]>([]);
   const [perfil, setPerfil] = useState<UserProfile | null>(null);
@@ -74,6 +82,9 @@ export default function CriarSolicitacaoPage() {
   const [loadingMateriais, setLoadingMateriais] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadMessage, setUploadMessage] = useState<UploadMessage | null>(null);
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepMensagem, setCepMensagem] = useState('');
+  const [savingProfileAddress, setSavingProfileAddress] = useState(false);
 
   const remainingSlots = MAX_IMAGES - imagens.length;
   const stepTitles = ['Informacoes', 'Detalhes', 'Endereco'];
@@ -122,7 +133,7 @@ export default function CriarSolicitacaoPage() {
         if (!dataPerfil.endereco) setModoEndereco('novo');
       } catch (err) {
         console.error('Erro ao carregar dados:', err);
-        setErro('Erro ao carregar dados');
+        setErro('Erro ao carregar dados.');
       } finally {
         setLoadingMateriais(false);
       }
@@ -131,12 +142,7 @@ export default function CriarSolicitacaoPage() {
     carregarDados();
   }, []);
 
-  const montarEnderecoNovo = () => {
-    const { rua, numero, complemento, bairro, cidade, uf } = enderecoNovo;
-    return [rua && numero ? `${rua}, ${numero}` : rua, complemento, bairro, cidade && uf ? `${cidade} - ${uf}` : cidade || uf]
-      .filter(Boolean)
-      .join(', ');
-  };
+  const montarEnderecoNovo = () => buildAddressString(enderecoNovo);
 
   const getEnderecoFinal = () => (modoEndereco === 'perfil' ? perfil?.endereco ?? '' : montarEnderecoNovo());
   const enderecoNovoPreview = montarEnderecoNovo();
@@ -152,7 +158,98 @@ export default function CriarSolicitacaoPage() {
 
   const handleEnderecoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    setEnderecoNovo((current) => ({ ...current, [name]: name === 'uf' ? value.toUpperCase().slice(0, 2) : value }));
+    setEnderecoNovo((current) => ({
+      ...current,
+      [name]:
+        name === 'cep'
+          ? normalizeCep(value)
+          : name === 'uf'
+            ? value.toUpperCase().slice(0, 2)
+            : value,
+    }));
+  };
+
+  const buscarCep = async () => {
+    const cep = normalizeCep(enderecoNovo.cep);
+
+    if (cep.length !== 8) {
+      setCepMensagem('Informe um CEP com 8 dígitos.');
+      return;
+    }
+
+    setCepLoading(true);
+    setCepMensagem('');
+
+    try {
+      const response = await fetch(`/api/cep/${cep}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setCepMensagem(data.error ?? 'Não foi possível consultar o CEP.');
+        return;
+      }
+
+      const cepData = data as CepLookupResult;
+      setEnderecoNovo((current) => ({
+        ...current,
+        cep: normalizeCep(cepData.cep),
+        rua: cepData.rua || current.rua,
+        bairro: cepData.bairro || current.bairro,
+        cidade: cepData.cidade || current.cidade,
+        uf: (cepData.uf || current.uf).toUpperCase(),
+        complemento: current.complemento || cepData.complemento || '',
+      }));
+      setCepMensagem('CEP encontrado. Revise os dados e informe o número.');
+    } catch (err) {
+      console.error('Erro ao consultar CEP:', err);
+      setCepMensagem('Não foi possível consultar o CEP.');
+    } finally {
+      setCepLoading(false);
+    }
+  };
+
+  const salvarEnderecoNoPerfil = async () => {
+    const missing = getMissingAddressFields(enderecoNovo);
+    if (missing.length > 0) {
+      setErro(`Complete o endereço antes de salvar no perfil: ${missing.join(', ')}.`);
+      return;
+    }
+
+    if (!perfil) {
+      setErro('Não foi possível carregar seu perfil agora.');
+      return;
+    }
+
+    setSavingProfileAddress(true);
+    setErro('');
+
+    try {
+      const endereco = buildAddressString(enderecoNovo);
+      const response = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: perfil.nome,
+          telefone: perfil.telefone ?? '',
+          endereco,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErro(data?.error?.endereco?.[0] ?? data?.error ?? 'Não foi possível salvar o endereço no perfil.');
+        return;
+      }
+
+      setPerfil(data);
+      setModoEndereco('perfil');
+      setSucesso('Endereço salvo no perfil com sucesso.');
+    } catch (err) {
+      console.error('Erro ao salvar endereço no perfil:', err);
+      setErro('Não foi possível salvar o endereço no perfil.');
+    } finally {
+      setSavingProfileAddress(false);
+    }
   };
 
   const handleImageUpload = (result: CloudinaryUploadWidgetResults) => {
@@ -211,8 +308,14 @@ export default function CriarSolicitacaoPage() {
 
     if (targetStep === 3) {
       const enderecoFinal = getEnderecoFinal().trim();
-      if (!enderecoFinal) return setErro('Informe um endereco para a coleta'), false;
-      if (enderecoFinal.length < 5) return setErro('O endereco esta muito curto. Preencha os dados completos'), false;
+      if (!enderecoFinal) return setErro('Informe um endereço para a coleta.'), false;
+      if (modoEndereco === 'novo') {
+        const missing = getMissingAddressFields(enderecoNovo);
+        if (missing.length > 0) {
+          return setErro(`Complete o endereço: ${missing.join(', ')}.`), false;
+        }
+      }
+      if (enderecoFinal.length < 5) return setErro('O endereço está muito curto. Preencha os dados completos.'), false;
     }
 
     return true;
@@ -244,17 +347,17 @@ export default function CriarSolicitacaoPage() {
       const data = await res.json();
 
       if (res.ok) {
-        setSucesso('Solicitacao criada com sucesso.');
+        setSucesso('Solicitação criada com sucesso.');
         setTimeout(() => { window.location.href = '/dashboard'; }, 1800);
         return;
       }
 
       if (typeof data?.resumo === 'string' && data.resumo) return setErro(data.resumo);
       if (typeof data?.error === 'string' && data.error) return setErro(data.error);
-      setErro('Erro ao criar solicitacao');
+      setErro('Erro ao criar solicitação.');
     } catch (err) {
-      console.error('Erro ao processar solicitacao:', err);
-      setErro('Erro ao processar solicitacao');
+      console.error('Erro ao processar solicitação:', err);
+      setErro('Erro ao processar solicitação.');
     } finally {
       setLoading(false);
     }
@@ -442,7 +545,7 @@ export default function CriarSolicitacaoPage() {
                                 <div className="absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white">{index === 0 ? 'Principal' : `Imagem ${index + 1}`}</div>
                                 <button type="button" onClick={() => removerImagem(index)} aria-label={`Remover imagem ${index + 1}`} className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 font-bold text-red-600 shadow-md transition hover:scale-105 hover:bg-red-50 dark:bg-zinc-950/95 dark:text-red-300 dark:hover:bg-red-950/60">X</button>
                               </div>
-                              <div className="p-4 text-sm text-slate-600 dark:text-zinc-400">Imagem pronta para seguir junto com a solicitacao.</div>
+                              <div className="p-4 text-sm text-slate-600 dark:text-zinc-400">Imagem pronta para seguir junto com a solicitação.</div>
                             </div>
                           ))}
                         </div>
@@ -451,13 +554,13 @@ export default function CriarSolicitacaoPage() {
                   </div>
 
                   <div className="rounded-2xl border border-green-100 bg-gradient-to-r from-green-50 to-cyan-50 p-5 text-sm text-green-900 dark:border-green-900/60 dark:from-green-950/30 dark:to-cyan-950/30 dark:text-green-100">
-                    Fotos nitidas e variadas ajudam na aprovacao e deixam a coleta mais clara para a empresa.
+                    Fotos nítidas e variadas ajudam na aprovação e deixam a coleta mais clara para a empresa.
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
                   <button type="button" onClick={() => setStep(1)} className="inline-flex items-center justify-center rounded-2xl border-2 border-slate-200 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800">Voltar</button>
-                  <button type="button" onClick={() => validarStep(2) && setStep(3)} className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-green-600 to-blue-600 px-8 py-3 font-semibold text-white shadow-lg shadow-green-200 transition hover:-translate-y-0.5 hover:shadow-xl">Proximo</button>
+                  <button type="button" onClick={() => validarStep(2) && setStep(3)} className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-green-600 to-blue-600 px-8 py-3 font-semibold text-white shadow-lg shadow-green-200 transition hover:-translate-y-0.5 hover:shadow-xl">Próximo</button>
                 </div>
               </div>
             )}
@@ -465,58 +568,78 @@ export default function CriarSolicitacaoPage() {
             {step === 3 && (
               <div className="space-y-8 p-8 md:p-12">
                 <div>
-                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-green-600">Endereco da coleta</p>
+                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-green-600">Endereço da coleta</p>
                   <h2 className="text-3xl font-bold text-slate-900 dark:text-zinc-100">Confirme o local</h2>
-                  <p className="mt-2 text-slate-600 dark:text-zinc-400">Escolha entre o endereco do perfil ou informe outro local.</p>
+                  <p className="mt-2 text-slate-600 dark:text-zinc-400">Escolha entre o endereço do perfil ou informe outro local, de preferência pelo CEP.</p>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <button type="button" onClick={() => setModoEndereco('perfil')} disabled={!perfil?.endereco} className={`rounded-2xl border-2 p-5 text-left transition ${modoEndereco === 'perfil' ? 'border-green-500 bg-green-50 dark:border-green-700 dark:bg-green-950/30' : 'border-slate-200 bg-slate-50 dark:border-zinc-800 dark:bg-zinc-900'} ${perfil?.endereco ? '' : 'cursor-not-allowed opacity-50'}`}>
-                    <p className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400">Usar endereco do perfil</p>
-                    <p className="mt-3 font-semibold text-slate-800 dark:text-zinc-100">{perfil?.endereco || 'Nenhum endereco cadastrado'}</p>
+                    <p className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400">Usar endereço do perfil</p>
+                    <p className="mt-3 font-semibold text-slate-800 dark:text-zinc-100">{perfil?.endereco || 'Nenhum endereço cadastrado'}</p>
                   </button>
                   <button type="button" onClick={() => setModoEndereco('novo')} className={`rounded-2xl border-2 p-5 text-left transition ${modoEndereco === 'novo' ? 'border-green-500 bg-green-50 dark:border-green-700 dark:bg-green-950/30' : 'border-slate-200 bg-slate-50 dark:border-zinc-800 dark:bg-zinc-900'}`}>
-                    <p className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400">Informar outro endereco</p>
+                    <p className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-zinc-400">Informar outro endereço</p>
                     <p className="mt-3 font-semibold text-slate-800 dark:text-zinc-100">Preencher um local diferente para esta coleta</p>
                   </button>
                 </div>
 
                 {modoEndereco === 'novo' && (
                   <div className="space-y-4 rounded-[24px] border border-slate-200 bg-gradient-to-br from-slate-50 to-green-50 p-6 dark:border-zinc-800 dark:from-zinc-950 dark:to-green-950/20">
+                    {!perfil?.endereco && (
+                      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-100">
+                        <p className="font-semibold">Você ainda não tem endereço cadastrado no perfil.</p>
+                        <p className="mt-2">Preencha os dados abaixo e, se quiser, salve este endereço para reutilizar nas próximas coletas.</p>
+                        <button
+                          type="button"
+                          onClick={salvarEnderecoNoPerfil}
+                          disabled={savingProfileAddress}
+                          className="mt-4 inline-flex items-center justify-center rounded-2xl border border-blue-300 bg-white px-4 py-2 font-semibold text-blue-800 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-blue-700 dark:bg-zinc-950 dark:text-blue-200 dark:hover:bg-blue-950/60"
+                        >
+                          {savingProfileAddress ? 'Salvando no perfil...' : 'Cadastrar endereço no perfil'}
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="grid gap-4 md:grid-cols-4">
+                      <div className="md:col-span-3"><label className="mb-2 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">CEP</label><input type="text" name="cep" value={formatCep(enderecoNovo.cep)} onChange={handleEnderecoChange} placeholder="00000-000" className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" /></div>
+                      <div><button type="button" onClick={buscarCep} disabled={cepLoading} className="mt-8 inline-flex w-full items-center justify-center rounded-2xl border-2 border-slate-200 px-4 py-3 font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800">{cepLoading ? 'Buscando...' : 'Buscar CEP'}</button></div>
+                    </div>
+                    {cepMensagem && <p className="text-sm text-slate-600 dark:text-zinc-400">{cepMensagem}</p>}
                     <div className="grid gap-4 md:grid-cols-4">
                       <div className="md:col-span-3"><label className="mb-2 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Rua / Avenida</label><input type="text" name="rua" value={enderecoNovo.rua} onChange={handleEnderecoChange} placeholder="Ex: Rua das Flores" className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" /></div>
-                      <div><label className="mb-2 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Numero</label><input type="text" name="numero" value={enderecoNovo.numero} onChange={handleEnderecoChange} placeholder="123" className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" /></div>
+                      <div><label className="mb-2 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Número</label><input type="text" name="numero" value={enderecoNovo.numero} onChange={handleEnderecoChange} placeholder="123" className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" /></div>
                     </div>
-                    <div><label className="mb-2 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Complemento <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span></label><input type="text" name="complemento" value={enderecoNovo.complemento} onChange={handleEnderecoChange} placeholder="Apto, bloco, referencia..." className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" /></div>
+                    <div><label className="mb-2 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Complemento <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span></label><input type="text" name="complemento" value={enderecoNovo.complemento} onChange={handleEnderecoChange} placeholder="Apto, bloco, referência..." className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" /></div>
                     <div><label className="mb-2 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Bairro</label><input type="text" name="bairro" value={enderecoNovo.bairro} onChange={handleEnderecoChange} placeholder="Ex: Centro" className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" /></div>
                     <div className="grid gap-4 md:grid-cols-4">
-                      <div className="md:col-span-3"><label className="mb-2 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Cidade</label><input type="text" name="cidade" value={enderecoNovo.cidade} onChange={handleEnderecoChange} placeholder="Ex: Sao Paulo" className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" /></div>
+                      <div className="md:col-span-3"><label className="mb-2 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Cidade</label><input type="text" name="cidade" value={enderecoNovo.cidade} onChange={handleEnderecoChange} placeholder="Ex: São Paulo" className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" /></div>
                       <div><label className="mb-2 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">UF</label><input type="text" name="uf" value={enderecoNovo.uf} onChange={handleEnderecoChange} maxLength={2} placeholder="SP" className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 uppercase outline-none transition focus:border-green-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" /></div>
                     </div>
-                    {enderecoNovoPreview && <div className="rounded-2xl border border-green-200 bg-white p-4 dark:border-green-900/60 dark:bg-zinc-900"><p className="text-xs font-bold uppercase tracking-[0.24em] text-green-600 dark:text-green-400">Previa do endereco</p><p className="mt-2 text-sm font-semibold text-green-800 dark:text-green-100">{enderecoNovoPreview}</p></div>}
+                    {enderecoNovoPreview && <div className="rounded-2xl border border-green-200 bg-white p-4 dark:border-green-900/60 dark:bg-zinc-900"><p className="text-xs font-bold uppercase tracking-[0.24em] text-green-600 dark:text-green-400">Prévia do endereço</p><p className="mt-2 text-sm font-semibold text-green-800 dark:text-green-100">{enderecoNovoPreview}</p></div>}
                   </div>
                 )}
 
-                {modoEndereco === 'perfil' && perfil?.endereco && <div className="rounded-2xl border border-green-100 bg-gradient-to-r from-green-50 to-cyan-50 p-5 dark:border-green-900/60 dark:from-green-950/30 dark:to-cyan-950/30"><p className="text-xs font-bold uppercase tracking-[0.24em] text-green-600 dark:text-green-400">Endereco selecionado</p><p className="mt-2 text-sm font-semibold text-green-900 dark:text-green-100">{perfil.endereco}</p></div>}
+                {modoEndereco === 'perfil' && perfil?.endereco && <div className="rounded-2xl border border-green-100 bg-gradient-to-r from-green-50 to-cyan-50 p-5 dark:border-green-900/60 dark:from-green-950/30 dark:to-cyan-950/30"><p className="text-xs font-bold uppercase tracking-[0.24em] text-green-600 dark:text-green-400">Endereço selecionado</p><p className="mt-2 text-sm font-semibold text-green-900 dark:text-green-100">{perfil.endereco}</p></div>}
 
                 <div className="rounded-[24px] border border-emerald-200 bg-gradient-to-br from-green-50 via-white to-blue-50 p-6 dark:border-emerald-900/50 dark:from-green-950/25 dark:via-zinc-900 dark:to-blue-950/20">
                   <p className="mb-4 text-xs font-bold uppercase tracking-[0.28em] text-green-600">Resumo final</p>
                   <div className="grid gap-4 md:grid-cols-2">
-                    <SummaryCard label="Titulo" value={formData.titulo} />
+                    <SummaryCard label="Título" value={formData.titulo} />
                     <SummaryCard label="Material" value={getMaterialSelecionado() ? `[${getMaterialSelecionado()?.emoji}] ${getMaterialSelecionado()?.nome}` : ''} />
                     <SummaryCard label="Quantidade" value={formData.quantidade} />
                     <SummaryCard label="Imagens" value={imagens.length > 0 ? `${imagens.length} imagem(ns) pronta(s)` : 'Nenhuma imagem adicionada'} />
-                    <SummaryCard label="Endereco" value={getEnderecoFinal()} full />
+                    <SummaryCard label="Endereço" value={getEnderecoFinal()} full />
                   </div>
                 </div>
 
                 <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-sm text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-100">
-                  Revise tudo antes de criar. A solicitacao sera enviada para analise e depois exibida para empresas parceiras.
+                  Revise tudo antes de criar. A solicitação será enviada para análise e depois exibida para empresas parceiras.
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
                   <button type="button" onClick={() => setStep(2)} className="inline-flex items-center justify-center rounded-2xl border-2 border-slate-200 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800">Voltar</button>
-                  <button type="button" onClick={handleSubmit} disabled={loading} className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 px-8 py-3 font-semibold text-white shadow-lg shadow-green-200 transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60">{loading ? 'Criando solicitacao...' : 'Criar solicitacao'}</button>
+                  <button type="button" onClick={handleSubmit} disabled={loading} className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 px-8 py-3 font-semibold text-white shadow-lg shadow-green-200 transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60">{loading ? 'Criando solicitação...' : 'Criar solicitação'}</button>
                 </div>
               </div>
             )}

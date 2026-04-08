@@ -2,6 +2,15 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import {
+  buildAddressString,
+  EMPTY_ADDRESS_FIELDS,
+  formatCep,
+  getMissingAddressFields,
+  normalizeCep,
+  type AddressFields,
+  type CepLookupResult,
+} from "@/lib/address";
 
 interface ProfileData {
   id: number;
@@ -36,6 +45,10 @@ export function ProfilePageClient({ initialProfile }: Props) {
     telefone: initialProfile.telefone ?? "",
     endereco: initialProfile.endereco ?? "",
   });
+  const [showAddressBuilder, setShowAddressBuilder] = useState(false);
+  const [addressDraft, setAddressDraft] = useState<AddressFields>(EMPTY_ADDRESS_FIELDS);
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepMessage, setCepMessage] = useState("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -70,10 +83,23 @@ export function ProfilePageClient({ initialProfile }: Props) {
     setError("");
     setSuccess("");
 
+    let enderecoPayload = formData.endereco.trim();
+    if (showAddressBuilder) {
+      const missing = getMissingAddressFields(addressDraft);
+      if (missing.length > 0) {
+        setError(`Complete o endereço: ${missing.join(", ")}.`);
+        return;
+      }
+      enderecoPayload = buildAddressString(addressDraft);
+    }
+
     const response = await fetch("/api/users/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
+      body: JSON.stringify({
+        ...formData,
+        endereco: enderecoPayload,
+      }),
     });
 
     const data = await response.json();
@@ -105,9 +131,63 @@ export function ProfilePageClient({ initialProfile }: Props) {
       telefone: data.telefone ?? "",
       endereco: data.endereco ?? "",
     });
+    setShowAddressBuilder(false);
     setSuccess("Perfil atualizado com sucesso.");
     startTransition(() => router.refresh());
   };
+
+  const buscarCep = async () => {
+    const cep = normalizeCep(addressDraft.cep);
+
+    if (cep.length !== 8) {
+      setCepMessage("Informe um CEP com 8 dígitos.");
+      return;
+    }
+
+    setCepLoading(true);
+    setCepMessage("");
+
+    try {
+      const response = await fetch(`/api/cep/${cep}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setCepMessage(data.error ?? "Não foi possível consultar o CEP.");
+        return;
+      }
+
+      const cepData = data as CepLookupResult;
+      setAddressDraft((current) => ({
+        ...current,
+        cep: normalizeCep(cepData.cep),
+        rua: cepData.rua || current.rua,
+        bairro: cepData.bairro || current.bairro,
+        cidade: cepData.cidade || current.cidade,
+        uf: (cepData.uf || current.uf).toUpperCase(),
+        complemento: current.complemento || cepData.complemento || "",
+      }));
+      setCepMessage("CEP encontrado. Revise os dados e informe o número.");
+    } catch {
+      setCepMessage("Não foi possível consultar o CEP.");
+    } finally {
+      setCepLoading(false);
+    }
+  };
+
+  const handleAddressDraftChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setAddressDraft((current) => ({
+      ...current,
+      [name]:
+        name === "cep"
+          ? normalizeCep(value)
+          : name === "uf"
+            ? value.toUpperCase().slice(0, 2)
+            : value,
+    }));
+  };
+
+  const addressPreview = useMemo(() => buildAddressString(addressDraft), [addressDraft]);
 
   return (
     <div className="page-enter" style={{ display: "grid", gap: "1.5rem" }}>
@@ -254,17 +334,129 @@ export function ProfilePageClient({ initialProfile }: Props) {
             />
           </ProfileField>
 
-          <ProfileField label="Endereco">
-            <textarea
-              name="endereco"
-              value={formData.endereco}
-              onChange={handleChange}
-              className="input-field"
-              rows={4}
-              placeholder="Informe seu endereco"
-              style={{ resize: "vertical" }}
-            />
-          </ProfileField>
+          {formData.endereco && !showAddressBuilder ? (
+            <ProfileField label="Endereco">
+              <textarea
+                name="endereco"
+                value={formData.endereco}
+                onChange={handleChange}
+                className="input-field"
+                rows={4}
+                placeholder="Informe seu endereco"
+                style={{ resize: "vertical" }}
+              />
+            </ProfileField>
+          ) : (
+            <div style={{ display: "grid", gap: ".8rem" }}>
+              <ProfileField label="Endereco cadastrado">
+                <div
+                  style={{
+                    padding: "1rem 1.1rem",
+                    borderRadius: 14,
+                    background: "var(--surface-3)",
+                    border: "1px solid var(--border)",
+                    display: "grid",
+                    gap: ".6rem",
+                  }}
+                >
+                  <p style={{ margin: 0, color: "var(--text-muted)", fontSize: ".88rem", lineHeight: 1.6 }}>
+                    {showAddressBuilder
+                      ? "Preencha o endereço abaixo para salvar no seu perfil."
+                      : "Você ainda não tem endereço salvo no perfil."}
+                  </p>
+                  {!showAddressBuilder ? (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ width: "fit-content" }}
+                      onClick={() => setShowAddressBuilder(true)}
+                    >
+                      Cadastrar endereço por CEP
+                    </button>
+                  ) : null}
+                </div>
+              </ProfileField>
+
+              {showAddressBuilder ? (
+                <div
+                  style={{
+                    display: "grid",
+                    gap: ".9rem",
+                    padding: "1rem 1.1rem",
+                    borderRadius: 14,
+                    background: "var(--surface-3)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: ".75rem", alignItems: "end" }}>
+                    <ProfileField label="CEP">
+                      <input
+                        type="text"
+                        name="cep"
+                        value={formatCep(addressDraft.cep)}
+                        onChange={handleAddressDraftChange}
+                        className="input-field"
+                        placeholder="00000-000"
+                      />
+                    </ProfileField>
+                    <button type="button" className="btn btn-secondary" onClick={buscarCep} disabled={cepLoading}>
+                      {cepLoading ? "Buscando..." : "Buscar CEP"}
+                    </button>
+                  </div>
+
+                  {cepMessage ? <p style={{ margin: 0, fontSize: ".82rem", color: "var(--text-muted)" }}>{cepMessage}</p> : null}
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 120px", gap: ".75rem" }}>
+                    <ProfileField label="Rua / Avenida">
+                      <input type="text" name="rua" value={addressDraft.rua} onChange={handleAddressDraftChange} className="input-field" placeholder="Ex: Rua das Flores" />
+                    </ProfileField>
+                    <ProfileField label="Numero">
+                      <input type="text" name="numero" value={addressDraft.numero} onChange={handleAddressDraftChange} className="input-field" placeholder="123" />
+                    </ProfileField>
+                  </div>
+
+                  <ProfileField label="Complemento">
+                    <input type="text" name="complemento" value={addressDraft.complemento} onChange={handleAddressDraftChange} className="input-field" placeholder="Apto, bloco, referencia..." />
+                  </ProfileField>
+
+                  <ProfileField label="Bairro">
+                    <input type="text" name="bairro" value={addressDraft.bairro} onChange={handleAddressDraftChange} className="input-field" placeholder="Ex: Centro" />
+                  </ProfileField>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 90px", gap: ".75rem" }}>
+                    <ProfileField label="Cidade">
+                      <input type="text" name="cidade" value={addressDraft.cidade} onChange={handleAddressDraftChange} className="input-field" placeholder="Ex: Sao Paulo" />
+                    </ProfileField>
+                    <ProfileField label="UF">
+                      <input type="text" name="uf" value={addressDraft.uf} onChange={handleAddressDraftChange} className="input-field" placeholder="SP" maxLength={2} />
+                    </ProfileField>
+                  </div>
+
+                  {addressPreview ? (
+                    <div
+                      style={{
+                        padding: ".9rem 1rem",
+                        borderRadius: 12,
+                        background: "rgba(30,122,50,.08)",
+                        border: "1px solid rgba(30,122,50,.18)",
+                      }}
+                    >
+                      <p style={{ margin: 0, fontSize: ".72rem", textTransform: "uppercase", letterSpacing: "1.2px", color: "var(--text-faint)", fontWeight: 700 }}>
+                        Previa do endereco
+                      </p>
+                      <p style={{ margin: ".35rem 0 0", color: "var(--text)", fontWeight: 600 }}>{addressPreview}</p>
+                    </div>
+                  ) : null}
+
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button type="button" className="btn btn-ghost" onClick={() => setShowAddressBuilder(false)}>
+                      Fechar
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
 
           <div
             style={{

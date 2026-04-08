@@ -13,7 +13,7 @@ describe("validations", () => {
       const result = registerSchema.safeParse({
         nome: "Maria Silva",
         email: "maria@example.com",
-        senha: "123456",
+        senha: "Senha@123",
         tipo: "usuario",
       });
 
@@ -24,7 +24,18 @@ describe("validations", () => {
       const result = registerSchema.safeParse({
         nome: "Maria Silva",
         email: "maria",
-        senha: "123456",
+        senha: "Senha@123",
+        tipo: "usuario",
+      });
+
+      expect(result.success).toBe(false);
+    });
+
+    it("rejeita senha fraca", () => {
+      const result = registerSchema.safeParse({
+        nome: "Maria Silva",
+        email: "maria@example.com",
+        senha: "12345678",
         tipo: "usuario",
       });
 

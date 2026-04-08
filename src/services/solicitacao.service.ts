@@ -1,6 +1,19 @@
 import { prisma } from "@/lib/prisma";
 
 const MAX_SOLICITACAO_IMAGENS = 5;
+const PRAZO_ANALISE_HORAS = 24;
+
+export function getAdminSolicitacaoScope(now = new Date()) {
+  const limite = new Date(now.getTime() - PRAZO_ANALISE_HORAS * 60 * 60 * 1000);
+
+  return {
+    OR: [
+      { status: "rejeitada" },
+      { status: "aprovada", aprovado: true, coleta: null },
+      { status: "pendente", aprovado: false, createdAt: { lte: limite } },
+    ],
+  };
+}
 
 /**
  * Cria uma nova solicitacao de coleta para o usuario autenticado.
@@ -100,6 +113,25 @@ export async function listarSolicitacoesPendentes() {
       user: { select: { id: true, nome: true, email: true } },
       material: true,
       imagens: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function listarSolicitacoesAdmin() {
+  return prisma.solicitacaoColeta.findMany({
+    where: getAdminSolicitacaoScope(),
+    include: {
+      user: { select: { id: true, nome: true, email: true } },
+      material: true,
+      imagens: true,
+      coleta: {
+        select: {
+          id: true,
+          status: true,
+          dataAceite: true,
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
