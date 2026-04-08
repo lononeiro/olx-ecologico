@@ -1,4 +1,4 @@
-import { withAuth } from "next-auth/middleware";
+import { withAuth, type NextRequestWithAuth } from "next-auth/middleware";
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
 import { applyCorsHeaders } from "@/lib/cors";
 
@@ -47,7 +47,7 @@ export default function middleware(req: NextRequest, event: NextFetchEvent) {
     return response;
   }
 
-  return protectedPagesMiddleware(req, event);
+  return protectedPagesMiddleware(req as NextRequestWithAuth, event);
 }
 
 export const config = {
