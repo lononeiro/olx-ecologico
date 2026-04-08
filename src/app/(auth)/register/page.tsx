@@ -224,7 +224,7 @@ export default function RegisterPage() {
                   fontFamily: "var(--font-body)", display: "flex",
                   flexDirection: "column", alignItems: "center", gap: ".3rem" }}>
                 <span style={{ fontSize: "1.4rem" }}>{t === "usuario" ? "" : ""}</span>
-                {t === "usuario" ? "Cidadao" : "Empresa"}
+                {t === "usuario" ? "Cidadão" : "Empresa"}
               </button>
             ))}
           </div>

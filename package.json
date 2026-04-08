@@ -2,11 +2,38 @@
   "name": "recycling-system",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "overrides": {
+    "metro": "0.81.5",
+    "metro-babel-transformer": "0.81.5",
+    "metro-cache": "0.81.5",
+    "metro-cache-key": "0.81.5",
+    "metro-config": "0.81.5",
+    "metro-core": "0.81.5",
+    "metro-file-map": "0.81.5",
+    "metro-resolver": "0.81.5",
+    "metro-runtime": "0.81.5",
+    "metro-source-map": "0.81.5",
+    "metro-symbolicate": "0.81.5",
+    "metro-transform-plugins": "0.81.5",
+    "metro-transform-worker": "0.81.5"
+  },
   "scripts": {
     "dev": "next dev",
+    "dev:web": "next dev",
+    "dev:mobile": "npm run dev -w apps/mobile",
     "build": "prisma generate && next build",
+    "build:web": "prisma generate && next build",
     "start": "next start",
+    "start:mobile": "npm run start -w apps/mobile",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck:shared": "tsc -p packages/shared/tsconfig.json --noEmit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
@@ -21,6 +48,7 @@
     "@auth/prisma-adapter": "^2.7.2",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
+    "expo": "^55.0.9",
     "leaflet": "^1.9.4",
     "next": "^14.2.29",
     "next-auth": "^4.24.11",
@@ -37,11 +65,13 @@
     "@types/react": "^18.3.14",
     "@types/react-dom": "^18.3.5",
     "@types/swagger-jsdoc": "^6.0.4",
+    "@vitest/coverage-v8": "^2.1.8",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.16",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   }
 }

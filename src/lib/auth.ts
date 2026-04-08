@@ -1,7 +1,7 @@
-import bcrypt from "bcryptjs";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
+import { authenticateUserByCredentials } from "@/lib/mobile-auth";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -17,26 +17,17 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-          include: { role: true },
-        });
-
-        if (!user || user.status !== "ativo") return null;
-
-        const senhaValida = await bcrypt.compare(
-          credentials.password,
-          user.senhaHash
+        const user = await authenticateUserByCredentials(
+          credentials.email,
+          credentials.password
         );
-
-        if (!senhaValida) return null;
+        if (!user) return null;
 
         return {
           id: String(user.id),
-          name: user.nome,
+          name: user.name,
           email: user.email,
-          role: user.role.nome,
+          role: user.role,
         };
       },
     }),

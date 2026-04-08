@@ -1,334 +1,302 @@
-# ♻️ Sistema de Reciclagem — Gerenciamento de Coletas
+# ECOnecta
 
-Plataforma web que conecta **cidadãos**, **empresas coletoras** e **administradores** para facilitar o processo de solicitação e coleta de materiais recicláveis.
+Plataforma web para conectar cidadaos, administradores e empresas coletoras no processo de solicitacao e coleta de materiais reciclaveis.
 
----
+## Visao geral
 
-## 📋 Sumário
+O sistema permite que usuarios comuns criem solicitacoes com descricao, endereco e imagens do material. Um administrador analisa essas solicitacoes e, quando aprovadas, elas ficam disponiveis para empresas coletoras aceitarem a coleta, atualizarem o andamento e conversarem com o solicitante.
 
-- [Visão Geral](#visão-geral)
-- [Arquitetura](#arquitetura)
-- [Modelo de Dados](#modelo-de-dados)
-- [Perfis de Usuário e Fluxo](#perfis-de-usuário-e-fluxo)
-- [Rotas da Aplicação](#rotas-da-aplicação)
-- [API Endpoints](#api-endpoints)
-- [Stack Tecnológico](#stack-tecnológico)
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação e Inicialização](#instalação-e-inicialização)
-- [Variáveis de Ambiente](#variáveis-de-ambiente)
+Perfis suportados:
 
----
+- `usuario`
+- `admin`
+- `empresa`
 
-## Visão Geral
+## Funcionalidades principais
 
-O sistema permite que cidadãos cadastrem solicitações de coleta de materiais recicláveis com fotos e endereço. Um **admin** aprova ou rejeita as solicitações. Após aprovação, **empresas coletoras** visualizam as solicitações disponíveis, aceitam a coleta e atualizam o status em tempo real até a conclusão. Cidadãos e empresas também se comunicam via **chat** dentro de cada coleta.
+- autenticacao com NextAuth usando credenciais
+- controle de acesso por role
+- cadastro de usuario e empresa
+- criacao de solicitacoes com ate 5 imagens via Cloudinary
+- aprovacao e rejeicao de solicitacoes pelo admin
+- aceite e acompanhamento de coletas pela empresa
+- chat entre usuario e empresa dentro da coleta
+- pagina `/me` para o usuario autenticado visualizar e editar o proprio perfil
+- modo claro e modo escuro com persistencia
 
----
+## Stack
 
-## Arquitetura
+- Next.js 14
+- React 18
+- TypeScript
+- Tailwind CSS
+- Prisma
+- PostgreSQL
+- NextAuth.js
+- Zod
+- next-cloudinary
+- Leaflet
 
-```
-recycling-system/
-│
-├── prisma/
-│   ├── schema.prisma          # Modelos do banco de dados
-│   ├── seed.ts                # Script de dados iniciais
-│   └── migrations/            # Histórico de migrações SQL
-│
-├── public/
-│   └── icon/                  # Assets estáticos
-│
-└── src/
-    ├── app/                   # Next.js App Router
-    │   ├── (auth)/            # Grupo de rotas públicas (sem Navbar)
-    │   │   ├── login/
-    │   │   └── register/
-    │   │
-    │   ├── api/               # API Routes (backend)
-    │   │   ├── auth/          # Registro, login, reset de senha
-    │   │   ├── solicitacoes/  # CRUD de solicitações (usuário)
-    │   │   ├── empresa/       # Coletas (empresa)
-    │   │   │   └── coletas/
-    │   │   ├── admin/         # Aprovação de solicitações (admin)
-    │   │   ├── materiais/     # Tipos de materiais
-    │   │   ├── mensagens/     # Chat por coleta
-    │   │   ├── users/me/      # Perfil do usuário
-    │   │   └── route.ts       # Documentação da API (HTML/JSON)
-    │   │
-    │   ├── dashboard/         # Área do Cidadão
-    │   │   └── solicitacoes/
-    │   │       ├── nova/      # Criar solicitação
-    │   │       └── [id]/      # Detalhe / chat
-    │   │
-    │   ├── empresa/           # Área da Empresa Coletora
-    │   │   ├── coletas/       # Minhas coletas
-    │   │   │   └── [id]/      # Detalhe / atualizar status
-    │   │   └── solicitacoes/  # Solicitações disponíveis para aceitar
-    │   │
-    │   ├── admin/             # Área do Administrador
-    │   │   └── solicitacoes/  # Fila de aprovação
-    │   │       └── [id]/
-    │   │
-    │   ├── me/                # Página de perfil do usuário logado
-    │   └── page.tsx           # Landing page pública
-    │
-    ├── components/
-    │   ├── cards/             # SolicitacaoCard, SolicitacaoCardVisual
-    │   ├── forms/             # ChatBox
-    │   └── ui/                # Navbar, MapaEndereco, StatusBadge,
-    │                          #   ColetaStatusTracker, ThemeToggle, etc.
-    │
-    ├── lib/
-    │   ├── auth.ts            # Configuração NextAuth (JWT + Credentials)
-    │   ├── prisma.ts          # Singleton do Prisma Client
-    │   ├── route-guard.ts     # Helper de proteção de rotas
-    │   ├── validations.ts     # Schemas Zod de validação
-    │   └── swagger.ts         # Configuração Swagger
-    │
-    ├── services/              # Camada de acesso a dados
-    │   ├── solicitacao.service.ts
-    │   ├── coleta.service.ts
-    │   └── mensagem.service.ts
-    │
-    ├── types/
-    │   └── index.ts           # Tipos TypeScript e constantes de status
-    │
-    └── middleware.ts          # Proteção e redirecionamento de rotas por role
+## Estrutura monorepo
+
+O projeto agora esta preparado para evoluir em tres camadas:
+
+```text
+.
+|- apps/
+|  |- mobile/          # app Expo / React Native
+|- packages/
+|  |- shared/          # schemas, contratos e status compartilhados
+|- prisma/             # banco e seed
+|- src/                # app web atual em Next.js
 ```
 
-### Decisões de Arquitetura
+### Como isso foi organizado
 
-| Decisão | Escolha | Motivo |
-|---|---|---|
-| Framework | Next.js 14 (App Router) | SSR, API Routes e roteamento integrados |
-| Autenticação | NextAuth.js com JWT | Suporte a roles no token, sem estado no servidor |
-| Banco de dados | PostgreSQL (Neon) | Relacional, gerenciado, com suporte a Prisma |
-| ORM | Prisma | Type-safety, migrations e seed integrados |
-| Upload de imagens | Cloudinary | CDN e transformação de imagens sem armazenamento local |
-| Mapa | Leaflet | Mapa open-source para exibir endereços de coleta |
-| Validação | Zod | Validação compartilhada entre cliente e servidor |
-| Estilização | Tailwind CSS | Utilitário, sem CSS customizado verboso |
+- o web atual continua na raiz para evitar uma migracao grande agora
+- o mobile nasce em `apps/mobile`
+- regras compartilhadas ficam em `packages/shared`
+- o arquivo `src/lib/validations.ts` do web agora reaproveita o pacote compartilhado
 
----
-
-## Modelo de Dados
-
-```
-Role ──────────────── User
-                       │
-             ┌─────────┼─────────┐
-             │         │         │
-          Company  Solicitacao  Mensagem
-             │      Coleta
-             │         │
-          Coleta ──────┘
-             │
-          Mensagem
-```
-
-### Entidades principais
-
-- **User** — Cidadão, empresa ou admin. Tem `roleId`, `status` (ativo/inativo) e suporte a reset de senha por token.
-- **Company** — Perfil extra de usuários com role `empresa`, com CNPJ.
-- **SolicitacaoColeta** — Pedido de coleta criado pelo cidadão. Passa pelos status `pendente → aprovada/rejeitada`.
-- **SolicitacaoImagem** — Imagens (URLs Cloudinary) vinculadas a uma solicitação (máx. 5).
-- **Coleta** — Criada quando uma empresa aceita uma solicitação. Tem status próprio: `aceita → a_caminho → em_coleta → concluida/cancelada`. Gera um `codigoConfirmacao`.
-- **Mensagem** — Chat entre cidadão e empresa dentro de uma coleta.
-- **MaterialTipo** — Tipos de material recicláveis (ex: papel, plástico, metal).
-
----
-
-## Perfis de Usuário e Fluxo
-
-### Cidadão (`usuario`)
-1. Cria uma solicitação de coleta com título, descrição, material, quantidade, endereço e até 5 fotos.
-2. Aguarda aprovação do admin.
-3. Após aprovação, acompanha o status da coleta e conversa com a empresa via chat.
-
-### Administrador (`admin`)
-1. Visualiza todas as solicitações pendentes.
-2. Aprova ou rejeita cada uma.
-3. Após aprovação, a solicitação fica disponível para empresas.
-
-### Empresa (`empresa`)
-1. Visualiza solicitações aprovadas e disponíveis.
-2. Aceita uma solicitação, criando uma coleta.
-3. Atualiza o status da coleta conforme o andamento.
-4. Se comunica com o cidadão via chat.
-
----
-
-## Rotas da Aplicação
-
-| Rota | Acesso | Descrição |
-|---|---|---|
-| `/` | Público | Landing page |
-| `/login` | Público | Login |
-| `/register` | Público | Cadastro |
-| `/dashboard` | `usuario` | Painel do cidadão |
-| `/dashboard/solicitacoes` | `usuario` | Minhas solicitações |
-| `/dashboard/solicitacoes/nova` | `usuario` | Nova solicitação |
-| `/dashboard/solicitacoes/[id]` | `usuario` | Detalhe + chat |
-| `/empresa` | `empresa` | Painel da empresa |
-| `/empresa/solicitacoes` | `empresa` | Solicitações disponíveis |
-| `/empresa/coletas` | `empresa` | Minhas coletas |
-| `/empresa/coletas/[id]` | `empresa` | Detalhe + atualizar status |
-| `/admin` | `admin` | Painel administrativo |
-| `/admin/solicitacoes` | `admin` | Fila de aprovação |
-| `/me` | Autenticado | Perfil do usuário |
-| `/api` | Público | Documentação da API |
-
----
-
-## API Endpoints
-
-| Método | Endpoint | Role | Descrição |
-|---|---|---|---|
-| `POST` | `/api/auth/register` | — | Registrar usuário |
-| `POST` | `/api/auth/forgot-password` | — | Solicitar reset de senha |
-| `POST` | `/api/auth/reset-password` | — | Redefinir senha |
-| `GET` | `/api/materiais` | — | Listar tipos de material |
-| `GET` | `/api/solicitacoes` | Autenticado | Listar solicitações do usuário |
-| `POST` | `/api/solicitacoes` | `usuario` | Criar solicitação |
-| `GET` | `/api/solicitacoes/[id]` | Autenticado | Detalhe de solicitação |
-| `PATCH` | `/api/admin/solicitacoes/[id]` | `admin` | Aprovar ou rejeitar |
-| `GET` | `/api/empresa/coletas` | `empresa` | Coletas da empresa |
-| `POST` | `/api/empresa/coletas` | `empresa` | Aceitar solicitação |
-| `GET` | `/api/empresa/coletas/[id]` | `empresa`/`usuario` | Detalhe da coleta |
-| `PATCH` | `/api/empresa/coletas/[id]` | `empresa` | Atualizar status da coleta |
-| `GET` | `/api/mensagens/[id]` | `usuario`/`empresa` | Mensagens da coleta |
-| `POST` | `/api/mensagens/[id]` | `usuario`/`empresa` | Enviar mensagem |
-| `GET` | `/api/users/me` | Autenticado | Dados do perfil |
-
-A documentação interativa da API está disponível em `http://localhost:3000/api`.
-
----
-
-## Stack Tecnológico
-
-| Camada | Tecnologia |
-|---|---|
-| Framework | Next.js 14 (App Router) |
-| Linguagem | TypeScript 5 |
-| Autenticação | NextAuth.js 4 + JWT |
-| Banco de Dados | PostgreSQL (Neon serverless) |
-| ORM | Prisma 5 |
-| Estilização | Tailwind CSS 3 |
-| Upload de Imagens | Cloudinary (next-cloudinary) |
-| Mapa | Leaflet 1.9 |
-| Validação | Zod 3 |
-| Senhas | bcryptjs |
-
----
-
-## Pré-requisitos
-
-- **Node.js** 18.17 ou superior
-- **npm** 9+ (ou yarn/pnpm)
-- Conta no **Neon** (ou outro PostgreSQL acessível) → para `DATABASE_URL`
-- Conta no **Cloudinary** → para upload de imagens
-
----
-
-## Instalação e Inicialização
-
-### 1. Clone o repositório e instale as dependências
+### Scripts uteis
 
 ```bash
-git clone <url-do-repositorio>
-cd recycling-system
+npm run dev:web
+npm run dev:mobile
+npm run typecheck:shared
+```
+
+### Observacao importante sobre auth mobile
+
+Hoje o web usa NextAuth com sessao voltada ao navegador. Para o app mobile, a base ideal continua sendo:
+
+- backend atual em Next.js
+- novos endpoints de autenticacao para mobile
+- access token + refresh token
+- armazenamento seguro com `expo-secure-store`
+
+O scaffold do mobile ja foi criado com isso em mente, mas a troca completa da autenticacao ainda e o proximo passo.
+
+## Estrutura do projeto
+
+```text
+src/
+|- app/
+|  |- (auth)/
+|  |- admin/
+|  |- api/
+|  |- dashboard/
+|  |- empresa/
+|  |- me/
+|  |- layout.tsx
+|  |- page.tsx
+|- components/
+|  |- cards/
+|  |- forms/
+|  |- ui/
+|- lib/
+|  |- auth.ts
+|  |- prisma.ts
+|  |- route-guard.ts
+|  |- validations.ts
+|- services/
+|- types/
+prisma/
+|- schema.prisma
+|- seed.ts
+```
+
+## Rotas principais
+
+- `/`
+- `/login`
+- `/register`
+- `/dashboard`
+- `/dashboard/solicitacoes`
+- `/dashboard/solicitacoes/nova`
+- `/dashboard/solicitacoes/[id]`
+- `/admin`
+- `/admin/solicitacoes`
+- `/admin/solicitacoes/[id]`
+- `/empresa`
+- `/empresa/solicitacoes`
+- `/empresa/coletas`
+- `/empresa/coletas/[id]`
+- `/me`
+
+## Endpoints principais
+
+### Autenticacao
+
+- `POST /api/auth/register`
+- `POST /api/auth/[...nextauth]`
+- `POST /api/auth/mobile/login`
+- `POST /api/auth/mobile/refresh`
+
+### Usuario autenticado
+
+- `GET /api/users/me`
+- `PATCH /api/users/me`
+
+### Solicitacoes
+
+- `GET /api/solicitacoes`
+- `POST /api/solicitacoes`
+- `GET /api/solicitacoes/[id]`
+
+### Admin
+
+- `PATCH /api/admin/solicitacoes/[id]`
+
+### Empresa / Coletas
+
+- `GET /api/empresa/coletas`
+- `POST /api/empresa/coletas`
+- `GET /api/empresa/coletas/[id]`
+- `PATCH /api/empresa/coletas/[id]`
+
+### Mensagens
+
+- `GET /api/mensagens/[id]`
+- `POST /api/mensagens/[id]`
+
+### Materiais
+
+- `GET /api/materiais`
+
+## Modelo de dados
+
+Relacoes principais definidas no `prisma/schema.prisma`:
+
+```text
+Role -> User (1:N)
+User -> Company (1:1)
+User -> SolicitacaoColeta (1:N)
+User -> Mensagem (1:N)
+SolicitacaoColeta -> SolicitacaoImagem (1:N)
+SolicitacaoColeta -> Coleta (1:1)
+Company -> Coleta (1:N)
+Coleta -> Mensagem (1:N)
+```
+
+## Fluxo de status
+
+```text
+Solicitacao: pendente -> aprovada | rejeitada
+Coleta:      aceita -> a_caminho -> em_coleta -> concluida
+                                          -> cancelada
+```
+
+## Configuracao local
+
+### 1. Instale as dependencias
+
+```bash
 npm install
 ```
 
-### 2. Configure as variáveis de ambiente
+### 2. Configure as variaveis de ambiente
 
-Copie o arquivo de exemplo e preencha os valores:
+O projeto ja possui um arquivo `.env.example` com a estrutura esperada.
+
+Copie o arquivo de exemplo:
 
 ```bash
 cp .env.example .env
 ```
 
-Edite o `.env` com suas credenciais (veja a seção [Variáveis de Ambiente](#variáveis-de-ambiente)).
+Depois preencha o `.env` com os valores corretos para o seu ambiente.
 
-### 3. Configure o banco de dados
+Variaveis usadas atualmente:
 
-Execute as migrações para criar as tabelas:
+```env
+DATABASE_URL="postgresql://user:password@host/database?sslmode=require&channel_binding=require"
+NEXTAUTH_SECRET="gere-um-segredo-forte-aqui"
+NEXTAUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="seu-cloud-name"
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="seu-upload-preset"
+```
+
+### 3. Configure o banco
 
 ```bash
+npm run db:generate
 npm run db:migrate
-```
-
-Ou, se preferir aplicar o schema sem histórico de migrations (ex: banco novo):
-
-```bash
-npm run db:push
-```
-
-### 4. Popule o banco com dados iniciais (opcional, mas recomendado)
-
-```bash
 npm run db:seed
 ```
 
-O seed cria os tipos de material, as roles (`usuario`, `empresa`, `admin`) e usuários de teste.
-
-### 5. Inicie o servidor de desenvolvimento
+### 4. Rode o projeto
 
 ```bash
 npm run dev
 ```
 
-Acesse em **http://localhost:3000**.
+Aplicacao disponivel em `http://localhost:3000`.
 
----
-
-## Scripts Disponíveis
-
-| Script | Descrição |
-|---|---|
-| `npm run dev` | Servidor de desenvolvimento |
-| `npm run build` | Build de produção (inclui `prisma generate`) |
-| `npm run start` | Inicia o servidor em modo produção |
-| `npm run lint` | Linting com ESLint |
-| `npm run db:generate` | Gera o Prisma Client |
-| `npm run db:migrate` | Cria e aplica uma nova migration |
-| `npm run db:push` | Aplica o schema sem criar migration |
-| `npm run db:seed` | Popula o banco com dados iniciais |
-| `npm run db:studio` | Abre o Prisma Studio (GUI do banco) |
-
----
-
-## Variáveis de Ambiente
-
-Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
-
-```env
-# Banco de dados PostgreSQL (ex: Neon)
-DATABASE_URL="postgresql://usuario:senha@host/banco?sslmode=require"
-
-# NextAuth — gere um segredo com: openssl rand -base64 32
-NEXTAUTH_SECRET="seu-segredo-forte-aqui"
-NEXTAUTH_URL="http://localhost:3000"
-
-# Cloudinary — upload de imagens
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="seu-cloud-name"
-NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="seu-upload-preset"
-```
-
-### Como obter cada valor
-
-- **DATABASE_URL** — Crie um projeto gratuito em [neon.tech](https://neon.tech) e copie a connection string.
-- **NEXTAUTH_SECRET** — Gere com `openssl rand -base64 32` no terminal.
-- **NEXTAUTH_URL** — `http://localhost:3000` para dev; URL do seu domínio em produção.
-- **NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME** e **NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET** — Crie uma conta em [cloudinary.com](https://cloudinary.com), vá em *Settings → Upload → Upload presets* e crie um preset **unsigned**.
-
----
-
-## Build para Produção
+## Scripts
 
 ```bash
+npm run dev
 npm run build
 npm run start
+npm run lint
+npm run db:generate
+npm run db:migrate
+npm run db:push
+npm run db:seed
+npm run db:studio
 ```
 
-> O comando `build` já executa `prisma generate` automaticamente.
+## Perfil `/me`
+
+A pagina `/me` usa sempre o usuario autenticado da sessao atual.
+
+Dados exibidos:
+
+- id
+- nome
+- email
+- telefone
+- endereco
+- status
+- data de cadastro
+- role
+- empresa vinculada, quando existir
+
+Campos editaveis:
+
+- nome
+- telefone
+- endereco
+
+## Tema
+
+O projeto suporta tema claro e escuro com persistencia no navegador:
+
+- chave usada: `theme`
+- valores: `light` e `dark`
+- estrategia: classe `dark` aplicada no elemento `html`
+
+## Upload de imagens
+
+O cadastro de solicitacao suporta:
+
+- selecao multipla
+- ate 5 imagens por solicitacao
+- preview antes do envio
+- remocao individual
+- upload via Cloudinary
+
+## Seguranca
+
+- hash de senha com `bcryptjs`
+- sessao JWT com NextAuth
+- autorizacao por role em rotas protegidas
+- validacao com Zod
+- atualizacao de dados sensiveis protegida no backend
+
+## Seed
+
+Os dados iniciais sao criados por `prisma/seed.ts`.
+
+Para verificar usuarios de teste e dados populados, consulte diretamente esse arquivo.

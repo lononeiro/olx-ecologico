@@ -35,6 +35,10 @@ pnpm-debug.log*
 .npm
 .eslintcache
 .turbo
+.expo
+apps/mobile/.expo
+apps/mobile/dist
+apps/mobile/web-build
 *.tsbuildinfo
 next-env.d.ts
 
