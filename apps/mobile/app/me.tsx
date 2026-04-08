@@ -1,25 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
 import { router } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Linking, StyleSheet, Text, View } from "react-native";
 import { profileUpdateSchema } from "@shared";
 import {
-  ActivityIndicator,
-  Linking,
-  SafeAreaView,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+  AppButton,
+  AppCard,
+  AppField,
+  AppScreen,
+  InfoRow,
+  LoadingCard,
+  MessageBanner,
+  SectionHeader,
+  StatusBadge,
+} from "@/components/AppUI";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  ApiError,
   getMyProfile,
   getReadableErrorMessage,
   type MobileProfileResponse,
   updateMyProfile,
 } from "@/lib/api";
+import { withAutoRefresh } from "@/lib/session";
+import { colors, spacing, typography } from "@/theme/tokens";
 
 type ProfileFormState = {
   nome: string;
@@ -43,14 +46,8 @@ function getProfileForm(profile: MobileProfileResponse): ProfileFormState {
 
 export default function MeScreen() {
   const queryClient = useQueryClient();
-  const {
-    accessToken,
-    isLoading,
-    refreshSession,
-    signOut,
-    updateUser,
-    user,
-  } = useAuth();
+  const { accessToken, isLoading, refreshSession, signOut, updateUser, user } =
+    useAuth();
   const [form, setForm] = useState<ProfileFormState>(emptyForm);
   const [feedback, setFeedback] = useState("");
   const [feedbackTone, setFeedbackTone] = useState<"success" | "error">("success");
@@ -64,27 +61,8 @@ export default function MeScreen() {
   const profileQuery = useQuery({
     queryKey: ["me", user?.id],
     enabled: !!user && !isLoading,
-    queryFn: async () => {
-      const token = accessToken ?? (await refreshSession());
-      if (!token) {
-        throw new Error("Sua sessao expirou. Entre novamente.");
-      }
-
-      try {
-        return await getMyProfile(token);
-      } catch (error) {
-        if (!(error instanceof ApiError) || error.status !== 401) {
-          throw error;
-        }
-
-        const refreshedToken = await refreshSession();
-        if (!refreshedToken) {
-          throw new Error("Sua sessao expirou. Entre novamente.");
-        }
-
-        return getMyProfile(refreshedToken);
-      }
-    },
+    queryFn: async () =>
+      withAutoRefresh(accessToken, refreshSession, (token) => getMyProfile(token)),
   });
 
   useEffect(() => {
@@ -97,28 +75,14 @@ export default function MeScreen() {
     mutationFn: async () => {
       const parsed = profileUpdateSchema.safeParse(form);
       if (!parsed.success) {
-        throw new Error(parsed.error.issues[0]?.message ?? "Revise os dados do perfil.");
+        throw new Error(
+          parsed.error.issues[0]?.message ?? "Revise os dados do perfil."
+        );
       }
 
-      const token = accessToken ?? (await refreshSession());
-      if (!token) {
-        throw new Error("Sua sessao expirou. Entre novamente.");
-      }
-
-      try {
-        return await updateMyProfile(token, parsed.data);
-      } catch (error) {
-        if (!(error instanceof ApiError) || error.status !== 401) {
-          throw error;
-        }
-
-        const refreshedToken = await refreshSession();
-        if (!refreshedToken) {
-          throw new Error("Sua sessao expirou. Entre novamente.");
-        }
-
-        return updateMyProfile(refreshedToken, parsed.data);
-      }
+      return withAutoRefresh(accessToken, refreshSession, (token) =>
+        updateMyProfile(token, parsed.data)
+      );
     },
     onSuccess: async (profile) => {
       setFeedbackTone("success");
@@ -174,301 +138,220 @@ export default function MeScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" color="#1e7a32" />
-      </SafeAreaView>
+      <AppScreen>
+        <LoadingCard text="Preparando sua conta..." />
+      </AppScreen>
     );
   }
 
   if (!user) return null;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#f4f8f2" }}>
-      <ScrollView contentContainerStyle={{ padding: 24, gap: 20 }}>
-        <View
-          style={{
-            backgroundColor: "#ffffff",
-            borderRadius: 24,
-            padding: 24,
-            gap: 10,
-            borderWidth: 1,
-            borderColor: "#d6ead6",
-          }}
-        >
-          <Text style={{ fontSize: 12, fontWeight: "700", color: "#2f8d47", letterSpacing: 2 }}>
-            SESSAO MOBILE
-          </Text>
-          <Text style={{ fontSize: 28, fontWeight: "700", color: "#122114" }}>
-            Minha conta
-          </Text>
-          <Text style={{ color: "#537156", lineHeight: 22 }}>
-            O app usa bearer token para consultar e atualizar `/api/users/me`,
-            com refresh automatico quando a sessao expira.
-          </Text>
+    <AppScreen>
+      <AppCard>
+        <View style={styles.heroTop}>
+          <View style={styles.identityBadge}>
+            <Text style={styles.identityInitial}>{user.name.charAt(0).toUpperCase()}</Text>
+          </View>
+          <View style={styles.heroText}>
+            <Text style={styles.heroEyebrow}>MINHA CONTA</Text>
+            <Text style={styles.heroName}>{user.name}</Text>
+            <Text style={styles.heroSubtitle}>
+              Seus dados pessoais, permissoes e informacoes de contato em um resumo claro para uso no app.
+            </Text>
+          </View>
         </View>
 
-        {profileQuery.isLoading && (
-          <StatusCard text="Carregando perfil..." />
-        )}
+        <View style={styles.metaRow}>
+          <StatusBadge kind="solicitacao" value={profileQuery.data?.status ?? "pendente"} />
+          <View style={styles.metaChip}>
+            <Text style={styles.metaChipText}>{user.role}</Text>
+          </View>
+        </View>
+      </AppCard>
 
-        {!!feedback && (
-          <MessageCard tone={feedbackTone} message={feedback} />
-        )}
+      {profileQuery.isLoading && <LoadingCard text="Carregando perfil..." />}
+      {!!feedback && <MessageBanner message={feedback} tone={feedbackTone} />}
+      {profileQuery.error && (
+        <MessageBanner
+          message={getReadableErrorMessage(
+            profileQuery.error,
+            "Nao foi possivel carregar o perfil."
+          )}
+          tone="error"
+        />
+      )}
 
-        {profileQuery.error && (
-          <MessageCard
-            tone="error"
-            message={getReadableErrorMessage(
-              profileQuery.error,
-              "Nao foi possivel carregar o perfil."
-            )}
-          />
-        )}
+      {profileQuery.data && (
+        <>
+          <AppCard>
+            <SectionHeader
+              eyebrow="RESUMO"
+              title="Dados da conta"
+              description="Informacoes principais da sua conta e da role vinculada."
+            />
+            <InfoRow label="Nome" value={profileQuery.data.nome} />
+            <InfoRow label="Email" value={profileQuery.data.email} />
+            <InfoRow label="Perfil" value={profileQuery.data.role.nome} />
+            <InfoRow
+              label="Telefone"
+              value={profileQuery.data.telefone ?? "Nao informado"}
+            />
+            <InfoRow
+              label="Endereco"
+              value={profileQuery.data.endereco ?? "Nao informado"}
+            />
+            <InfoRow label="Criado em" value={createdAtLabel} />
+          </AppCard>
 
-        {profileQuery.data && (
-          <>
-            <View style={{ gap: 16 }}>
-              <InfoCard label="Nome" value={profileQuery.data.nome} />
-              <InfoCard label="Email" value={profileQuery.data.email} />
-              <InfoCard label="Perfil" value={profileQuery.data.role.nome} />
-              <InfoCard
-                label="Telefone"
-                value={profileQuery.data.telefone ?? "Nao informado"}
-              />
-              <InfoCard
-                label="Endereco"
-                value={profileQuery.data.endereco ?? "Nao informado"}
-              />
-              <InfoCard label="Status" value={profileQuery.data.status} />
-              <InfoCard label="Criado em" value={createdAtLabel} />
-              {profileQuery.data.company && (
-                <>
-                  <InfoCard label="Empresa" value={profileQuery.data.company.cnpj} />
-                  <InfoCard
-                    label="Descricao da empresa"
-                    value={profileQuery.data.company.descricao ?? "Nao informada"}
-                  />
-                  <InfoCard
-                    label="Cadastro da empresa"
-                    value={companyCreatedAtLabel}
-                  />
-                </>
-              )}
-            </View>
+          <AppCard>
+            <SectionHeader
+              eyebrow="EDICAO"
+              title="Atualizar dados"
+              description="Nome, telefone e endereco seguem o mesmo contrato validado pelo backend."
+            />
 
-            <View
-              style={{
-                backgroundColor: "#ffffff",
-                borderRadius: 24,
-                padding: 20,
-                gap: 14,
-                borderWidth: 1,
-                borderColor: "#d6ead6",
+            <AppField
+              label="Nome"
+              value={form.nome}
+              onChangeText={(value) => {
+                if (feedback) setFeedback("");
+                setForm((current) => ({ ...current, nome: value }));
               }}
-            >
-              <Text style={{ fontSize: 12, fontWeight: "700", color: "#2f8d47", letterSpacing: 2 }}>
-                EDITAR PERFIL
-              </Text>
-              <Text style={{ fontSize: 22, fontWeight: "700", color: "#122114" }}>
-                Dados atualizaveis
-              </Text>
-              <Text style={{ color: "#537156", lineHeight: 22 }}>
-                Nome, telefone e endereco seguem o mesmo contrato validado no backend.
-              </Text>
+              placeholder="Seu nome completo"
+            />
+            <AppField
+              label="Telefone"
+              value={form.telefone}
+              onChangeText={(value) => {
+                if (feedback) setFeedback("");
+                setForm((current) => ({ ...current, telefone: value }));
+              }}
+              placeholder="Telefone para contato"
+            />
+            <AppField
+              label="Endereco"
+              value={form.endereco}
+              onChangeText={(value) => {
+                if (feedback) setFeedback("");
+                setForm((current) => ({ ...current, endereco: value }));
+              }}
+              placeholder="Endereco para coletas"
+              multiline
+            />
 
-              <Field
-                label="Nome"
-                value={form.nome}
-                onChangeText={(value) => {
-                  setFeedback("");
-                  setForm((current) => ({ ...current, nome: value }));
-                }}
-                placeholder="Seu nome completo"
-              />
-              <Field
-                label="Telefone"
-                value={form.telefone}
-                onChangeText={(value) => {
-                  setFeedback("");
-                  setForm((current) => ({ ...current, telefone: value }));
-                }}
-                placeholder="Telefone para contato"
-              />
-              <Field
-                label="Endereco"
-                value={form.endereco}
-                onChangeText={(value) => {
-                  setFeedback("");
-                  setForm((current) => ({ ...current, endereco: value }));
-                }}
-                placeholder="Endereco para coletas"
-                multiline
-              />
-
-              <TouchableOpacity
+            <View style={styles.actions}>
+              <AppButton
+                label={saveProfileMutation.isPending ? "Salvando..." : "Salvar alteracoes"}
                 onPress={() => saveProfileMutation.mutate()}
                 disabled={saveProfileMutation.isPending}
-                style={{
-                  backgroundColor: "#1e7a32",
-                  borderRadius: 16,
-                  paddingVertical: 16,
-                  alignItems: "center",
-                  opacity: saveProfileMutation.isPending ? 0.7 : 1,
-                }}
-              >
-                <Text style={{ color: "#ffffff", fontWeight: "700" }}>
-                  {saveProfileMutation.isPending ? "Salvando..." : "Salvar alteracoes"}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
+              />
+              <AppButton
+                label="Abrir no mapa"
+                tone="secondary"
                 onPress={openInMaps}
-                style={{
-                  backgroundColor: "#eef7ec",
-                  borderRadius: 16,
-                  paddingVertical: 16,
-                  alignItems: "center",
-                  borderWidth: 1,
-                  borderColor: "#d6ead6",
-                }}
-              >
-                <Text style={{ color: "#122114", fontWeight: "700" }}>
-                  Ver localizacao no mapa
-                </Text>
-              </TouchableOpacity>
+              />
             </View>
-          </>
-        )}
+          </AppCard>
 
-        <TouchableOpacity
+          {profileQuery.data.company && (
+            <AppCard>
+              <SectionHeader
+                eyebrow="EMPRESA"
+                title="Vinculo empresarial"
+                description="Dados exibidos quando a sua conta possui empresa associada."
+              />
+              <InfoRow label="CNPJ" value={profileQuery.data.company.cnpj} />
+              <InfoRow
+                label="Descricao"
+                value={profileQuery.data.company.descricao ?? "Nao informada"}
+              />
+              <InfoRow label="Cadastro da empresa" value={companyCreatedAtLabel} />
+            </AppCard>
+          )}
+        </>
+      )}
+
+      <AppCard tone="subtle">
+        <SectionHeader
+          eyebrow="ACOES"
+          title="Conta e sessao"
+          description="Atualize os dados, recarregue o perfil ou encerre sua sessao no dispositivo."
+        />
+        <AppButton
+          label="Atualizar perfil"
+          tone="secondary"
           onPress={() => {
             setFeedback("");
             void profileQuery.refetch();
           }}
-          style={{
-            backgroundColor: "#ffffff",
-            borderRadius: 16,
-            paddingVertical: 16,
-            alignItems: "center",
-            borderWidth: 1,
-            borderColor: "#d6ead6",
-          }}
-        >
-          <Text style={{ color: "#122114", fontWeight: "700" }}>Atualizar perfil</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
+        />
+        <AppButton
+          label="Sair"
+          tone="danger"
           onPress={async () => {
             await signOut();
             router.replace("/login");
           }}
-          style={{
-            backgroundColor: "#1e7a32",
-            borderRadius: 16,
-            paddingVertical: 16,
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: "#ffffff", fontWeight: "700" }}>Sair</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+        />
+      </AppCard>
+    </AppScreen>
   );
 }
 
-function Field({
-  label,
-  multiline,
-  ...props
-}: {
-  label: string;
-  value: string;
-  onChangeText: (value: string) => void;
-  placeholder: string;
-  multiline?: boolean;
-}) {
-  return (
-    <View style={{ gap: 8 }}>
-      <Text style={{ color: "#537156", fontSize: 12, fontWeight: "700", letterSpacing: 1 }}>
-        {label.toUpperCase()}
-      </Text>
-      <TextInput
-        {...props}
-        multiline={multiline}
-        textAlignVertical={multiline ? "top" : "center"}
-        style={{
-          backgroundColor: "#ffffff",
-          borderRadius: 16,
-          paddingHorizontal: 16,
-          paddingVertical: 14,
-          minHeight: multiline ? 120 : undefined,
-          borderWidth: 1,
-          borderColor: "#d6ead6",
-        }}
-      />
-    </View>
-  );
-}
-
-function StatusCard({ text }: { text: string }) {
-  return (
-    <View
-      style={{
-        backgroundColor: "#ffffff",
-        borderRadius: 20,
-        padding: 20,
-        alignItems: "center",
-        gap: 12,
-      }}
-    >
-      <ActivityIndicator size="small" color="#1e7a32" />
-      <Text style={{ color: "#537156" }}>{text}</Text>
-    </View>
-  );
-}
-
-function MessageCard({
-  tone,
-  message,
-}: {
-  tone: "success" | "error";
-  message: string;
-}) {
-  const isSuccess = tone === "success";
-
-  return (
-    <View
-      style={{
-        backgroundColor: isSuccess ? "#eef7ec" : "#fff1f1",
-        borderRadius: 20,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: isSuccess ? "#d6ead6" : "#f2b8b5",
-      }}
-    >
-      <Text style={{ color: isSuccess ? "#1e7a32" : "#9f3029", fontWeight: "700" }}>
-        {message}
-      </Text>
-    </View>
-  );
-}
-
-function InfoCard({ label, value }: { label: string; value: string }) {
-  return (
-    <View
-      style={{
-        backgroundColor: "#ffffff",
-        borderRadius: 20,
-        padding: 18,
-        gap: 8,
-        borderWidth: 1,
-        borderColor: "#d6ead6",
-      }}
-    >
-      <Text style={{ color: "#537156", fontSize: 12, fontWeight: "700", letterSpacing: 1 }}>
-        {label.toUpperCase()}
-      </Text>
-      <Text style={{ color: "#122114", fontSize: 16, fontWeight: "600" }}>{value}</Text>
-    </View>
-  );
-}
+const styles = StyleSheet.create({
+  heroTop: {
+    flexDirection: "row",
+    gap: spacing.lg,
+    alignItems: "flex-start",
+  },
+  identityBadge: {
+    width: 62,
+    height: 62,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  identityInitial: {
+    ...typography.sectionTitle,
+    color: colors.white,
+  },
+  heroText: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  heroEyebrow: {
+    ...typography.eyebrow,
+    color: colors.accent,
+  },
+  heroName: {
+    ...typography.title,
+    color: colors.text,
+    letterSpacing: -0.8,
+  },
+  heroSubtitle: {
+    ...typography.body,
+    color: colors.textSoft,
+  },
+  metaRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    flexWrap: "wrap",
+    alignItems: "center",
+  },
+  metaChip: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  metaChipText: {
+    ...typography.meta,
+    color: colors.primary,
+    textTransform: "uppercase",
+  },
+  actions: {
+    gap: spacing.sm,
+  },
+});
