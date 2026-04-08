@@ -4,9 +4,14 @@ import {
   createMobileAuthTokens,
   verifyMobileToken,
 } from "@/lib/mobile-auth";
+import { applyCors, createCorsPreflightResponse } from "@/lib/cors";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+
+export function OPTIONS(req: NextRequest) {
+  return createCorsPreflightResponse(req);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,9 +19,12 @@ export async function POST(req: NextRequest) {
     const parsed = mobileRefreshSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.flatten().fieldErrors },
-        { status: 400 }
+      return applyCors(
+        req,
+        NextResponse.json(
+          { error: parsed.error.flatten().fieldErrors },
+          { status: 400 }
+        )
       );
     }
 
@@ -27,21 +35,30 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user || user.status !== "ativo") {
-      return NextResponse.json({ error: "Usuario invalido" }, { status: 401 });
+      return applyCors(
+        req,
+        NextResponse.json({ error: "Usuario invalido" }, { status: 401 })
+      );
     }
 
-    return NextResponse.json(
-      await createMobileAuthTokens({
-        id: user.id,
-        name: user.nome,
-        email: user.email,
-        role: user.role.nome as "usuario" | "admin" | "empresa",
-      })
+    return applyCors(
+      req,
+      NextResponse.json(
+        await createMobileAuthTokens({
+          id: user.id,
+          name: user.nome,
+          email: user.email,
+          role: user.role.nome as "usuario" | "admin" | "empresa",
+        })
+      )
     );
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message ?? "Refresh token invalido" },
-      { status: 401 }
+    return applyCors(
+      req,
+      NextResponse.json(
+        { error: error?.message ?? "Refresh token invalido" },
+        { status: 401 }
+      )
     );
   }
 }

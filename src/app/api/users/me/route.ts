@@ -1,9 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { autorizarRota, getUserId } from "@/lib/route-guard";
+import { applyCors, createCorsPreflightResponse } from "@/lib/cors";
 import { profileUpdateSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
+
+export function OPTIONS(req: NextRequest) {
+  return createCorsPreflightResponse(req);
+}
 
 const userSelect = {
   id: true,
@@ -24,9 +29,9 @@ const userSelect = {
   },
 } as const;
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const { session, error } = await autorizarRota(["usuario", "admin", "empresa"]);
-  if (error) return error;
+  if (error) return applyCors(req, error);
 
   const userId = getUserId(session!);
   const user = await prisma.user.findUnique({
@@ -35,24 +40,30 @@ export async function GET() {
   });
 
   if (!user) {
-    return NextResponse.json({ error: "Usuario nao encontrado" }, { status: 404 });
+    return applyCors(
+      req,
+      NextResponse.json({ error: "Usuario nao encontrado" }, { status: 404 })
+    );
   }
 
-  return NextResponse.json(user);
+  return applyCors(req, NextResponse.json(user));
 }
 
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
   const { session, error } = await autorizarRota(["usuario", "admin", "empresa"]);
-  if (error) return error;
+  if (error) return applyCors(req, error);
 
   const userId = getUserId(session!);
   const body = await req.json();
   const parsed = profileUpdateSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten().fieldErrors },
-      { status: 400 }
+    return applyCors(
+      req,
+      NextResponse.json(
+        { error: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
     );
   }
 
@@ -68,5 +79,5 @@ export async function PATCH(req: Request) {
     select: userSelect,
   });
 
-  return NextResponse.json(user);
+  return applyCors(req, NextResponse.json(user));
 }

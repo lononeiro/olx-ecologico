@@ -4,8 +4,13 @@ import {
   authenticateUserByCredentials,
   createMobileAuthTokens,
 } from "@/lib/mobile-auth";
+import { applyCors, createCorsPreflightResponse } from "@/lib/cors";
 
 export const dynamic = "force-dynamic";
+
+export function OPTIONS(req: NextRequest) {
+  return createCorsPreflightResponse(req);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,9 +18,12 @@ export async function POST(req: NextRequest) {
     const parsed = loginSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.flatten().fieldErrors },
-        { status: 400 }
+      return applyCors(
+        req,
+        NextResponse.json(
+          { error: parsed.error.flatten().fieldErrors },
+          { status: 400 }
+        )
       );
     }
 
@@ -25,17 +33,23 @@ export async function POST(req: NextRequest) {
     );
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Email ou senha invalidos" },
-        { status: 401 }
+      return applyCors(
+        req,
+        NextResponse.json(
+          { error: "Email ou senha invalidos" },
+          { status: 401 }
+        )
       );
     }
 
-    return NextResponse.json(await createMobileAuthTokens(user));
+    return applyCors(req, NextResponse.json(await createMobileAuthTokens(user)));
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message ?? "Erro ao autenticar" },
-      { status: 500 }
+    return applyCors(
+      req,
+      NextResponse.json(
+        { error: error?.message ?? "Erro ao autenticar" },
+        { status: 500 }
+      )
     );
   }
 }
