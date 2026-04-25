@@ -14,15 +14,29 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
   const [texto, setTexto]         = useState("");
   const [loading, setLoading]     = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const shouldScrollOnNextUpdateRef = useRef(false);
+  const lastMessageSignatureRef = useRef(getMessageSignature(initialMessages));
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (shouldScrollOnNextUpdateRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      shouldScrollOnNextUpdateRef.current = false;
+    }
   }, [mensagens]);
 
   useEffect(() => {
     const interval = setInterval(async () => {
       const res = await fetch(`/api/mensagens/${coletaId}`);
-      if (res.ok) setMensagens(await res.json());
+      if (!res.ok) return;
+
+      const nextMessages = await res.json();
+      const nextSignature = getMessageSignature(nextMessages);
+
+      if (nextSignature !== lastMessageSignatureRef.current) {
+        shouldScrollOnNextUpdateRef.current = true;
+        lastMessageSignatureRef.current = nextSignature;
+        setMensagens(nextMessages);
+      }
     }, 10000);
     return () => clearInterval(interval);
   }, [coletaId]);
@@ -38,7 +52,12 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
     setLoading(false);
     if (res.ok) {
       const novaMensagem = await res.json();
-      setMensagens(prev => [...prev, novaMensagem]);
+      shouldScrollOnNextUpdateRef.current = true;
+      setMensagens(prev => {
+        const nextMessages = [...prev, novaMensagem];
+        lastMessageSignatureRef.current = getMessageSignature(nextMessages);
+        return nextMessages;
+      });
       setTexto("");
     }
   }
@@ -51,7 +70,8 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
         background: "var(--surface-2)", borderRadius: "var(--radius-sm)",
         border: "1px solid var(--border)",
         display: "flex", flexDirection: "column", gap: ".6rem",
-      }}>
+      }}
+      >
         {mensagens.length === 0 ? (
           <div style={{
             flex: 1, display: "flex", flexDirection: "column",
@@ -72,7 +92,7 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
                   maxWidth: "72%", padding: ".6rem .9rem",
                   borderRadius: isOwn ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
                   background: isOwn ? "var(--green)" : "var(--surface)",
-                  color: isOwn ? "#fff" : "var(--text)",
+                  color: isOwn ? "var(--surface)" : "var(--text)",
                   border: isOwn ? "none" : "1px solid var(--border)",
                   boxShadow: "var(--shadow-sm)",
                   fontSize: ".875rem", lineHeight: 1.5,
@@ -106,7 +126,7 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
           style={{ flex: 1 }}
         />
         <button type="submit" disabled={loading || !texto.trim()} className="btn btn-primary"
-          style={{ flexShrink: 0 }}>
+          style={{ flexShrink: 0, color: "var(--surface)" }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
           </svg>
@@ -115,4 +135,9 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
       </form>
     </div>
   );
+}
+
+function getMessageSignature(messages: Mensagem[]) {
+  const lastMessage = messages[messages.length - 1];
+  return `${messages.length}:${lastMessage?.id ?? "none"}:${String(lastMessage?.createdAt ?? "none")}`;
 }

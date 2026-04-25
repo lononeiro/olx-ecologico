@@ -106,7 +106,10 @@ export default async function SolicitacaoDetailPage({
           </p>
         </div>
 
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+        <div
+          className={s.coleta ? "detail-grid" : undefined}
+          style={{ maxWidth: s.coleta ? 1180 : 900, margin: "0 auto" }}
+        >
           <article
             style={{
               background: "var(--surface)",
@@ -248,7 +251,7 @@ export default async function SolicitacaoDetailPage({
           </article>
 
           {s.coleta && (
-            <div style={{ marginTop: "1.25rem", display: "grid", gap: "1rem" }}>
+            <aside className="chat-col">
               <section
                 className="card"
                 style={{
@@ -266,10 +269,9 @@ export default async function SolicitacaoDetailPage({
               </section>
 
               <section
-                className="card"
+                className="card chat-card"
                 style={{
                   padding: 0,
-                  overflow: "hidden",
                   background: "var(--surface)",
                   border: "1px solid var(--border)",
                   boxShadow: "var(--shadow)",
@@ -289,7 +291,7 @@ export default async function SolicitacaoDetailPage({
                     compact
                   />
                 </div>
-                <div style={{ padding: "1rem 1.25rem" }}>
+                <div className="chat-card-body" style={{ padding: "1rem 1.25rem" }}>
                   <ChatBox
                     coletaId={s.coleta.id}
                     currentUserId={userId}
@@ -297,7 +299,7 @@ export default async function SolicitacaoDetailPage({
                   />
                 </div>
               </section>
-            </div>
+            </aside>
           )}
         </div>
       </div>

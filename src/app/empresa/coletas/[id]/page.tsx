@@ -89,7 +89,7 @@ export default async function EmpresaColetaDetailPage({
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 1rem" }}>
         <div
           style={{
-            maxWidth: 920,
+            maxWidth: 1180,
             margin: "0 auto 1rem",
             display: "flex",
             alignItems: "center",
@@ -121,7 +121,7 @@ export default async function EmpresaColetaDetailPage({
           </p>
         </div>
 
-        <div style={{ maxWidth: 920, margin: "0 auto" }}>
+        <div className="detail-grid" style={{ maxWidth: 1180, margin: "0 auto" }}>
           <article
             style={{
               background: "var(--surface)",
@@ -255,7 +255,7 @@ export default async function EmpresaColetaDetailPage({
             </div>
           </article>
 
-          <div style={{ marginTop: "1.25rem", display: "grid", gap: "1rem" }}>
+          <aside className="chat-col">
             <section
               className="card"
               style={{
@@ -273,10 +273,9 @@ export default async function EmpresaColetaDetailPage({
             </section>
 
             <section
-              className="card"
+              className="card chat-card"
               style={{
                 padding: 0,
-                overflow: "hidden",
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
                 boxShadow: "var(--shadow)",
@@ -296,7 +295,7 @@ export default async function EmpresaColetaDetailPage({
                   compact
                 />
               </div>
-              <div style={{ padding: "1rem 1.25rem" }}>
+              <div className="chat-card-body" style={{ padding: "1rem 1.25rem" }}>
                 <ChatBox
                   coletaId={coleta.id}
                   currentUserId={userId}
@@ -304,7 +303,7 @@ export default async function EmpresaColetaDetailPage({
                 />
               </div>
             </section>
-          </div>
+          </aside>
         </div>
       </div>
     </div>

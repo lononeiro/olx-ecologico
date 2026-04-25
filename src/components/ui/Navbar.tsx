@@ -6,12 +6,17 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
-export function Navbar() {
+type NavbarProps = {
+  mobileOpen?: boolean;
+  onClose?: () => void;
+};
+
+export function Navbar({ mobileOpen = false, onClose }: NavbarProps) {
   const { data: session } = useSession();
   const role = (session?.user as any)?.role;
   const pathname = usePathname();
   const [signingOut, setSigningOut] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(mobileOpen);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -22,7 +27,12 @@ export function Navbar() {
 
   useEffect(() => {
     setMenuOpen(false);
+    onClose?.();
   }, [pathname]);
+
+  useEffect(() => {
+    setMenuOpen(mobileOpen);
+  }, [mobileOpen]);
 
   const links: Record<string, { href: string; label: string; icon: React.ReactNode }[]> = {
     usuario: [
@@ -279,7 +289,11 @@ export function Navbar() {
 
           <button
             className="show-mobile btn-icon"
-            onClick={() => setMenuOpen((current) => !current)}
+            onClick={() => {
+              const next = !menuOpen;
+              setMenuOpen(next);
+              if (!next) onClose?.();
+            }}
             style={{ flexShrink: 0 }}
             aria-label="Menu"
           >
@@ -435,7 +449,10 @@ export function Navbar() {
         )}
       </header>
 
-      {menuOpen && <div className="mobile-menu-overlay" onClick={() => setMenuOpen(false)} />}
+      {menuOpen && <div className="mobile-menu-overlay" onClick={() => {
+        setMenuOpen(false);
+        onClose?.();
+      }} />}
     </>
   );
 }
