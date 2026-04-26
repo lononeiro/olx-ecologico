@@ -73,7 +73,7 @@ export default function Home() {
             letterSpacing: ".5px",
           }}
         >
-          ♻ ECOleta
+          ♻ ECOnecta
         </span>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
           <ThemeToggle compact />
@@ -603,7 +603,7 @@ export default function Home() {
         }}
       >
         <span style={{ fontFamily: "var(--font-display)", color: "var(--landing-soft)", fontSize: "1rem" }}>
-          ♻ ECOleta
+          ♻ ECOnecta
         </span>
         <span style={{ color: "var(--landing-soft)", fontSize: ".8rem" }}>
           Feito com 💚 para um planeta mais sustentável

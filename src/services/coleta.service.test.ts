@@ -1,16 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const prismaMock = {
-  coleta: {
-    findUnique: vi.fn(),
-    findFirst: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    findMany: vi.fn(),
+const { prismaMock, randomBytesMock } = vi.hoisted(() => ({
+  prismaMock: {
+    coleta: {
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      findMany: vi.fn(),
+    },
   },
-};
-
-const randomBytesMock = vi.fn();
+  randomBytesMock: vi.fn(),
+}));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: prismaMock,
@@ -60,6 +61,25 @@ describe("coleta.service", () => {
           companyId: 5,
           status: "aceita",
           codigoConfirmacao: "AB12CD34",
+        },
+        include: { solicitacao: true, company: true },
+      });
+    });
+
+    it("cria a coleta com data de previsao quando informada", async () => {
+      const dataPrevisaoColeta = new Date("2026-04-27T17:30:00.000Z");
+      prismaMock.coleta.findUnique.mockResolvedValueOnce(null);
+      prismaMock.coleta.create.mockResolvedValueOnce({ id: 9 });
+
+      await aceitarSolicitacao(10, 5, dataPrevisaoColeta);
+
+      expect(prismaMock.coleta.create).toHaveBeenCalledWith({
+        data: {
+          solicitacaoId: 10,
+          companyId: 5,
+          status: "aceita",
+          codigoConfirmacao: "AB12CD34",
+          dataPrevisaoColeta,
         },
         include: { solicitacao: true, company: true },
       });

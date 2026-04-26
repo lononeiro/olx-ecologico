@@ -5,7 +5,7 @@ export function SolicitacaoBadge({ status }: { status: string }) {
     STATUS_SOLICITACAO_COLOR[status] ??
     "bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-zinc-200";
   const label = STATUS_SOLICITACAO_LABEL[status] ?? status;
-  return <span className={`badge ${color}`}>{label}</span>;
+  return <span className={`badge ${color}`} role="status">{label}</span>;
 }
 
 export function ColetaBadge({ status }: { status: string }) {
@@ -13,5 +13,5 @@ export function ColetaBadge({ status }: { status: string }) {
     STATUS_COLETA_COLOR[status] ??
     "bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-zinc-200";
   const label = STATUS_COLETA_LABEL[status] ?? status;
-  return <span className={`badge ${color}`}>{label}</span>;
+  return <span className={`badge ${color}`} role="status">{label}</span>;
 }

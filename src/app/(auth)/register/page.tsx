@@ -272,7 +272,7 @@ export default function RegisterPage() {
           <TransitionLink href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: ".6rem" }}>
             <span style={{ fontSize: "1.6rem" }}>♻</span>
             <span style={{ fontFamily: "var(--font-display)", color: "var(--auth-accent)", fontSize: "1.1rem", fontWeight: 700 }}>
-              ECOleta
+              ECOnecta
             </span>
           </TransitionLink>
         </div>

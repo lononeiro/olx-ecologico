@@ -120,13 +120,17 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
 
       {/* Input */}
       <form onSubmit={handleEnviar} style={{ display: "flex", gap: ".5rem" }}>
+        <label htmlFor={`chat-message-${coletaId}`} className="sr-only">
+          Nova mensagem
+        </label>
         <input
+          id={`chat-message-${coletaId}`}
           type="text" className="input-field" placeholder="Digite uma mensagem..."
           value={texto} onChange={e => setTexto(e.target.value)} disabled={loading}
           style={{ flex: 1 }}
         />
         <button type="submit" disabled={loading || !texto.trim()} className="btn btn-primary"
-          style={{ flexShrink: 0, color: "var(--surface)" }}>
+          style={{ flexShrink: 0, color: "var(--surface)" }} aria-label="Enviar mensagem">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
           </svg>

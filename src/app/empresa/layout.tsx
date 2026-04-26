@@ -1,12 +1,5 @@
-import { Navbar } from "@/components/ui/Navbar";
+import { AppShell } from "@/components/ui/AppShell";
 
 export default function EmpresaLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      <Navbar />
-      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "2rem 1.5rem" }}>
-        {children}
-      </main>
-    </div>
-  );
+  return <AppShell>{children}</AppShell>;
 }

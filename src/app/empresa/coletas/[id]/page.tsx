@@ -204,8 +204,8 @@ export default async function EmpresaColetaDetailPage({
             <div style={{ padding: "1.75rem 2rem 2rem" }}>
               <SectionHeading
                 eyebrow="Dados"
-                title="Informacoes da coleta"
-                description="Leitura organizada para a equipe da empresa, sem remover nenhuma informacao importante do fluxo atual."
+                title="Informações da coleta"
+                description="Leitura organizada para a equipe da empresa, sem remover nenhuma informação importante do fluxo atual."
               />
 
               <div

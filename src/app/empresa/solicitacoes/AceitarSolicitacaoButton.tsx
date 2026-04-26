@@ -31,15 +31,21 @@ export function AceitarSolicitacaoButton({
   const [modalAberto, setModalAberto] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
+  const [dataPrevisaoColeta, setDataPrevisaoColeta] = useState("");
 
   async function handleAceitar() {
+    if (!dataPrevisaoColeta) {
+      setErro("Informe a data prevista para a coleta.");
+      return;
+    }
+
     setLoading(true);
     setErro("");
 
     const res = await fetch("/api/empresa/coletas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ solicitacaoId }),
+      body: JSON.stringify({ solicitacaoId, dataPrevisaoColeta }),
     });
 
     const data = await res.json();
@@ -229,6 +235,48 @@ export function AceitarSolicitacaoButton({
                   <InfoField label="Status" value={<SolicitacaoBadge status="aprovada" />} />
                   <InfoField label="Endereco da coleta" value={endereco} full />
                   {descricao && <InfoField label="Descricao" value={descricao} full muted />}
+                </div>
+
+                <div
+                  style={{
+                    marginBottom: "1.2rem",
+                    padding: "1rem 1.05rem",
+                    borderRadius: 20,
+                    border: "1px solid var(--border)",
+                    background: "var(--surface)",
+                    boxShadow: "var(--shadow-xs)",
+                  }}
+                >
+                  <label
+                    htmlFor={`data-previsao-coleta-${solicitacaoId}`}
+                    style={{
+                      display: "block",
+                      fontSize: ".7rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "1.5px",
+                      color: "var(--text-faint)",
+                      fontWeight: 700,
+                      marginBottom: ".5rem",
+                    }}
+                  >
+                    Data prevista da coleta
+                  </label>
+                  <input
+                    id={`data-previsao-coleta-${solicitacaoId}`}
+                    type="datetime-local"
+                    className="input-field"
+                    value={dataPrevisaoColeta}
+                    onChange={(event) => {
+                      setDataPrevisaoColeta(event.target.value);
+                      if (erro) setErro("");
+                    }}
+                    min={new Date().toISOString().slice(0, 16)}
+                    disabled={loading}
+                    required
+                  />
+                  <p style={{ marginTop: ".45rem", fontSize: ".78rem", color: "var(--text-muted)" }}>
+                    Essa previsao aparecera no dashboard e ajuda a organizar as proximas coletas.
+                  </p>
                 </div>
 
                 {imagens.length > 0 && (

@@ -94,6 +94,7 @@ model Coleta {
   status              String    @default("aceita")
   codigoConfirmacao   String?
   dataAceite          DateTime  @default(now())
+  dataPrevisaoColeta  DateTime?
   dataConclusao       DateTime?
 
   solicitacao SolicitacaoColeta @relation(fields: [solicitacaoId], references: [id])

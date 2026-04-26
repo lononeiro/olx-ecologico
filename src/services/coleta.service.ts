@@ -13,7 +13,8 @@ function gerarCodigoConfirmacao(): string {
  */
 export async function aceitarSolicitacao(
   solicitacaoId: number,
-  companyId: number
+  companyId: number,
+  dataPrevisaoColeta?: Date
 ) {
   // Verifica se a solicitação já não foi aceita por outra empresa
   const existente = await prisma.coleta.findUnique({
@@ -21,12 +22,24 @@ export async function aceitarSolicitacao(
   });
   if (existente) throw new Error("Solicitação já foi aceita por outra empresa.");
 
+  const data: {
+    solicitacaoId: number;
+    companyId: number;
+    status: string;
+    codigoConfirmacao: string;
+    dataPrevisaoColeta?: Date;
+  } = {
+    solicitacaoId,
+    companyId,
+    status: "aceita",
+    codigoConfirmacao: gerarCodigoConfirmacao(),
+  };
+
+  if (dataPrevisaoColeta) data.dataPrevisaoColeta = dataPrevisaoColeta;
+
   return prisma.coleta.create({
     data: {
-      solicitacaoId,
-      companyId,
-      status: "aceita",
-      codigoConfirmacao: gerarCodigoConfirmacao(),
+      ...data,
     },
     include: { solicitacao: true, company: true },
   });

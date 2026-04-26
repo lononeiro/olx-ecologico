@@ -32,10 +32,18 @@ export async function POST(req: NextRequest) {
   const userId = getUserId(session!);
 
   try {
-    const { solicitacaoId } = await req.json();
+    const { solicitacaoId, dataPrevisaoColeta } = await req.json();
 
     if (!solicitacaoId || isNaN(Number(solicitacaoId))) {
       return NextResponse.json({ error: "solicitacaoId inválido" }, { status: 400 });
+    }
+
+    let previsao: Date | undefined;
+    if (dataPrevisaoColeta) {
+      previsao = new Date(dataPrevisaoColeta);
+      if (Number.isNaN(previsao.getTime())) {
+        return NextResponse.json({ error: "dataPrevisaoColeta invalida" }, { status: 400 });
+      }
     }
 
     const company = await prisma.company.findUnique({ where: { userId } });
@@ -43,7 +51,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Empresa não encontrada" }, { status: 404 });
     }
 
-    const coleta = await aceitarSolicitacao(Number(solicitacaoId), company.id);
+    const coleta = await aceitarSolicitacao(Number(solicitacaoId), company.id, previsao);
     return NextResponse.json(coleta, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 });
