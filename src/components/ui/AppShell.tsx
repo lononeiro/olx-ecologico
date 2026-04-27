@@ -25,8 +25,16 @@ const PAGE_TITLES: Record<string, { title: string; description: string }> = {
     description: "Visao central da operacao, analises e pendencias.",
   },
   "/admin/solicitacoes": {
-    title: "Fila Operacional",
-    description: "Solicitacoes que exigem acompanhamento administrativo.",
+    title: "Gestao de Solicitacoes",
+    description: "Todas as solicitacoes de coleta da plataforma.",
+  },
+  "/admin/usuarios": {
+    title: "Gestao de Usuarios",
+    description: "Visualize, ative, desative e gerencie os usuarios da plataforma.",
+  },
+  "/admin/empresas": {
+    title: "Gestao de Empresas",
+    description: "Gerencie as empresas parceiras e acompanhe suas coletas.",
   },
   "/empresa": {
     title: "Painel da Empresa",

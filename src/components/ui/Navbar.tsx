@@ -21,7 +21,8 @@ const NAV_LINKS: Record<string, { href: string; label: string; icon: ReactNode }
   admin: [
     { href: "/admin", label: "Dashboard", icon: <IconDashboard /> },
     { href: "/admin/solicitacoes", label: "Solicitacoes", icon: <IconClipboard /> },
-    { href: "/me", label: "Usuarios", icon: <IconUser /> },
+    { href: "/admin/usuarios", label: "Usuarios", icon: <IconUser /> },
+    { href: "/admin/empresas", label: "Empresas", icon: <IconBuilding /> },
   ],
   empresa: [
     { href: "/empresa", label: "Dashboard", icon: <IconDashboard /> },
@@ -218,6 +219,20 @@ function IconLogout() {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <path d="m16 17 5-5-5-5" />
       <path d="M21 12H9" />
+    </svg>
+  );
+}
+
+function IconBuilding() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M9 3v18" />
+      <path d="M3 9h6" />
+      <path d="M3 15h6" />
+      <path d="M13 7h5" />
+      <path d="M13 12h5" />
+      <path d="M13 17h5" />
     </svg>
   );
 }
