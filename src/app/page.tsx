@@ -24,14 +24,6 @@ export default function Home() {
           from { opacity: 0; transform: translateY(32px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes floatLeaf {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50%       { transform: translateY(-18px) rotate(4deg); }
-        }
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
         @keyframes marquee {
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }
@@ -40,10 +32,6 @@ export default function Home() {
         .anim-2 { animation: fadeUp .8s ease both .3s; }
         .anim-3 { animation: fadeUp .8s ease both .5s; }
         .anim-4 { animation: fadeUp .8s ease both .7s; }
-        .leaf   { animation: floatLeaf 6s ease-in-out infinite; }
-        .leaf2  { animation: floatLeaf 8s ease-in-out infinite .5s; }
-        .leaf3  { animation: floatLeaf 7s ease-in-out infinite 1s; }
-        .spin   { animation: spin-slow 18s linear infinite; }
         .marquee-track { animation: marquee 22s linear infinite; }
         .btn-glow:hover { transition: box-shadow 0.3s ease; box-shadow: 0 0 40px rgba(47,141,71,.28); }
         .card-hover { transition: transform .3s ease, box-shadow .3s ease; }
@@ -110,46 +98,6 @@ export default function Home() {
           margin: "0 auto",
         }}
       >
-        <span
-          className="leaf"
-          style={{
-            position: "absolute",
-            top: "4rem",
-            right: "6rem",
-            fontSize: "5rem",
-            opacity: 0.12,
-            userSelect: "none",
-          }}
-        >
-          🌿
-        </span>
-        <span
-          className="leaf2"
-          style={{
-            position: "absolute",
-            top: "12rem",
-            right: "2rem",
-            fontSize: "3.5rem",
-            opacity: 0.08,
-            userSelect: "none",
-          }}
-        >
-          🍃
-        </span>
-        <span
-          className="leaf3"
-          style={{
-            position: "absolute",
-            top: "2rem",
-            left: "62%",
-            fontSize: "2.5rem",
-            opacity: 0.1,
-            userSelect: "none",
-          }}
-        >
-          ♻
-        </span>
-
         <div
           className="anim-1"
           style={{
@@ -523,12 +471,10 @@ export default function Home() {
       >
         <div style={{ position: "relative", display: "inline-block", marginBottom: "2rem" }}>
           <div
-            className="spin"
             style={{
               width: "80px",
               height: "80px",
               border: "2px solid rgba(47,141,71,.2)",
-              borderTopColor: "var(--landing-accent)",
               borderRadius: "50%",
               margin: "0 auto",
             }}

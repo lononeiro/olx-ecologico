@@ -13,13 +13,25 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
   const [mensagens, setMensagens] = useState<Mensagem[]>(initialMessages);
   const [texto, setTexto]         = useState("");
   const [loading, setLoading]     = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const shouldScrollOnNextUpdateRef = useRef(false);
   const lastMessageSignatureRef = useRef(getMessageSignature(initialMessages));
 
+  function scrollToBottom() {
+    const el = containerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function isNearBottom() {
+    const el = containerRef.current;
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }
+
   useEffect(() => {
     if (shouldScrollOnNextUpdateRef.current) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      scrollToBottom();
       shouldScrollOnNextUpdateRef.current = false;
     }
   }, [mensagens]);
@@ -33,7 +45,8 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
       const nextSignature = getMessageSignature(nextMessages);
 
       if (nextSignature !== lastMessageSignatureRef.current) {
-        shouldScrollOnNextUpdateRef.current = true;
+        // só scroll automático se o usuário já estiver perto do fundo
+        shouldScrollOnNextUpdateRef.current = isNearBottom();
         lastMessageSignatureRef.current = nextSignature;
         setMensagens(nextMessages);
       }
@@ -52,7 +65,7 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
     setLoading(false);
     if (res.ok) {
       const novaMensagem = await res.json();
-      shouldScrollOnNextUpdateRef.current = true;
+      shouldScrollOnNextUpdateRef.current = true; // ao enviar, sempre desce
       setMensagens(prev => {
         const nextMessages = [...prev, novaMensagem];
         lastMessageSignatureRef.current = getMessageSignature(nextMessages);
@@ -63,9 +76,9 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: ".75rem", flex: 1, minHeight: 0 }}>
+    <div className="chat-box-root" style={{ display: "flex", flexDirection: "column", gap: ".75rem", flex: 1, minHeight: 0 }}>
       {/* Messages */}
-      <div style={{
+      <div ref={containerRef} className="chat-box-messages" style={{
         flex: 1, minHeight: 260, maxHeight: 480, overflowY: "auto", padding: "1rem",
         background: "var(--surface-2)", borderRadius: "var(--radius-sm)",
         border: "1px solid var(--border)",
@@ -87,8 +100,8 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
           mensagens.map(m => {
             const isOwn = m.remetente.id === currentUserId;
             return (
-              <div key={m.id} style={{ display: "flex", justifyContent: isOwn ? "flex-end" : "flex-start" }}>
-                <div style={{
+              <div key={m.id} className="chat-message-row" style={{ display: "flex", justifyContent: isOwn ? "flex-end" : "flex-start" }}>
+                <div className={isOwn ? "chat-bubble chat-bubble-own" : "chat-bubble chat-bubble-other"} style={{
                   maxWidth: "72%", padding: ".6rem .9rem",
                   borderRadius: isOwn ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
                   background: isOwn ? "var(--green)" : "var(--surface)",
@@ -115,11 +128,10 @@ export function ChatBox({ coletaId, currentUserId, initialMessages }: Props) {
             );
           })
         )}
-        <div ref={bottomRef} />
       </div>
 
       {/* Input */}
-      <form onSubmit={handleEnviar} style={{ display: "flex", gap: ".5rem" }}>
+      <form className="chat-box-form" onSubmit={handleEnviar} style={{ display: "flex", gap: ".5rem" }}>
         <label htmlFor={`chat-message-${coletaId}`} className="sr-only">
           Nova mensagem
         </label>

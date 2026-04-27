@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChatBox } from "@/components/forms/ChatBox";
+import { FloatingChat } from "@/components/ui/FloatingChat";
 import { RequestImageGallery } from "@/components/ui/RequestImageGallery";
 import { ColetaStatusTracker } from "@/components/ui/ColetaStatusTracker";
 import { ColetaBadge } from "@/components/ui/StatusBadge";
@@ -267,42 +268,21 @@ export default async function EmpresaColetaDetailPage({
               <SectionHeading
                 eyebrow="Acompanhamento"
                 title="Progresso da coleta"
-                description="O fluxo operacional segue disponivel abaixo da ficha principal, com os controles da empresa preservados."
               />
               <ColetaStatusTracker coletaId={coleta.id} statusAtual={coleta.status} isEmpresa />
             </section>
 
-            <section
-              className="card chat-card"
-              style={{
-                padding: 0,
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                boxShadow: "var(--shadow)",
-              }}
+            <FloatingChat
+              title={`Chat com ${s.user.nome.split(" ")[0]}`}
+              description="Conversa vinculada a esta coleta."
+              messageCount={coleta.mensagens.length}
             >
-              <div
-                style={{
-                  padding: "1rem 1.25rem",
-                  borderBottom: "1px solid var(--border)",
-                  background: "linear-gradient(180deg, var(--surface-3) 0%, var(--surface) 100%)",
-                }}
-              >
-                <SectionHeading
-                  eyebrow="Comunicação"
-                  title={`Chat com ${s.user.nome.split(" ")[0]}`}
-                  description="Conversa vinculada a esta coleta."
-                  compact
-                />
-              </div>
-              <div className="chat-card-body" style={{ padding: "1rem 1.25rem" }}>
-                <ChatBox
-                  coletaId={coleta.id}
-                  currentUserId={userId}
-                  initialMessages={coleta.mensagens as any}
-                />
-              </div>
-            </section>
+              <ChatBox
+                coletaId={coleta.id}
+                currentUserId={userId}
+                initialMessages={coleta.mensagens as any}
+              />
+            </FloatingChat>
           </aside>
         </div>
       </div>

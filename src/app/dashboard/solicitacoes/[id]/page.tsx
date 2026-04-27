@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChatBox } from "@/components/forms/ChatBox";
+import { FloatingChat } from "@/components/ui/FloatingChat";
 import { RequestImageGallery } from "@/components/ui/RequestImageGallery";
 import { ColetaStatusTracker } from "@/components/ui/ColetaStatusTracker";
 import { SolicitacaoBadge } from "@/components/ui/StatusBadge";
@@ -226,11 +227,38 @@ export default async function SolicitacaoDetailPage({
                       value={new Date(s.coleta.dataAceite).toLocaleDateString("pt-BR")}
                     />
                     {s.coleta.codigoConfirmacao && (
-                      <DocumentField
-                        label="Código de confirmação"
-                        value={s.coleta.codigoConfirmacao}
-                        mono
-                      />
+                      <div style={{
+                        gridColumn: "1 / -1",
+                        padding: "1rem 1.25rem",
+                        borderRadius: 20,
+                        border: "2px solid var(--green)",
+                        background: "rgba(30,122,50,.06)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "1.5rem",
+                        flexWrap: "wrap",
+                      }}>
+                        <div style={{ flex: 1, minWidth: 160 }}>
+                          <p style={{ fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1.5px", color: "var(--green)", fontWeight: 700, marginBottom: ".4rem" }}>
+                            Codigo de confirmacao
+                          </p>
+                          <p style={{ fontSize: "2rem", fontFamily: "ui-monospace, SFMono-Regular, monospace", fontWeight: 700, letterSpacing: "8px", color: "var(--text)", lineHeight: 1 }}>
+                            {s.coleta.codigoConfirmacao}
+                          </p>
+                        </div>
+                        <div style={{
+                          padding: ".7rem 1rem",
+                          borderRadius: "var(--radius-sm)",
+                          background: "rgba(30,122,50,.1)",
+                          border: "1px solid rgba(30,122,50,.2)",
+                          fontSize: ".82rem",
+                          color: "var(--green-dark)",
+                          lineHeight: 1.55,
+                          maxWidth: 240,
+                        }}>
+                          <strong>Mostre este codigo ao coletor</strong> no momento da conclusao da coleta.
+                        </div>
+                      </div>
                     )}
                     {s.coleta.dataConclusao && (
                       <DocumentField
@@ -268,37 +296,17 @@ export default async function SolicitacaoDetailPage({
                 <ColetaStatusTracker coletaId={s.coleta.id} statusAtual={s.coleta.status} isEmpresa={false} />
               </section>
 
-              <section
-                className="card chat-card"
-                style={{
-                  padding: 0,
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  boxShadow: "var(--shadow)",
-                }}
+              <FloatingChat
+                title="Chat com a empresa"
+                description={s.coleta.company.user.nome}
+                messageCount={s.coleta.mensagens.length}
               >
-                <div
-                  style={{
-                    padding: "1rem 1.25rem",
-                    borderBottom: "1px solid var(--border)",
-                    background: "linear-gradient(180deg, var(--surface-3) 0%, var(--surface) 100%)",
-                  }}
-                >
-                  <SectionHeading
-                    eyebrow="Comunicação"
-                    title="Chat com a empresa"
-                    description={s.coleta.company.user.nome}
-                    compact
-                  />
-                </div>
-                <div className="chat-card-body" style={{ padding: "1rem 1.25rem" }}>
-                  <ChatBox
-                    coletaId={s.coleta.id}
-                    currentUserId={userId}
-                    initialMessages={s.coleta.mensagens as any}
-                  />
-                </div>
-              </section>
+                <ChatBox
+                  coletaId={s.coleta.id}
+                  currentUserId={userId}
+                  initialMessages={s.coleta.mensagens as any}
+                />
+              </FloatingChat>
             </aside>
           )}
         </div>

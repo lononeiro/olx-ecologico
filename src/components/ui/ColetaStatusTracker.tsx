@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { STATUS_COLETA_LABEL } from "@/types";
 
@@ -49,6 +49,12 @@ export function ColetaStatusTracker({ coletaId, statusAtual, isEmpresa }: Props)
   // Para a etapa de conclusão — input do código
   const [codigoInput, setCodigoInput] = useState("");
   const [codigoErro, setCodigoErro] = useState("");
+
+  useEffect(() => {
+    if (!resultado?.ok) return;
+    const timer = setTimeout(() => setResultado(null), 3000);
+    return () => clearTimeout(timer);
+  }, [resultado]);
 
   const isCancelada = statusAtual === "cancelada";
   const isConcluida = statusAtual === "concluida";
@@ -159,24 +165,29 @@ export function ColetaStatusTracker({ coletaId, statusAtual, isEmpresa }: Props)
                    currentIdx === 2 ? "66%" : "calc(100% - 36px)",
           }} />
 
-          <div style={{ display: "flex", justifyContent: "space-between", position: "relative", zIndex: 2 }}>
+          <div role="list" aria-label="Progresso da coleta" style={{ display: "flex", justifyContent: "space-between", position: "relative", zIndex: 2 }}>
             {STEPS.map((step, idx) => {
               const done = idx < currentIdx;
               const active = idx === currentIdx;
               const future = idx > currentIdx;
+              const stepState = done ? "concluida" : active ? "atual" : "pendente";
               return (
-                <div key={step.key} style={{
+                <div key={step.key} role="listitem" style={{
                   display: "flex", flexDirection: "column", alignItems: "center", gap: ".5rem", flex: 1,
                 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: "50%",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    background: done || active ? "var(--green)" : "var(--surface)",
-                    border: future ? "2px solid var(--border)" : "2px solid var(--green)",
-                    color: done || active ? "#fff" : "var(--text-faint)",
-                    transition: "all .3s var(--ease)",
-                    boxShadow: active ? "0 0 0 4px rgba(30,122,50,.15)" : "none",
-                  }}>
+                  <div
+                    aria-label={`Etapa ${idx + 1}: ${step.label} — ${stepState}`}
+                    aria-current={active ? "step" : undefined}
+                    style={{
+                      width: 36, height: 36, borderRadius: "50%",
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                      background: done || active ? "var(--green)" : "var(--surface)",
+                      border: future ? "2px solid var(--border)" : "2px solid var(--green)",
+                      color: done || active ? "#fff" : "var(--text-faint)",
+                      transition: "all .3s var(--ease)",
+                      boxShadow: active ? "0 0 0 4px rgba(30,122,50,.15)" : "none",
+                    }}
+                  >
                     {done
                       ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6 9 17l-5-5"/></svg>
                       : step.icon}
@@ -213,13 +224,26 @@ export function ColetaStatusTracker({ coletaId, statusAtual, isEmpresa }: Props)
           border: `1.5px solid ${resultado.ok ? "rgba(30,122,50,.2)" : "rgba(184,50,40,.2)"}`,
           color: resultado.ok ? "var(--green-dark)" : "var(--red)",
           fontSize: ".83rem", fontWeight: 500,
-          display: "flex", alignItems: "center", gap: ".5rem",
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem",
         }}>
-          {resultado.ok
-            ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17l-5-5"/></svg>
-            : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-          }
-          {resultado.msg}
+          <span style={{ display: "flex", alignItems: "center", gap: ".5rem" }}>
+            {resultado.ok
+              ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17l-5-5"/></svg>
+              : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+            }
+            {resultado.msg}
+          </span>
+          {!resultado.ok && (
+            <button
+              onClick={() => setResultado(null)}
+              aria-label="Fechar mensagem de erro"
+              style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", padding: "0 .15rem", lineHeight: 1, flexShrink: 0 }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/>
+              </svg>
+            </button>
+          )}
         </div>
       )}
 
@@ -264,29 +288,44 @@ export function ColetaStatusTracker({ coletaId, statusAtual, isEmpresa }: Props)
             </div>
           )}
 
-          <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap" }}>
+          <div className="coleta-status-actions">
             <button
               onClick={avancar}
               disabled={loading || (proximoEhConclusao && !codigoInput.trim())}
-              className="btn btn-primary"
-              style={{ flex: 1, justifyContent: "center", minWidth: 140 }}
+              className="btn btn-primary coleta-status-action-btn"
             >
               {loading ? (
-                <><span className="spinner" style={{ width: 14, height: 14 }} /> Atualizando...</>
+                <>
+                  <span
+                    className="spinner"
+                    style={{ width: 14, height: 14, position: "absolute", left: "1rem" }}
+                  />
+                  <span style={{ display: "block", width: "100%", textAlign: "center" }}>Atualizando...</span>
+                </>
               ) : (
                 <>
-                  {STEPS.find(s => s.key === proximoPrincipal)?.icon}
-                  {proximoEhConclusao ? "Confirmar conclusao" : `Avancar para ${STATUS_COLETA_LABEL[proximoPrincipal]}`}
+                  <span
+                    style={{
+                      position: "absolute",
+                      left: "1rem",
+                      display: "inline-flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    {STEPS.find(s => s.key === proximoPrincipal)?.icon}
+                  </span>
+                  <span style={{ display: "block", width: "100%", textAlign: "center" }}>
+                    {proximoEhConclusao ? "Confirmar conclusao" : `Avancar para ${STATUS_COLETA_LABEL[proximoPrincipal]}`}
+                  </span>
                 </>
               )}
             </button>
             <button
               onClick={cancelar}
               disabled={loading}
-              className="btn btn-danger"
-              style={{ flexShrink: 0 }}
+              className="btn btn-danger coleta-status-action-btn"
             >
-              Cancelar coleta
+              <span style={{ display: "block", width: "100%", textAlign: "center" }}>Cancelar coleta</span>
             </button>
           </div>
         </div>

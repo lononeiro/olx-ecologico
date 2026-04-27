@@ -275,7 +275,7 @@ export function AceitarSolicitacaoButton({
                     required
                   />
                   <p style={{ marginTop: ".45rem", fontSize: ".78rem", color: "var(--text-muted)" }}>
-                    Essa previsão aparecerá no dashboard e ajuda a organizar as próximas coletas.
+                    {/* Essa previsão aparecerá no dashboard e ajuda a organizar as próximas  coletas. */}
                   </p>
                 </div>
 

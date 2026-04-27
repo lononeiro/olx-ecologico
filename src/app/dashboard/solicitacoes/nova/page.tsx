@@ -543,7 +543,7 @@ export default function CriarSolicitacaoPage() {
                         <div className="mb-4 flex items-center justify-between">
                           <div>
                             <p className="text-sm font-semibold text-slate-800 dark:text-zinc-100">Previews selecionados</p>
-                            <p className="text-sm text-slate-500 dark:text-zinc-400">Revise as imagens e remova as que nao quiser manter.</p>
+                            <p className="text-sm text-slate-500 dark:text-zinc-400">Revise as imagens e remova as que não quiser manter.</p>
                           </div>
                           <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">{imagens.length} imagem(ns)</span>
                         </div>

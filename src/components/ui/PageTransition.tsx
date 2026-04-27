@@ -53,7 +53,7 @@ export function PageTransitionProvider({ children }: { children: React.ReactNode
           style={{
             position: "fixed",
             inset: 0,
-            background: "#0f1a0f",
+            background: "rgba(15,26,15,.94)",
             zIndex: 9999,
             opacity: overlayOpacity,
             transition:
@@ -61,8 +61,35 @@ export function PageTransitionProvider({ children }: { children: React.ReactNode
                 ? "opacity 300ms ease"
                 : "opacity 400ms ease",
             pointerEvents: "none",
+            display: "grid",
+            placeItems: "center",
           }}
-        />
+        >
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              display: "grid",
+              justifyItems: "center",
+              gap: ".85rem",
+              color: "#fff",
+              transform: phase === "leaving" ? "translateY(0)" : "translateY(8px)",
+              transition: "transform 300ms ease",
+            }}
+          >
+            <span
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: "50%",
+                border: "3px solid rgba(255,255,255,.22)",
+                borderTopColor: "#86d25a",
+                animation: "spin .75s linear infinite",
+              }}
+            />
+            <span style={{ fontSize: ".9rem", fontWeight: 700 }}>Carregando pagina...</span>
+          </div>
+        </div>
       )}
       {children}
     </Ctx.Provider>
