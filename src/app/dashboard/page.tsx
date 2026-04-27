@@ -21,6 +21,7 @@ export default async function DashboardPage() {
     ).length,
     concluidas: solicitacoes.filter((s) => s.coleta?.status === "concluida").length,
   };
+  const textoSolicitacaoPendente = stats.pendentes === 1 ? "solicitação" : "solicitações";
 
   const hora = new Date().getHours();
   const saudacao = hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite";
@@ -36,31 +37,31 @@ export default async function DashboardPage() {
           </h1>
           <p style={{ fontSize: 13, color: "var(--color-gray-500)", marginTop: 4 }}>
             {stats.total === 0
-              ? "Crie sua primeira solicitacao de coleta."
-              : `Voce tem ${stats.pendentes} solicitacao${stats.pendentes === 1 ? "" : "oes"} aguardando aprovacao.`}
+              ? "Crie sua primeira solicitação de coleta."
+              : `Voce tem ${stats.pendentes} ${textoSolicitacaoPendente} aguardando aprovação.`}
           </p>
         </div>
-        <Link href="/dashboard/solicitacoes/nova" className="btn btn-primary" aria-label="Criar nova solicitacao">
+        <Link href="/dashboard/solicitacoes/nova" className="btn btn-primary" aria-label="Criar nova solicitação">
           <IconPlus />
-          Nova solicitacao
+          Nova solicitação
         </Link>
       </div>
 
       <div className="kpi-grid" style={{ marginBottom: 20 }}>
-        <MetricCard label="Solicitacoes" value={stats.total} description="Total de solicitacoes" />
-        <MetricCard label="Pendentes" value={stats.pendentes} description="Aguardando aprovacao" accent="amber" />
+        <MetricCard label="Solicitações" value={stats.total} description="Total de Solicitações" />
+        <MetricCard label="Pendentes" value={stats.pendentes} description="Aguardando aprovação" accent="amber" />
         <MetricCard label="Em andamento" value={stats.emAndamento} description="Coletas ativas" accent="blue" />
-        <MetricCard label="Concluidas" value={stats.concluidas} description="Coletas finalizadas" />
+        <MetricCard label="Concluídas" value={stats.concluidas} description="Coletas finalizadas" />
       </div>
 
       <div className="dashboard-overview-grid">
         <SurfaceCard className="chart-card">
-          <PageSection title="Coletas por mes" description="Volume mensal das solicitacoes criadas" />
+          <PageSection title="Coletas por mes" description="Volume mensal das Solicitações criadas" />
           <MonthlyLineChart items={solicitacoes} />
         </SurfaceCard>
 
         <SurfaceCard>
-          <PageSection title="Solicitacoes recentes" description={`Ultimas ${Math.min(solicitacoes.length, 5)} movimentacoes`} />
+          <PageSection title="Solicitações recentes" description={`Ultimas ${Math.min(solicitacoes.length, 5)} movimentações`} />
           <div className="request-list">
             {solicitacoes.slice(0, 5).map((item) => (
               <Link key={item.id} href={`/dashboard/solicitacoes/${item.id}`} className="request-row" style={{ textDecoration: "none" }}>
@@ -73,7 +74,7 @@ export default async function DashboardPage() {
                 <span className="request-row-date">{new Date(item.createdAt).toLocaleDateString("pt-BR")}</span>
               </Link>
             ))}
-            {solicitacoes.length === 0 ? <p className="request-row-copy">Nenhuma solicitacao recente.</p> : null}
+            {solicitacoes.length === 0 ? <p className="request-row-copy">Nenhuma solicitação recente.</p> : null}
           </div>
         </SurfaceCard>
       </div>
@@ -83,20 +84,20 @@ export default async function DashboardPage() {
           <div className="empty-state-icon"><IconRecycle /></div>
           <div>
             <p style={{ fontWeight: 600, fontSize: 18, color: "var(--color-gray-900)", marginBottom: 4 }}>
-              Nenhuma solicitacao ainda
+              Nenhuma solicitação ainda
             </p>
             <p style={{ fontSize: 13, color: "var(--color-gray-500)", maxWidth: 360, margin: "0 auto" }}>
-              Crie sua primeira solicitacao de coleta. Leva menos de 2 minutos.
+              Crie sua primeira solicitação de coleta. Leva menos de 2 minutos.
             </p>
           </div>
-          <Link href="/dashboard/solicitacoes/nova" className="btn btn-primary" aria-label="Criar primeira solicitacao">
-            Criar primeira solicitacao
+          <Link href="/dashboard/solicitacoes/nova" className="btn btn-primary" aria-label="Criar primeira solicitação">
+            Criar primeira solicitação
           </Link>
         </div>
       ) : (
         <>
           <PageSection
-            title="Todas as solicitacoes"
+            title="Todas as Solicitações"
             description={`${solicitacoes.length} registros no total`}
             action={
               solicitacoes.length > 5 ? (

@@ -12,12 +12,12 @@ export default async function EmpresaSolicitacoesPage() {
       <div style={{ marginBottom: "2rem" }}>
         <p className="section-label">Empresa</p>
         <h1 style={{ fontSize: "clamp(1.3rem, 3vw, 1.65rem)", fontWeight: 800, color: "var(--text)", letterSpacing: "-.4px" }}>
-          Solicitacoes Disponiveis
+          Solicitações Disponíveis
         </h1>
         <p style={{ fontSize: ".84rem", color: "var(--text-muted)", marginTop: ".3rem" }}>
           {solicitacoes.length === 0
-            ? "Nenhuma solicitacao disponivel no momento."
-            : `${solicitacoes.length} solicitac${solicitacoes.length === 1 ? "ao" : "oes"} aguardando aceitacao.`}
+            ? "Nenhuma solicitação disponível no momento."
+            : `${solicitacoes.length} solicitac${solicitacoes.length === 1 ? "ao" : "oes"} aguardando aceitação.`}
         </p>
       </div>
 
@@ -30,10 +30,10 @@ export default async function EmpresaSolicitacoesPage() {
           </div>
           <div>
             <p style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--text)", marginBottom: ".3rem" }}>
-              Nenhuma solicitacao disponivel
+              Nenhuma solicitação disponivel
             </p>
             <p style={{ fontSize: ".86rem", color: "var(--text-muted)", maxWidth: 340, margin: "0 auto" }}>
-              Novas solicitacoes aprovadas apareceram aqui assim que estiverem disponiveis.
+              Novas solicitações aprovadas apareceram aqui assim que estiverem disponíveis.
             </p>
           </div>
         </div>

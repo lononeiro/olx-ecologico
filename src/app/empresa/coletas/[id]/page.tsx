@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 const STATUS_COPY: Record<string, { title: string; description: string; tone: string }> = {
   aceita: {
     title: "Coleta confirmada",
-    description: "A empresa assumiu a solicitacao e pode alinhar os proximos passos com o solicitante.",
+    description: "A empresa assumiu a solicitação e pode alinhar os proximos passos com o solicitante.",
     tone: "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200",
   },
   a_caminho: {
@@ -22,18 +22,18 @@ const STATUS_COPY: Record<string, { title: string; description: string; tone: st
     tone: "border-indigo-200 bg-indigo-50 text-indigo-800 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-200",
   },
   em_coleta: {
-    title: "Coleta em execucao",
+    title: "Coleta em execução",
     description: "O material esta sendo atendido no local, com o fluxo operacional ja em andamento.",
     tone: "border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/40 dark:text-violet-200",
   },
   concluida: {
     title: "Coleta concluida",
-    description: "Atendimento finalizado com registro completo da solicitacao e da comunicacao.",
+    description: "Atendimento finalizado com registro completo da solicitação e da comunicação.",
     tone: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
   },
   cancelada: {
     title: "Coleta cancelada",
-    description: "O fluxo foi encerrado antes da conclusao. Consulte o historico da conversa se precisar revisar o contexto.",
+    description: "O fluxo foi encerrado antes da conclusão. Consulte o histórico da conversa se precisar revisar o contexto.",
     tone: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200",
   },
 };
@@ -73,7 +73,7 @@ export default async function EmpresaColetaDetailPage({
   const s = coleta.solicitacao;
   const statusCopy = STATUS_COPY[coleta.status] ?? {
     title: coleta.status,
-    description: "Acompanhe os dados operacionais desta coleta em uma visualizacao mais organizada.",
+    description: "Acompanhe os dados operacionais desta coleta em uma visualização mais organizada.",
     tone: "border-slate-200 bg-slate-50 text-slate-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
   };
 
@@ -180,7 +180,7 @@ export default async function EmpresaColetaDetailPage({
                       color: "var(--text-muted)",
                     }}
                   >
-                    Painel detalhado da coleta com anexos, dados da solicitacao e informacoes do solicitante em uma visualizacao mais limpa e profissional.
+                    Painel detalhado da coleta com anexos, dados da solicitação e informações do solicitante em uma visualização mais limpa e profissional.
                   </p>
                 </div>
                 <ColetaBadge status={coleta.status} />
@@ -218,7 +218,7 @@ export default async function EmpresaColetaDetailPage({
                 <DocumentField label="Material" value={s.material.nome} />
                 <DocumentField label="Quantidade" value={s.quantidade} />
                 <DocumentField
-                  label="Solicitacao criada em"
+                  label="Solicitação criada em"
                   value={new Date(s.createdAt).toLocaleString("pt-BR")}
                 />
                 <DocumentField
@@ -234,7 +234,7 @@ export default async function EmpresaColetaDetailPage({
                 )}
                 <DocumentField label="Endereco da coleta" value={s.endereco} full />
                 {s.descricao && (
-                  <DocumentField label="Descricao do material" value={s.descricao} full muted />
+                  <DocumentField label="Descrição do material" value={s.descricao} full muted />
                 )}
 
                 <StatusSummary
@@ -289,7 +289,7 @@ export default async function EmpresaColetaDetailPage({
                 }}
               >
                 <SectionHeading
-                  eyebrow="Comunicacao"
+                  eyebrow="Comunicação"
                   title={`Chat com ${s.user.nome.split(" ")[0]}`}
                   description="Conversa vinculada a esta coleta."
                   compact
@@ -438,7 +438,7 @@ function StatusSummary({
           opacity: 0.8,
         }}
       >
-        Situacao atual
+        Situação atual
       </p>
       <p style={{ fontSize: ".96rem", fontWeight: 700, marginBottom: ".25rem" }}>{title}</p>
       <p style={{ fontSize: ".85rem", lineHeight: 1.55 }}>{description}</p>

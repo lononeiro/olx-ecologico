@@ -12,18 +12,18 @@ export const dynamic = "force-dynamic";
 
 const STATUS_COPY: Record<string, { title: string; description: string; tone: string }> = {
   pendente: {
-    title: "Aguardando aprovacao",
-    description: "Sua solicitacao esta em analise pela administracao.",
+    title: "Aguardando aprovação",
+    description: "Sua solicitação esta em análise pela administração.",
     tone: "border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-900/60 dark:bg-yellow-950/40 dark:text-yellow-200",
   },
   aprovada: {
     title: "Aguardando empresa",
-    description: "A solicitacao foi aprovada e aguarda uma empresa aceitar a coleta.",
+    description: "A solicitação foi aprovada e aguarda uma empresa aceitar a coleta.",
     tone: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
   },
   rejeitada: {
-    title: "Solicitacao rejeitada",
-    description: "Entre em contato com o suporte caso precise de mais informacoes.",
+    title: "Solicitação rejeitada",
+    description: "Entre em contato com o suporte caso precise de mais informações.",
     tone: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200",
   },
 };
@@ -58,7 +58,7 @@ export default async function SolicitacaoDetailPage({
 
   const statusCopy = STATUS_COPY[s.status] ?? {
     title: s.status,
-    description: "Acompanhe os dados atualizados desta solicitacao.",
+    description: "Acompanhe os dados atualizados desta solicitação.",
     tone: "border-slate-200 bg-slate-50 text-slate-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
   };
 
@@ -168,7 +168,7 @@ export default async function SolicitacaoDetailPage({
                       color: "var(--text-muted)",
                     }}
                   >
-                    Documento de referencia da solicitacao de coleta com destaque visual para anexos e dados principais.
+                    Documento de referencia da solicitação de coleta com destaque visual para anexos e dados principais.
                   </p>
                 </div>
                 <SolicitacaoBadge status={s.status} />
@@ -192,7 +192,7 @@ export default async function SolicitacaoDetailPage({
             <div style={{ padding: "1.75rem 2rem 2rem" }}>
               <SectionHeading
                 eyebrow="Dados"
-                title="Informacoes da solicitacao"
+                title="Informações da solicitação"
                 description="Hierarquia organizada para leitura formal, sem esconder os dados relevantes do sistema."
               />
 
@@ -210,15 +210,15 @@ export default async function SolicitacaoDetailPage({
                   value={new Date(s.createdAt).toLocaleString("pt-BR")}
                 />
                 <DocumentField label="Status" value={statusCopy.title} />
-                <DocumentField label="Endereco" value={s.endereco} full />
+                <DocumentField label="Endereço" value={s.endereco} full />
                 {s.descricao && (
-                  <DocumentField label="Descricao" value={s.descricao} full muted />
+                  <DocumentField label="Descrição" value={s.descricao} full muted />
                 )}
 
                 {s.coleta ? (
                   <>
                     <DocumentField
-                      label="Empresa responsavel"
+                      label="Empresa responsável"
                       value={s.coleta.company.user.nome}
                     />
                     <DocumentField
@@ -227,14 +227,14 @@ export default async function SolicitacaoDetailPage({
                     />
                     {s.coleta.codigoConfirmacao && (
                       <DocumentField
-                        label="Codigo de confirmacao"
+                        label="Código de confirmação"
                         value={s.coleta.codigoConfirmacao}
                         mono
                       />
                     )}
                     {s.coleta.dataConclusao && (
                       <DocumentField
-                        label="Data da conclusao"
+                        label="Data da conclusão"
                         value={new Date(s.coleta.dataConclusao).toLocaleDateString("pt-BR")}
                       />
                     )}
@@ -263,7 +263,7 @@ export default async function SolicitacaoDetailPage({
                 <SectionHeading
                   eyebrow="Acompanhamento"
                   title="Progresso da coleta"
-                  description="O andamento operacional continua disponivel, mas separado da folha principal."
+                  description="O andamento operacional continua disponível, mas separado da folha principal."
                 />
                 <ColetaStatusTracker coletaId={s.coleta.id} statusAtual={s.coleta.status} isEmpresa={false} />
               </section>
@@ -285,7 +285,7 @@ export default async function SolicitacaoDetailPage({
                   }}
                 >
                   <SectionHeading
-                    eyebrow="Comunicacao"
+                    eyebrow="Comunicação"
                     title="Chat com a empresa"
                     description={s.coleta.company.user.nome}
                     compact
@@ -431,7 +431,7 @@ function StatusSummary({
           opacity: 0.8,
         }}
       >
-        Situacao atual
+        Situação atual
       </p>
       <p style={{ fontSize: ".96rem", fontWeight: 700, marginBottom: ".25rem" }}>{title}</p>
       <p style={{ fontSize: ".85rem", lineHeight: 1.55 }}>{description}</p>

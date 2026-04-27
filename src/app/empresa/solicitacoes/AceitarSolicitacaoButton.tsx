@@ -52,7 +52,7 @@ export function AceitarSolicitacaoButton({
     setLoading(false);
 
     if (!res.ok) {
-      setErro(data.error ?? "Erro ao aceitar solicitacao.");
+      setErro(data.error ?? "Erro ao aceitar solicitação.");
       return;
     }
 
@@ -72,7 +72,7 @@ export function AceitarSolicitacaoButton({
           <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
           <circle cx="12" cy="10" r="3" />
         </svg>
-        Ver localizacao e aceitar
+        Ver localização e aceitar
       </button>
 
       {modalAberto && (
@@ -155,7 +155,7 @@ export function AceitarSolicitacaoButton({
                       marginBottom: ".45rem",
                     }}
                   >
-                    Confirmar aceitacao
+                    Confirmar aceitação
                   </p>
                   <p
                     style={{
@@ -213,7 +213,7 @@ export function AceitarSolicitacaoButton({
                         marginBottom: ".45rem",
                       }}
                     >
-                      Localizacao da coleta
+                      Localização da coleta
                     </p>
                   </div>
                   <div style={{ padding: "0 1rem 1rem" }}>
@@ -233,8 +233,8 @@ export function AceitarSolicitacaoButton({
                   <InfoField label="Quantidade" value={quantidade} />
                   <InfoField label="Solicitante" value={solicitanteNome} />
                   <InfoField label="Status" value={<SolicitacaoBadge status="aprovada" />} />
-                  <InfoField label="Endereco da coleta" value={endereco} full />
-                  {descricao && <InfoField label="Descricao" value={descricao} full muted />}
+                  <InfoField label="Endereço da coleta" value={endereco} full />
+                  {descricao && <InfoField label="Descrição" value={descricao} full muted />}
                 </div>
 
                 <div
@@ -275,7 +275,7 @@ export function AceitarSolicitacaoButton({
                     required
                   />
                   <p style={{ marginTop: ".45rem", fontSize: ".78rem", color: "var(--text-muted)" }}>
-                    Essa previsao aparecera no dashboard e ajuda a organizar as proximas coletas.
+                    Essa previsão aparecerá no dashboard e ajuda a organizar as próximas coletas.
                   </p>
                 </div>
 
@@ -398,7 +398,7 @@ export function AceitarSolicitacaoButton({
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <path d="M20 6 9 17l-5-5" />
                         </svg>
-                        Confirmar aceitacao
+                        Confirmar aceitação
                       </>
                     )}
                   </button>

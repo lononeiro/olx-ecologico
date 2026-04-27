@@ -311,9 +311,9 @@ export default function CriarSolicitacaoPage() {
 
     if (targetStep === 2) {
       if (!formData.quantidade.trim()) return setErro('Quantidade e obrigatoria'), false;
-      if (!formData.descricao.trim()) return setErro('Descricao e obrigatoria'), false;
-      if (formData.descricao.trim().length < 10) return setErro('Descricao deve ter no minimo 10 caracteres'), false;
-      if (uploadingImage) return setErro('Aguarde a finalizacao do upload antes de continuar'), false;
+      if (!formData.descricao.trim()) return setErro('Descrição e obrigatoria'), false;
+      if (formData.descricao.trim().length < 10) return setErro('Descrição deve ter no minimo 10 caracteres'), false;
+      if (uploadingImage) return setErro('Aguarde a finalização do upload antes de continuar'), false;
       if (imagens.length > MAX_IMAGES) return setErro(`Voce pode adicionar no maximo ${MAX_IMAGES} imagens`), false;
     }
 
@@ -389,7 +389,7 @@ export default function CriarSolicitacaoPage() {
               <span>{'<'}</span><span>Voltar ao Dashboard</span>
             </Link>
             <h1 className="mb-3 bg-gradient-to-r from-green-700 via-emerald-600 to-blue-600 bg-clip-text text-4xl font-bold text-transparent md:text-5xl">
-              Nova Solicitacao de Coleta
+              Nova Solicitação de Coleta
             </h1>
             <p className="mx-auto max-w-2xl text-gray-600 dark:text-zinc-400">
               Preencha os dados do material e monte uma galeria com ate 5 imagens antes de enviar.
@@ -426,9 +426,9 @@ export default function CriarSolicitacaoPage() {
             {step === 1 && (
               <div className="space-y-8 p-8 md:p-12">
                 <div>
-                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-green-600">Base da solicitacao</p>
-                  <h2 className="text-3xl font-bold text-slate-900 dark:text-zinc-100">Informacoes principais</h2>
-                  <p className="mt-2 text-slate-600 dark:text-zinc-400">Use um titulo claro e escolha o material correto.</p>
+                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-green-600">Base da solicitação</p>
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-zinc-100">Informações principais</h2>
+                  <p className="mt-2 text-slate-600 dark:text-zinc-400">Use um título claro e escolha o material correto.</p>
                 </div>
 
                 <div className="space-y-6">
@@ -453,7 +453,7 @@ export default function CriarSolicitacaoPage() {
                   </div>
 
                   <div className="rounded-2xl border border-green-100 bg-gradient-to-r from-green-50 to-cyan-50 p-5 text-sm text-green-900 dark:border-green-900/60 dark:from-green-950/30 dark:to-cyan-950/30 dark:text-green-100">
-                    Um material bem classificado ajuda a empresa certa a encontrar sua solicitacao.
+                    Um material bem classificado ajuda a empresa certa a encontrar sua solicitação.
                   </div>
                 </div>
 
@@ -468,7 +468,7 @@ export default function CriarSolicitacaoPage() {
               <div className="space-y-8 p-8 md:p-12">
                 <div>
                   <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-green-600">Detalhes e imagens</p>
-                  <h2 className="text-3xl font-bold text-slate-900 dark:text-zinc-100">Descricao do material</h2>
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-zinc-100">Descrição do material</h2>
                   <p className="mt-2 text-slate-600 dark:text-zinc-400">Adicione detalhes e monte uma galeria moderna com ate 5 imagens.</p>
                 </div>
 
@@ -479,9 +479,9 @@ export default function CriarSolicitacaoPage() {
                   </div>
 
                   <div>
-                    <label className="mb-3 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Descricao *</label>
-                    <textarea name="descricao" value={formData.descricao} onChange={handleInputChange} rows={6} maxLength={500} placeholder="Explique o volume, o estado do material e qualquer observacao importante para a coleta." className="w-full resize-none rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-green-50 px-4 py-4 text-slate-900 outline-none transition focus:border-green-600 focus:shadow-lg dark:border-zinc-700 dark:from-zinc-950 dark:to-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" />
-                    <div className="mt-2 flex justify-between text-sm text-slate-400 dark:text-zinc-500"><span>Minimo de 10 caracteres</span><span>{formData.descricao.length}/500</span></div>
+                    <label className="mb-3 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Descrição *</label>
+                    <textarea name="descricao" value={formData.descricao} onChange={handleInputChange} rows={6} maxLength={500} placeholder="Explique o volume, o estado do material e qualquer observação importante para a coleta." className="w-full resize-none rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-green-50 px-4 py-4 text-slate-900 outline-none transition focus:border-green-600 focus:shadow-lg dark:border-zinc-700 dark:from-zinc-950 dark:to-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" />
+                    <div className="mt-2 flex justify-between text-sm text-slate-400 dark:text-zinc-500"><span> mínimo de 10 caracteres</span><span>{formData.descricao.length}/500</span></div>
                   </div>
 
                   <div className="rounded-[24px] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-cyan-50 p-5 md:p-6 dark:border-emerald-900/50 dark:from-emerald-950/25 dark:via-zinc-900 dark:to-cyan-950/20">
@@ -501,7 +501,7 @@ export default function CriarSolicitacaoPage() {
                         <div>
                           <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-green-600 to-blue-600 text-sm font-bold text-white shadow-lg shadow-green-200">IMG</div>
                           <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">{remainingSlots > 0 ? `Voce ainda pode adicionar ${remainingSlots} imagem(ns)` : 'Limite maximo atingido'}</h3>
-                          <p className="mt-1 text-sm text-slate-600 dark:text-zinc-400">O upload continua usando Cloudinary e cada imagem fica pronta para preview assim que o envio termina.</p>
+                          <p className="mt-1 text-sm text-slate-600 dark:text-zinc-400"></p>
                         </div>
 
                         <CldUploadWidget

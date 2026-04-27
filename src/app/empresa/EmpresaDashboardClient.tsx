@@ -102,7 +102,7 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
           <p>Aqui esta o resumo de hoje - {today.toLocaleDateString("pt-BR")}</p>
         </div>
         <div className="empresa-page-actions">
-          <button type="button" className="empresa-bell" aria-label="Notificacoes da empresa">
+          <button type="button" className="empresa-bell" aria-label="notificações da empresa">
             <IconBell />
             {data.metrics.novasSolicitacoes > 0 ? <span>{data.metrics.novasSolicitacoes}</span> : null}
           </button>
@@ -113,22 +113,22 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
       {data.metrics.pendentesMais24h > 0 ? (
         <section className="empresa-alert">
           <div>
-            <strong>Voce tem {data.metrics.pendentesMais24h} solicitacao{data.metrics.pendentesMais24h === 1 ? "" : "oes"} aguardando resposta ha mais de 24h.</strong>
-            <span>Responda logo para manter sua avaliacao.</span>
+            <strong>Voce tem {data.metrics.pendentesMais24h} solicitação{data.metrics.pendentesMais24h === 1 ? "" : "oes"} aguardando resposta ha mais de 24h.</strong>
+            <span>Responda logo para manter sua avaliação.</span>
           </div>
-          <Link href="/empresa/solicitacoes">Ver solicitacoes -&gt;</Link>
+          <Link href="/empresa/solicitacoes">Ver solicitações -&gt;</Link>
         </section>
       ) : null}
 
       <section className="empresa-kpi-grid">
-        <OperationalKpi icon={<IconInbox />} iconBg="#DBEAFE" iconColor="#1E40AF" label="Novas solicitacoes" value={data.metrics.novasSolicitacoes} trend={`↑ ${Math.min(3, data.metrics.novasSolicitacoes)} hoje`} />
+        <OperationalKpi icon={<IconInbox />} iconBg="#DBEAFE" iconColor="#1E40AF" label="Novas solicitações" value={data.metrics.novasSolicitacoes} trend={`↑ ${Math.min(3, data.metrics.novasSolicitacoes)} hoje`} />
         <OperationalKpi icon={<IconTruck />} iconBg="#FEF9C3" iconColor="#854D0E" label="Em andamento" value={data.metrics.emAndamento} trend={nextScheduled ? `prox: ${new Date(nextScheduled.dataPrevisaoColeta!).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "sem previsao"} info />
-        <OperationalKpi icon={<IconCheckCircle />} iconBg="#DCFCE7" iconColor="#166534" label="Concluidas este mes" value={data.metrics.concluidasMes} trend="↑ 12% vs mes ant" />
-        <OperationalKpi icon={<IconBars />} iconBg="#F3E8FF" iconColor="#6B21A8" label="Taxa de conclusao" value={`${data.metrics.taxaConclusao}%`} trend="↑ 2pp vs mes ant" />
+        <OperationalKpi icon={<IconCheckCircle />} iconBg="#DCFCE7" iconColor="#166534" label="Concluídas este mês" value={data.metrics.concluidasMes} trend="↑ 12% vs mês ant" />
+        <OperationalKpi icon={<IconBars />} iconBg="#F3E8FF" iconColor="#6B21A8" label="Taxa de conclusão" value={`${data.metrics.taxaConclusao}%`} trend="↑ 2pp vs mês ant" />
       </section>
 
       <section className="empresa-impact-grid">
-        <ImpactCard label="Material coletado" value={`${data.metrics.materialColetadoKg.toLocaleString("pt-BR")} kg`} sublabel="este mes" />
+        <ImpactCard label="Material coletado" value={`${data.metrics.materialColetadoKg.toLocaleString("pt-BR")} kg`} sublabel="este mês" />
         <ImpactCard label="CO2 evitado" value={`${Math.round(data.metrics.materialColetadoKg * 0.5).toLocaleString("pt-BR")} kg`} sublabel="emissoes evitadas" />
         <ImpactCard label="Arvores equivalentes" value={String(Math.max(1, Math.round(data.metrics.materialColetadoKg / 25)))} sublabel="arvores preservadas" />
       </section>
@@ -136,9 +136,9 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
       <section className="empresa-main-grid">
         <div className="empresa-panel">
           <div className="empresa-panel-header">
-            <h2>Solicitacoes recentes</h2>
+            <h2>Solicitações recentes</h2>
             <div className="empresa-panel-actions">
-              <label className="sr-only" htmlFor="empresa-request-filter">Filtrar solicitacoes</label>
+              <label className="sr-only" htmlFor="empresa-request-filter">Filtrar solicitações</label>
               <select id="empresa-request-filter" value={filter} onChange={(event) => setFilter(event.target.value as typeof filter)}>
                 {FILTERS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
               </select>
@@ -179,15 +179,15 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
           </div>
 
           <div className="empresa-panel">
-            <h2>Avaliacao e reputacao</h2>
+            <h2>Avaliação e reputação</h2>
             <div className="rating-summary">
               <div>
                 <strong><span>★</span> 4.8</strong>
-                <p>de 127 avaliacoes</p>
+                <p>de 127 avaliações</p>
               </div>
               <div>
                 <div className="rating-track"><i style={{ width: "96%" }} /></div>
-                <p>96% Taxa de satisfacao</p>
+                <p>96% Taxa de satisfação</p>
               </div>
             </div>
             <RatingRow stars="★★★★★" percent={68} />
@@ -323,7 +323,7 @@ function RequestRow({ item }: { item: EmpresaDashboardData["solicitacoes"][numbe
               imagens={item.imagens}
             />
           ) : null}
-          {item.status === "em_andamento" ? <Link className="empresa-row-outline" href={item.detailHref}>Registrar conclusao</Link> : null}
+          {item.status === "em_andamento" ? <Link className="empresa-row-outline" href={item.detailHref}>Registrar conclusão</Link> : null}
           <Link className="empresa-row-outline" href={item.detailHref}>Ver detalhes</Link>
         </div>
       </div>
@@ -350,8 +350,8 @@ function EmptyRequests() {
   return (
     <div className="empresa-empty-state">
       <IconInboxLarge />
-      <strong>Nenhuma solicitacao recente</strong>
-      <p>Novas solicitacoes aparecerao aqui quando chegarem.</p>
+      <strong>Nenhuma solicitação recente</strong>
+      <p>Novas solicitações aparecerão aqui quando chegarem.</p>
     </div>
   );
 }

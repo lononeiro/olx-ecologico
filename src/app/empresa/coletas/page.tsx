@@ -42,11 +42,11 @@ export default async function EmpresaColetasPage() {
               Nenhuma coleta ainda
             </p>
             <p style={{ fontSize: ".86rem", color: "var(--text-muted)", maxWidth: 340, margin: "0 auto" }}>
-              Aceite uma solicitacao para iniciar sua primeira coleta.
+              Aceite uma solicitação para iniciar sua primeira coleta.
             </p>
           </div>
           <Link href="/empresa/solicitacoes" className="btn btn-blue">
-            Ver solicitacoes disponiveis
+            Ver solicitações disponíveis
           </Link>
         </div>
       ) : (

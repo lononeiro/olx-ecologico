@@ -122,7 +122,7 @@ export function ProfilePageClient({ initialProfile }: Props) {
         return;
       }
 
-      setError("Nao foi possivel salvar o perfil agora.");
+      setError("Não foi possível salvar o perfil agora.");
       return;
     }
 
@@ -436,7 +436,7 @@ export function ProfilePageClient({ initialProfile }: Props) {
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 90px", gap: ".75rem" }}>
                     <ProfileField label="Cidade">
-                      <input type="text" name="cidade" value={addressDraft.cidade} onChange={handleAddressDraftChange} className="input-field" placeholder="Ex: Sao Paulo" />
+                      <input type="text" name="cidade" value={addressDraft.cidade} onChange={handleAddressDraftChange} className="input-field" placeholder="Ex: São Paulo" />
                     </ProfileField>
                     <ProfileField label="UF">
                       <input type="text" name="uf" value={addressDraft.uf} onChange={handleAddressDraftChange} className="input-field" placeholder="SP" maxLength={2} />
@@ -480,7 +480,7 @@ export function ProfilePageClient({ initialProfile }: Props) {
             }}
           >
             <p style={{ fontSize: ".78rem", color: "var(--text-faint)" }}>
-              Campos sensiveis continuam protegidos e nao podem ser alterados nesta tela.
+              Campos sensiveis continuam protegidos e não podem ser alterados nesta tela.
             </p>
             <button type="submit" className="btn btn-primary" disabled={isPending}>
               {isPending ? "Salvando..." : "Salvar alteracoes"}
@@ -508,7 +508,7 @@ export function ProfilePageClient({ initialProfile }: Props) {
             <div>
               <p className="section-label">Empresa Vinculada</p>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>
-                Relacao atual da conta
+                Relacão atual da conta
               </h2>
             </div>
 
@@ -517,8 +517,8 @@ export function ProfilePageClient({ initialProfile }: Props) {
                 <ReadOnlyRow label="Empresa ID" value={String(profile.company.id)} mono />
                 <ReadOnlyRow label="CNPJ" value={profile.company.cnpj} mono />
                 <ReadOnlyRow
-                  label="Descricao"
-                  value={profile.company.descricao || "Nao informada"}
+                  label="Descrição"
+                  value={profile.company.descricao || "Não informada"}
                   multiline
                 />
                 <ReadOnlyRow label="Cadastro da empresa" value={companyCreatedAtLabel} />

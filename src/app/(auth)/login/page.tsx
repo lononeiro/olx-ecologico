@@ -279,7 +279,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 labelStyle={labelStyle}
                 inputStyle={{ ...inputStyle("senha"), paddingRight: "6rem" }}
-                hint="Se você já tem cadastro antigo, sua senha atual continua válida."
+                // hint="Se você já tem cadastro antigo, sua senha atual continua válida."
                 wrapperStyle={{
                   borderRadius: "12px",
                 }}

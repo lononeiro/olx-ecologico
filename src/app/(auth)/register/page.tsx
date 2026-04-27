@@ -209,11 +209,34 @@ export default function RegisterPage() {
           -webkit-box-shadow: 0 0 0 1000px var(--auth-autofill) inset !important;
           -webkit-text-fill-color: var(--auth-text) !important;
         }
-        .tipo-btn { transition: all .2s; cursor: pointer; }
+        .tipo-selector { position: relative; isolation: isolate; }
+        .tipo-indicator {
+          position: absolute;
+          inset: 0 auto 0 0;
+          width: calc(50% - .375rem);
+          border-radius: 12px;
+          background: rgba(47,141,71,.1);
+          border: 1px solid var(--auth-accent);
+          transform: translateX(0);
+          transition: transform .35s cubic-bezier(.22, 1, .36, 1), box-shadow .25s;
+          box-shadow: 0 10px 28px rgba(47,141,71,.12);
+          z-index: 0;
+        }
+        .tipo-indicator.empresa { transform: translateX(calc(100% + .75rem)); }
+        .tipo-btn { transition: color .25s, transform .25s; cursor: pointer; position: relative; z-index: 1; }
         .tipo-btn:hover { border-color: rgba(47,141,71,.4) !important; }
+        .tipo-btn.active { transform: translateY(-1px); }
+        .tipo-transition { animation: typeSwap .32s ease both; }
+        .empresa-fields {
+          overflow: hidden;
+          transition: max-height .42s cubic-bezier(.22, 1, .36, 1), opacity .28s ease, transform .34s ease, margin-top .34s ease;
+        }
+        .empresa-fields.open { max-height: 330px; opacity: 1; transform: translateY(0); margin-top: 0; }
+        .empresa-fields.closed { max-height: 0; opacity: 0; transform: translateY(-10px); pointer-events: none; margin-top: -1rem; }
         .section-divider { display: flex; align-items: center; gap: .75rem; margin: .4rem 0 1rem; }
         .section-divider span { color: var(--auth-soft); font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; white-space: nowrap; }
         .section-divider hr { flex: 1; border: none; border-top: 1px solid var(--auth-border-soft); }
+        @keyframes typeSwap { from { opacity: .75; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         @media (max-width: 768px) { .hidden-mobile { display: none !important; } }
       `}</style>
 
@@ -288,18 +311,18 @@ export default function RegisterPage() {
               marginBottom: "1.2rem",
             }}
           >
-            Entre rápido
+            Comece a circular
             <br />
-            e complete depois.
+            o que tem valor.
           </h2>
           <p style={{ color: "var(--auth-muted)", fontSize: ".92rem", lineHeight: 1.8, maxWidth: "280px", marginBottom: "2.5rem" }}>
-            O cadastro inicial ficou mais curto. Telefone, descrição e demais ajustes podem ser feitos depois no perfil.
+            Crie sua conta para anunciar, encontrar e dar um novo destino a produtos que ainda podem ser aproveitados.
           </p>
           {[
-            "Cadastro inicial em poucos campos",
-            "Senha forte validada no backend",
-            "Endereço opcional com busca por CEP",
-            "Área de perfil para completar dados depois",
+            "Anuncie itens que podem ganhar uma segunda vida",
+            "Encontre oportunidades perto de você",
+            "Conecte pessoas, empresas e iniciativas locais",
+            "Ajude a reduzir desperdício com escolhas simples",
           ].map((item) => (
             <div key={item} style={{ display: "flex", alignItems: "center", gap: ".75rem", marginBottom: ".9rem" }}>
               <div
@@ -350,19 +373,20 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <div className="a2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".75rem", marginBottom: "1.8rem" }}>
+          <div className="tipo-selector a2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".75rem", marginBottom: "1.8rem" }}>
+            <div className={`tipo-indicator ${tipo === "empresa" ? "empresa" : ""}`} />
             {(["usuario", "empresa"] as Tipo[]).map((t) => (
               <button
                 key={t}
                 type="button"
-                className="tipo-btn"
+                className={`tipo-btn ${tipo === t ? "active" : ""}`}
                 onClick={() => setTipo(t)}
                 style={{
                   padding: ".9rem",
                   borderRadius: "12px",
                   border: "1px solid",
-                  borderColor: tipo === t ? "var(--auth-accent)" : "var(--auth-border)",
-                  background: tipo === t ? "rgba(47,141,71,.1)" : "var(--auth-surface)",
+                  borderColor: tipo === t ? "transparent" : "var(--auth-border)",
+                  background: tipo === t ? "transparent" : "var(--auth-surface)",
                   color: tipo === t ? "var(--auth-accent)" : "var(--auth-muted)",
                   fontSize: ".88rem",
                   fontWeight: tipo === t ? 600 : 400,
@@ -396,7 +420,7 @@ export default function RegisterPage() {
               <hr />
             </div>
 
-            <div className="a3">
+            <div key={tipo} className="a3 tipo-transition">
               <label style={labelStyle}>{tipo === "empresa" ? "Nome da empresa" : "Nome completo"}</label>
               <input
                 type="text"
@@ -430,8 +454,10 @@ export default function RegisterPage() {
               />
             </div>
 
-            {tipo === "empresa" ? (
-              <>
+            <div
+              className={`empresa-fields ${tipo === "empresa" ? "open" : "closed"}`}
+              aria-hidden={tipo !== "empresa"}
+            >
                 <div className="section-divider a4">
                   <span>Empresa</span>
                   <hr />
@@ -441,7 +467,8 @@ export default function RegisterPage() {
                   <label style={labelStyle}>CNPJ</label>
                   <input
                     type="text"
-                    required
+                    required={tipo === "empresa"}
+                    disabled={tipo !== "empresa"}
                     placeholder="00.000.000/0001-00"
                     style={inputStyle("cnpj")}
                     {...f("cnpj")}
@@ -455,10 +482,15 @@ export default function RegisterPage() {
                       {" "}(opcional)
                     </span>
                   </label>
-                  <textarea rows={3} placeholder="Você pode detalhar a empresa agora ou depois." style={{ ...inputStyle("descricao"), resize: "none" }} {...f("descricao")} />
+                  <textarea
+                    rows={3}
+                    disabled={tipo !== "empresa"}
+                    placeholder="Você pode detalhar a empresa agora ou depois."
+                    style={{ ...inputStyle("descricao"), resize: "none" }}
+                    {...f("descricao")}
+                  />
                 </div>
-              </>
-            ) : null}
+            </div>
 
             <div className="section-divider a5">
               <span>Endereço</span>
