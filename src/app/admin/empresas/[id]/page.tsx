@@ -58,7 +58,7 @@ export default async function AdminEmpresaDetailPage({ params }: { params: { id:
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", gap: ".75rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-        <BackButton fallbackHref="/admin/empresas" className="btn btn-ghost" style={{ fontSize: ".82rem" }}>
+        <BackButton fallbackHref="/admin/empresas" className="btn btn-ghost">
           ← Voltar
         </BackButton>
         <p style={{ fontSize: ".72rem", textTransform: "uppercase", letterSpacing: "1.6px", color: "var(--text-faint)", fontWeight: 700 }}>

@@ -48,7 +48,7 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: ".75rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-        <BackButton fallbackHref="/admin/usuarios" className="btn btn-ghost" style={{ fontSize: ".82rem" }}>
+        <BackButton fallbackHref="/admin/usuarios" className="btn btn-ghost">
           ← Voltar
         </BackButton>
         <p style={{ fontSize: ".72rem", textTransform: "uppercase", letterSpacing: "1.6px", color: "var(--text-faint)", fontWeight: 700 }}>
