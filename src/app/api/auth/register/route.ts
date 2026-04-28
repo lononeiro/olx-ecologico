@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { nome, email, senha, endereco, telefone, tipo, cnpj, descricao } =
-      parsed.data;
+    const { nome, senha, endereco, telefone, tipo, cnpj, descricao } = parsed.data;
+    const email = parsed.data.email.toLowerCase().trim();
 
     const existente = await prisma.user.findUnique({ where: { email } });
     if (existente) {

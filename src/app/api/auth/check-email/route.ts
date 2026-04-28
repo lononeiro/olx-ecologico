@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 // GET /api/auth/check-email?email=usuario@example.com
 export async function GET(req: NextRequest) {
   try {
-    const email = req.nextUrl.searchParams.get("email");
+    const rawEmail = req.nextUrl.searchParams.get("email");
+    const email = rawEmail?.toLowerCase().trim() ?? null;
 
     if (!email) {
       return NextResponse.json(

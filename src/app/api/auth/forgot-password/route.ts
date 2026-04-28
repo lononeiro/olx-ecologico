@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 // Body: { email: "usuario@example.com" }
 export async function POST(req: NextRequest) {
   try {
-    const { email } = await req.json();
+    const body = await req.json();
+    const email = typeof body.email === "string" ? body.email.toLowerCase().trim() : "";
 
     if (!email) {
       return NextResponse.json(
@@ -24,45 +25,30 @@ export async function POST(req: NextRequest) {
     });
 
     if (!usuario) {
-      // Por segurança, retornar mensagem genérica
       return NextResponse.json(
         { mensagem: "Se o email existir, você receberá instruções de recuperação" },
         { status: 200 }
       );
     }
 
-    // Gerar token de reset (válido por 1 hora)
     const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetTokenHash = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+    const resetTokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
-    // Salvar token no banco de dados
     await prisma.user.update({
       where: { id: usuario.id },
-      data: {
-        resetToken: resetTokenHash,
-        resetTokenExpiry: resetTokenExpiry
-      }
+      data: { resetToken: resetTokenHash, resetTokenExpiry },
     });
 
-    // Aqui você enviaria o email com o link de reset
-    // Exemplo usando seu serviço de email favorito (Nodemailer, SendGrid, etc)
-    
-    const resetLink = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}&email=${email}`;
-    
-    // TODO: Enviar email com o link
-    // await enviarEmailRecuperacao(email, usuario.nome, resetLink);
+    const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const resetLink = `${base}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
-    console.log(`Link de reset: ${resetLink}`); // Remove em produção
+    console.log(`[DEV] Link de reset: ${resetLink}`);
 
     return NextResponse.json(
-      { 
+      {
         mensagem: "Se o email existir, você receberá instruções de recuperação",
-        // Remove em produção - apenas para teste
-        resetLink: process.env.NODE_ENV === "development" ? resetLink : undefined
+        resetLink,
       },
       { status: 200 }
     );

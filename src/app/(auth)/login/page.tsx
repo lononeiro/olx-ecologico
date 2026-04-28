@@ -284,6 +284,14 @@ export default function LoginPage() {
                   borderRadius: "12px",
                 }}
               />
+              <div style={{ textAlign: "right", marginTop: ".6rem" }}>
+                <TransitionLink
+                  href="/forgot-password"
+                  style={{ fontSize: ".82rem", color: "var(--auth-soft)", textDecoration: "none" }}
+                >
+                  Esqueci minha senha
+                </TransitionLink>
+              </div>
             </div>
 
             <div className="a4" style={{ paddingTop: ".4rem" }}>

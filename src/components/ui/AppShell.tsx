@@ -36,6 +36,10 @@ const PAGE_TITLES: Record<string, { title: string; description: string }> = {
     title: "Gestao de Empresas",
     description: "Gerencie as empresas parceiras e acompanhe suas coletas.",
   },
+  "/admin/materiais": {
+    title: "Tipos de Material",
+    description: "Adicione, renomeie e remova os tipos de material aceitos na plataforma.",
+  },
   "/empresa": {
     title: "Painel da Empresa",
     description: "Resumo das coletas, demandas disponiveis e performance.",

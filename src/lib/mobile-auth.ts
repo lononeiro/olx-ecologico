@@ -34,7 +34,7 @@ export async function authenticateUserByCredentials(
   password: string
 ): Promise<AuthUser | null> {
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email: email.toLowerCase().trim() },
     include: { role: true },
   });
 

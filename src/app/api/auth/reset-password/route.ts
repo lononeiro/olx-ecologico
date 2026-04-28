@@ -8,7 +8,9 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const { token, email, novaSenha } = await req.json();
+    const body = await req.json();
+    const { token, novaSenha } = body;
+    const email = typeof body.email === "string" ? body.email.toLowerCase().trim() : "";
 
     if (!token || !email || !novaSenha) {
       return NextResponse.json(
