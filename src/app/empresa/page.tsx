@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listarColetasDaEmpresa } from "@/services/coleta.service";
+import { calcularMediaEmpresa } from "@/services/avaliacao.service";
 import { EmpresaDashboardClient, type EmpresaDashboardData } from "./EmpresaDashboardClient";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ export default async function EmpresaDashboardPage() {
   const company = await prisma.company.findUnique({ where: { userId } });
   if (!company) return <p>Empresa nao configurada.</p>;
 
-  const [coletas, solicitacoesDisponiveis] = await Promise.all([
+  const [coletas, solicitacoesDisponiveis, avaliacaoData] = await Promise.all([
     listarColetasDaEmpresa(company.id),
     prisma.solicitacaoColeta.findMany({
       where: { aprovado: true, status: "aprovada", coleta: null },
@@ -24,6 +25,7 @@ export default async function EmpresaDashboardPage() {
       orderBy: { createdAt: "desc" },
       take: 12,
     }),
+    calcularMediaEmpresa(company.id),
   ]);
 
   const agora = Date.now();
@@ -94,6 +96,7 @@ export default async function EmpresaDashboardPage() {
     },
     solicitacoes,
     materiais: buildMaterialPerformance(materialTotals),
+    avaliacao: avaliacaoData,
   };
 
   return <EmpresaDashboardClient data={data} />;

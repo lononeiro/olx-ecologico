@@ -2,10 +2,12 @@ import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChatBox } from "@/components/forms/ChatBox";
+import { AvaliacaoForm } from "@/components/forms/AvaliacaoForm";
 import { FloatingChat } from "@/components/ui/FloatingChat";
 import { RequestImageGallery } from "@/components/ui/RequestImageGallery";
 import { ColetaStatusTracker } from "@/components/ui/ColetaStatusTracker";
 import { SolicitacaoBadge } from "@/components/ui/StatusBadge";
+import { CancelarSolicitacaoButton } from "@/components/ui/CancelarSolicitacaoButton";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -25,6 +27,11 @@ const STATUS_COPY: Record<string, { title: string; description: string; tone: st
   rejeitada: {
     title: "Solicitação rejeitada",
     description: "Entre em contato com o suporte caso precise de mais informações.",
+    tone: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200",
+  },
+  cancelada: {
+    title: "Solicitação cancelada",
+    description: "Esta solicitação foi cancelada pelo solicitante.",
     tone: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200",
   },
 };
@@ -50,6 +57,7 @@ export default async function SolicitacaoDetailPage({
             include: { remetente: { select: { id: true, nome: true } } },
             orderBy: { createdAt: "asc" },
           },
+          avaliacao: true,
         },
       },
     },
@@ -172,7 +180,14 @@ export default async function SolicitacaoDetailPage({
                     Documento de referencia da solicitação de coleta com destaque visual para anexos e dados principais.
                   </p>
                 </div>
-                <SolicitacaoBadge status={s.status} />
+                <div style={{ display: "flex", alignItems: "center", gap: ".65rem", flexWrap: "wrap" }}>
+                  <SolicitacaoBadge status={s.status} />
+                  <CancelarSolicitacaoButton
+                    solicitacaoId={s.id}
+                    statusSolicitacao={s.status}
+                    statusColeta={s.coleta?.status ?? null}
+                  />
+                </div>
               </div>
             </div>
 
@@ -307,6 +322,23 @@ export default async function SolicitacaoDetailPage({
                   initialMessages={s.coleta.mensagens as any}
                 />
               </FloatingChat>
+
+              {s.coleta.status === "concluida" && (
+                <section
+                  className="card"
+                  style={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    boxShadow: "var(--shadow)",
+                  }}
+                >
+                  <SectionHeading eyebrow="Pós-coleta" title="Avalie a empresa" />
+                  <AvaliacaoForm
+                    coletaId={s.coleta.id}
+                    avaliacaoExistente={(s.coleta as any).avaliacao ?? null}
+                  />
+                </section>
+              )}
             </aside>
           )}
         </div>

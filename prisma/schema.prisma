@@ -32,6 +32,7 @@ model User {
   company            Company?
   solicitacoes       SolicitacaoColeta[]
   mensagensEnviadas  Mensagem[]
+  avaliacoesFeitas   Avaliacao[]
 
   @@map("users")
 }
@@ -100,8 +101,23 @@ model Coleta {
   solicitacao SolicitacaoColeta @relation(fields: [solicitacaoId], references: [id])
   company     Company           @relation(fields: [companyId], references: [id])
   mensagens   Mensagem[]
+  avaliacao   Avaliacao?
 
   @@map("coletas")
+}
+
+model Avaliacao {
+  id         Int      @id @default(autoincrement())
+  coletaId   Int      @unique
+  autorId    Int
+  nota       Int
+  comentario String?
+  createdAt  DateTime @default(now())
+
+  coleta Coleta @relation(fields: [coletaId], references: [id])
+  autor  User   @relation(fields: [autorId], references: [id])
+
+  @@map("avaliacoes")
 }
 
 model Mensagem {

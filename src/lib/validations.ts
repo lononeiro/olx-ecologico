@@ -1,4 +1,5 @@
 import {
+  avaliacaoCreateSchema,
   coletaStatusSchema,
   mensagemCreateSchema,
   profileUpdateSchema,
@@ -13,6 +14,7 @@ const registerSchema = sharedRegisterSchema.superRefine(({ senha }, ctx) => {
 });
 
 export {
+  avaliacaoCreateSchema,
   coletaStatusSchema,
   mensagemCreateSchema,
   profileUpdateSchema,

@@ -38,6 +38,11 @@ export interface EmpresaDashboardData {
     percent: number;
     color: string;
   }[];
+  avaliacao: {
+    media: number;
+    total: number;
+    distribuicao: Record<number, number>;
+  };
 }
 
 const FILTERS: { value: "todas" | RequestStatus; label: string }[] = [
@@ -180,20 +185,39 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
 
           <div className="empresa-panel">
             <h2>Avaliação e reputação</h2>
-            <div className="rating-summary">
-              <div>
-                <strong><span>★</span> 4.8</strong>
-                <p>de 127 avaliações</p>
-              </div>
-              <div>
-                <div className="rating-track"><i style={{ width: "96%" }} /></div>
-                <p>96% Taxa de satisfação</p>
-              </div>
-            </div>
-            <RatingRow stars="★★★★★" percent={68} />
-            <RatingRow stars="★★★★☆" percent={24} />
-            <RatingRow stars="★★★☆☆" percent={6} />
-            <RatingRow stars="★★☆☆☆" percent={2} />
+            {data.avaliacao.total === 0 ? (
+              <p style={{ fontSize: ".875rem", color: "var(--text-faint)", marginTop: ".5rem" }}>
+                Nenhuma avaliação recebida ainda.
+              </p>
+            ) : (
+              <>
+                <div className="rating-summary">
+                  <div>
+                    <strong><span>★</span> {data.avaliacao.media.toFixed(1)}</strong>
+                    <p>de {data.avaliacao.total} avaliação{data.avaliacao.total === 1 ? "" : "ões"}</p>
+                  </div>
+                  <div>
+                    <div className="rating-track">
+                      <i style={{ width: `${Math.round((data.avaliacao.distribuicao[4] ?? 0 + (data.avaliacao.distribuicao[5] ?? 0)) / data.avaliacao.total * 100)}%` }} />
+                    </div>
+                    <p>
+                      {data.avaliacao.total > 0
+                        ? `${Math.round(((data.avaliacao.distribuicao[4] ?? 0) + (data.avaliacao.distribuicao[5] ?? 0)) / data.avaliacao.total * 100)}% Taxa de satisfação`
+                        : "—"}
+                    </p>
+                  </div>
+                </div>
+                {([5, 4, 3, 2] as const).map((n) => (
+                  <RatingRow
+                    key={n}
+                    stars={"★".repeat(n) + "☆".repeat(5 - n)}
+                    percent={data.avaliacao.total > 0
+                      ? Math.round(((data.avaliacao.distribuicao[n] ?? 0) / data.avaliacao.total) * 100)
+                      : 0}
+                  />
+                ))}
+              </>
+            )}
           </div>
         </div>
       </section>

@@ -1,11 +1,29 @@
 import { listarSolicitacoesAprovadas } from "@/services/solicitacao.service";
 import { AceitarSolicitacaoButton } from "./AceitarSolicitacaoButton";
 import { SolicitacaoCardVisual } from "@/components/cards/SolicitacaoCardVisual";
+import { FiltrosSolicitacoes } from "@/components/filters/FiltrosSolicitacoes";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export default async function EmpresaSolicitacoesPage() {
-  const solicitacoes = await listarSolicitacoesAprovadas();
+export default async function EmpresaSolicitacoesPage({
+  searchParams,
+}: {
+  searchParams: { materialId?: string; dataInicio?: string; dataFim?: string; q?: string };
+}) {
+  const dataFimDate = searchParams.dataFim
+    ? new Date(searchParams.dataFim + "T23:59:59")
+    : undefined;
+
+  const [solicitacoes, materiais] = await Promise.all([
+    listarSolicitacoesAprovadas({
+      materialId: searchParams.materialId ? Number(searchParams.materialId) : undefined,
+      dataInicio: searchParams.dataInicio ? new Date(searchParams.dataInicio) : undefined,
+      dataFim:    dataFimDate,
+      q:          searchParams.q,
+    }),
+    prisma.materialTipo.findMany({ orderBy: { nome: "asc" } }),
+  ]);
 
   return (
     <div className="page-enter">
@@ -20,6 +38,16 @@ export default async function EmpresaSolicitacoesPage() {
             : `${solicitacoes.length} solicitac${solicitacoes.length === 1 ? "ao" : "oes"} aguardando aceitação.`}
         </p>
       </div>
+
+      <FiltrosSolicitacoes
+        buscaAtual={searchParams.q}
+        materialIdAtual={searchParams.materialId}
+        dataInicioAtual={searchParams.dataInicio}
+        dataFimAtual={searchParams.dataFim}
+        materiais={materiais}
+        mostrarStatus={false}
+        mostrarBusca
+      />
 
       {solicitacoes.length === 0 ? (
         <div className="card empty-state" style={{ background: "linear-gradient(135deg, var(--surface), var(--surface-3))" }}>

@@ -10,15 +10,21 @@ const LIMIT = 20;
 export default async function AdminSolicitacoesPage({
   searchParams,
 }: {
-  searchParams: { page?: string; search?: string; status?: string };
+  searchParams: { page?: string; search?: string; status?: string; materialId?: string; dataInicio?: string; dataFim?: string };
 }) {
   const page         = Math.max(1, Number(searchParams.page   ?? 1));
   const search       = searchParams.search ?? "";
   const statusFilter = searchParams.status ?? "";
+  const materialId   = searchParams.materialId ?? "";
+  const dataInicio   = searchParams.dataInicio ?? "";
+  const dataFim      = searchParams.dataFim ?? "";
 
   const where = {
     AND: [
       statusFilter ? { status: statusFilter } : {},
+      materialId   ? { materialId: Number(materialId) } : {},
+      dataInicio   ? { createdAt: { gte: new Date(dataInicio) } } : {},
+      dataFim      ? { createdAt: { lte: new Date(dataFim + "T23:59:59") } } : {},
       search ? { OR: [
         { titulo: { contains: search, mode: "insensitive" as const } },
         { user: { nome:  { contains: search, mode: "insensitive" as const } } },
@@ -26,6 +32,8 @@ export default async function AdminSolicitacoesPage({
       ]} : {},
     ],
   };
+
+  const materiais = await prisma.materialTipo.findMany({ orderBy: { nome: "asc" } });
 
   const [solicitacoes, total, counts] = await Promise.all([
     prisma.solicitacaoColeta.findMany({
@@ -98,7 +106,14 @@ export default async function AdminSolicitacoesPage({
         })}
       </div>
 
-      <AdminSolicitacoesFilters search={search} status={statusFilter} />
+      <AdminSolicitacoesFilters
+        search={search}
+        status={statusFilter}
+        materialId={materialId}
+        dataInicio={dataInicio}
+        dataFim={dataFim}
+        materiais={materiais}
+      />
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: ".75rem" }}>
         <p style={{ fontSize: ".82rem", color: "var(--text-muted)" }}>

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\lucas.g\\\\tcc\\\\olx-ecologico\" -Force)",
+      "Bash(Select-Object Name, Mode)"
+    ]
+  }
+}

@@ -52,6 +52,10 @@ const PAGE_TITLES: Record<string, { title: string; description: string }> = {
     title: "Coletas",
     description: "Lista operacional das coletas aceitas pela empresa.",
   },
+  "/empresa/avaliacoes": {
+    title: "Avaliacoes",
+    description: "Notas, comentarios e reputacao das coletas finalizadas.",
+  },
   "/me": {
     title: "Meu Perfil",
     description: "Gerencie seus dados de conta e informacoes vinculadas.",
