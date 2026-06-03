@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { buscarSolicitacaoPorId } from "@/services/solicitacao.service";
+import { buscarSolicitacaoAdminDetailDTO } from "@/services/solicitacao.service";
 import { AdminActionButtons } from "./AdminActionButtons";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ export default async function AdminSolicitacaoDetailPage({
   params: { id: string };
 }) {
   const id = Number(params.id);
-  const s = await buscarSolicitacaoPorId(id);
+  const s = await buscarSolicitacaoAdminDetailDTO(id);
   if (!s) notFound();
 
   const canModerate = s.status === "pendente" && !s.aprovado;

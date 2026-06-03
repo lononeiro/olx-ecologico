@@ -43,7 +43,7 @@ export function AdminSolicitacoesFilters({ search, status, materialId, dataInici
       <input
         type="search"
         defaultValue={search}
-        placeholder="Buscar por titulo, solicitante ou e-mail..."
+        placeholder="Buscar por titulo..."
         className="input-field"
         style={{ flex: 1, minWidth: 200, fontSize: ".875rem" }}
         onChange={(e) => handleSearch(e.target.value)}

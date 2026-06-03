@@ -15,6 +15,7 @@ const NAV_LINKS: Record<string, { href: string; label: string; icon: ReactNode }
   usuario: [
     { href: "/dashboard", label: "Dashboard", icon: <IconDashboard /> },
     { href: "/dashboard/solicitacoes", label: "Solicitacoes", icon: <IconClipboard /> },
+    { href: "/dashboard/mensagens", label: "Mensagens", icon: <IconMessage /> },
     { href: "/dashboard/solicitacoes/nova", label: "Nova solicitacao", icon: <IconPlus /> },
     { href: "/me", label: "Usuarios", icon: <IconUser /> },
   ],

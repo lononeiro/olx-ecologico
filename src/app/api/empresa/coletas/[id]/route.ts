@@ -21,9 +21,13 @@ export async function GET(
     let coleta;
     if (role === "empresa") {
       const company = await prisma.company.findUnique({ where: { userId } });
-      coleta = await buscarColetaPorId(id, undefined, company?.id);
+      coleta = await buscarColetaPorId(id, undefined, company?.id, {
+        includeMensagens: true,
+      });
     } else {
-      coleta = await buscarColetaPorId(id, userId);
+      coleta = await buscarColetaPorId(id, userId, undefined, {
+        includeMensagens: true,
+      });
     }
 
     if (!coleta) {

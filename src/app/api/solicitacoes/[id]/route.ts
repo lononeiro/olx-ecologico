@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { autorizarRota, getUserId } from "@/lib/route-guard";
-import { buscarSolicitacaoPorId, cancelarSolicitacao } from "@/services/solicitacao.service";
+import { prisma } from "@/lib/prisma";
+import { auditAccess } from "@/lib/audit";
+import {
+  buscarSolicitacaoAdminDetailDTO,
+  buscarSolicitacaoEmpresaDTO,
+  buscarSolicitacaoUsuarioDTO,
+  cancelarSolicitacao,
+} from "@/services/solicitacao.service";
+
 export const dynamic = "force-dynamic";
 
 const cancelarSchema = z.object({ action: z.literal("cancelar") });
@@ -16,21 +24,48 @@ export async function GET(
 
   const id = Number(params.id);
   if (isNaN(id)) {
-    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    return NextResponse.json({ error: "ID invalido" }, { status: 400 });
   }
 
   const role = (session!.user as any).role;
   const userId = getUserId(session!);
 
   try {
-    // Usuário só pode ver suas próprias solicitações
-    const solicitacao = await buscarSolicitacaoPorId(
-      id,
-      role === "usuario" ? userId : undefined
-    );
+    let solicitacao = null;
+
+    if (role === "usuario") {
+      solicitacao = await buscarSolicitacaoUsuarioDTO(id, userId);
+    }
+
+    if (role === "admin") {
+      solicitacao = await buscarSolicitacaoAdminDetailDTO(id);
+    }
+
+    if (role === "empresa") {
+      const company = await prisma.company.findUnique({
+        where: { userId },
+        select: { id: true },
+      });
+
+      if (!company) {
+        return NextResponse.json({ error: "Empresa nao encontrada" }, { status: 404 });
+      }
+
+      solicitacao = await buscarSolicitacaoEmpresaDTO(id, company.id);
+    }
 
     if (!solicitacao) {
-      return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
+      return NextResponse.json({ error: "Solicitacao nao encontrada" }, { status: 404 });
+    }
+
+    if (role === "usuario" || (role === "empresa" && solicitacao.coleta)) {
+      auditAccess({
+        userId,
+        action: "view_full_solicitacao",
+        resource: "solicitacao",
+        resourceId: id,
+        metadata: { role },
+      });
     }
 
     return NextResponse.json(solicitacao);

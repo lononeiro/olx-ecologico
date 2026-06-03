@@ -28,12 +28,19 @@ export async function verificarAcessoColeta(coletaId: number, userId: number) {
  * Lista mensagens de uma coleta.
  * Lança erro se o userId não tiver acesso.
  */
-export async function listarMensagensColeta(coletaId: number, userId: number) {
+export async function listarMensagensColeta(
+  coletaId: number,
+  userId: number,
+  options: { sinceId?: number } = {}
+) {
   const acesso = await verificarAcessoColeta(coletaId, userId);
   if (!acesso) throw new Error("Acesso negado a esta conversa.");
 
   return prisma.mensagem.findMany({
-    where: { coletaId },
+    where: {
+      coletaId,
+      ...(options.sinceId ? { id: { gt: options.sinceId } } : {}),
+    },
     include: { remetente: { select: { id: true, nome: true } } },
     orderBy: { createdAt: "asc" },
   });

@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { prismaMock, randomBytesMock } = vi.hoisted(() => ({
-  prismaMock: {
+const { prismaMock, randomBytesMock } = vi.hoisted(() => {
+  const prismaMock = {
+    solicitacaoColeta: {
+      findFirst: vi.fn(),
+    },
     coleta: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
@@ -9,9 +12,17 @@ const { prismaMock, randomBytesMock } = vi.hoisted(() => ({
       update: vi.fn(),
       findMany: vi.fn(),
     },
-  },
-  randomBytesMock: vi.fn(),
-}));
+    conversaSolicitacao: {
+      updateMany: vi.fn(),
+    },
+    $transaction: vi.fn((callback) => callback(prismaMock)),
+  };
+
+  return {
+    prismaMock,
+    randomBytesMock: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/prisma", () => ({
   prisma: prismaMock,
@@ -33,20 +44,33 @@ import {
 describe("coleta.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.solicitacaoColeta.findFirst.mockResolvedValue({ id: 10 });
     randomBytesMock.mockReturnValue({
       toString: vi.fn().mockReturnValue("ab12cd34"),
     });
   });
 
   describe("aceitarSolicitacao", () => {
+    it("impede aceitar solicitacao indisponivel", async () => {
+      prismaMock.solicitacaoColeta.findFirst.mockResolvedValueOnce(null);
+
+      await expect(aceitarSolicitacao(10, 5)).rejects.toThrow(
+        "Solicitacao indisponivel para aceite."
+      );
+
+    expect(prismaMock.coleta.create).not.toHaveBeenCalled();
+      expect(prismaMock.conversaSolicitacao.updateMany).not.toHaveBeenCalled();
+    });
+
     it("impede aceitar uma solicitacao ja vinculada a outra coleta", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce({ id: 3 });
 
       await expect(aceitarSolicitacao(10, 5)).rejects.toThrow(
-        "Solicitação já foi aceita por outra empresa."
+        "Solicitacao ja foi aceita por outra empresa."
       );
 
       expect(prismaMock.coleta.create).not.toHaveBeenCalled();
+      expect(prismaMock.conversaSolicitacao.updateMany).not.toHaveBeenCalled();
     });
 
     it("cria a coleta com codigo de confirmacao em maiusculo", async () => {
@@ -63,6 +87,14 @@ describe("coleta.service", () => {
           codigoConfirmacao: "AB12CD34",
         },
         include: { solicitacao: true, company: true },
+      });
+      expect(prismaMock.conversaSolicitacao.updateMany).toHaveBeenCalledWith({
+        where: { solicitacaoId: 10, companyId: 5 },
+        data: { status: "convertida" },
+      });
+      expect(prismaMock.conversaSolicitacao.updateMany).toHaveBeenCalledWith({
+        where: { solicitacaoId: 10, companyId: { not: 5 } },
+        data: { status: "encerrada" },
       });
     });
 
@@ -91,7 +123,7 @@ describe("coleta.service", () => {
       prismaMock.coleta.findFirst.mockResolvedValueOnce(null);
 
       await expect(atualizarStatusColeta(1, 2, "a_caminho")).rejects.toThrow(
-        "Coleta não encontrada ou sem permissão."
+        "Coleta nao encontrada ou sem permissao."
       );
     });
 
@@ -144,6 +176,8 @@ describe("coleta.service", () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce(null);
 
       await expect(buscarColetaPorId(30)).resolves.toBeNull();
+      expect(JSON.stringify(prismaMock.coleta.findUnique.mock.calls.at(-1)?.[0])).not.toContain("mensagens");
+      expect(JSON.stringify(prismaMock.coleta.findUnique.mock.calls.at(-1)?.[0])).not.toContain("endereco");
     });
 
     it("retorna null se o usuario nao for dono da solicitacao", async () => {
@@ -175,6 +209,27 @@ describe("coleta.service", () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce(coleta);
 
       await expect(buscarColetaPorId(30, 10)).resolves.toEqual(coleta);
+    });
+
+    it("inclui mensagens ordenadas quando solicitado", async () => {
+      prismaMock.coleta.findUnique.mockResolvedValueOnce({
+        id: 30,
+        solicitacao: { userId: 10 },
+        companyId: 5,
+      });
+
+      await buscarColetaPorId(30, 10, undefined, { includeMensagens: true });
+
+      expect(prismaMock.coleta.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.objectContaining({
+            mensagens: {
+              include: { remetente: { select: { id: true, nome: true } } },
+              orderBy: { createdAt: "asc" },
+            },
+          }),
+        })
+      );
     });
   });
 });

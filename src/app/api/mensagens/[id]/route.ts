@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { autorizarRota, getUserId } from "@/lib/route-guard";
 import { enviarMensagem, listarMensagensColeta } from "@/services/mensagem.service";
 import { mensagemCreateSchema } from "@/lib/validations";
+import { auditAccess } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const { session, error } = await autorizarRota(["usuario", "empresa", "admin"]);
+  const { session, error } = await autorizarRota(["usuario", "empresa"]);
   if (error) return error;
 
   const coletaId = Number(params.id);
@@ -22,7 +23,24 @@ export async function GET(
 
   try {
     const userId = getUserId(session!);
-    const mensagens = await listarMensagensColeta(coletaId, userId);
+    const sinceIdParam = req.nextUrl.searchParams.get("sinceId");
+    const sinceId = sinceIdParam ? Number(sinceIdParam) : undefined;
+
+    if (sinceIdParam && (!sinceId || Number.isNaN(sinceId))) {
+      return NextResponse.json({ error: "sinceId invalido" }, { status: 400 });
+    }
+
+    const mensagens = await listarMensagensColeta(coletaId, userId, { sinceId });
+
+    if (req.nextUrl.searchParams.get("audit") === "1") {
+      auditAccess({
+        userId,
+        action: "open_chat",
+        resource: "coleta",
+        resourceId: coletaId,
+      });
+    }
+
     return NextResponse.json(mensagens);
   } catch (err: any) {
     // "Acesso negado" vira 403, demais erros viram 500

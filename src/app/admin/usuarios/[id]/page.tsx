@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BackButton } from "@/components/ui/BackButton";
 import { SolicitacaoBadge } from "@/components/ui/StatusBadge";
+import { maskEmail, maskPhone, summarizeAddress } from "@/lib/privacy";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +72,7 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
             <h1 style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--text)", marginBottom: ".25rem" }}>
               {user.nome}
             </h1>
-            <p style={{ fontSize: ".88rem", color: "var(--text-muted)", marginBottom: ".5rem" }}>{user.email}</p>
+            <p style={{ fontSize: ".88rem", color: "var(--text-muted)", marginBottom: ".5rem" }}>{maskEmail(user.email)}</p>
             <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
               <span style={{
                 fontSize: ".72rem", fontWeight: 700, padding: ".2rem .65rem", borderRadius: 50,
@@ -108,8 +109,8 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
       <div className="card" style={{ marginBottom: "1rem", padding: "1.25rem" }}>
         <p className="section-label" style={{ marginBottom: ".85rem" }}>Dados cadastrais</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: ".75rem" }}>
-          <Field label="Telefone" value={user.telefone} />
-          <Field label="Endereco" value={user.endereco} />
+          <Field label="Telefone" value={maskPhone(user.telefone)} />
+          <Field label="Regiao" value={summarizeAddress(user.endereco)} />
           <Field label="Cadastro em" value={new Date(user.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })} />
           {user.company && <Field label="CNPJ" value={user.company.cnpj} />}
         </div>
@@ -161,7 +162,7 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
           </div>
           {user._count.solicitacoes > 10 && (
             <div style={{ padding: ".75rem 1.25rem", borderTop: "1px solid var(--border)", textAlign: "center" }}>
-              <Link href={`/admin/solicitacoes?search=${encodeURIComponent(user.email)}`}
+              <Link href={`/admin/solicitacoes`}
                 className="btn btn-ghost" style={{ fontSize: ".82rem" }}>
                 Ver todas as {user._count.solicitacoes} solicitacoes →
               </Link>

@@ -29,6 +29,8 @@ export interface AuthUser {
   role: "usuario" | "admin" | "empresa";
 }
 
+export type MobileRole = "usuario" | "empresa";
+
 export interface MobileAuthResponse {
   accessToken: string;
   refreshToken: string;
@@ -38,6 +40,6 @@ export interface MobileAuthResponse {
     id: number;
     name: string;
     email: string;
-    role: "usuario" | "admin" | "empresa";
+    role: MobileRole;
   };
 }

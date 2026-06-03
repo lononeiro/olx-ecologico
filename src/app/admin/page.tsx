@@ -310,12 +310,11 @@ export default async function AdminDashboardPage() {
                 titulo={s.titulo}
                 descricao={s.descricao}
                 quantidade={s.quantidade}
-                endereco={s.endereco}
+                endereco={s.regiao ?? "Nao informado"}
                 status={s.status}
                 createdAt={s.createdAt}
                 material={s.material}
                 imagens={s.imagens}
-                solicitanteNome={s.user.nome}
                 detailsHref={`/admin/solicitacoes/${s.id}`}
               />
             </div>

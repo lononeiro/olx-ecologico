@@ -32,6 +32,7 @@ model User {
   company            Company?
   solicitacoes       SolicitacaoColeta[]
   mensagensEnviadas  Mensagem[]
+  mensagensPreAceite MensagemPreAceite[]
   avaliacoesFeitas   Avaliacao[]
 
   @@map("users")
@@ -46,6 +47,7 @@ model Company {
 
   user    User     @relation(fields: [userId], references: [id])
   coletas Coleta[]
+  conversasSolicitacao ConversaSolicitacao[]
 
   @@map("companies")
 }
@@ -74,6 +76,7 @@ model SolicitacaoColeta {
   material MaterialTipo @relation(fields: [materialId], references: [id])
   imagens  SolicitacaoImagem[]
   coleta   Coleta?
+  conversas ConversaSolicitacao[]
 
   @@map("solicitacao_coleta")
 }
@@ -131,4 +134,33 @@ model Mensagem {
   remetente User   @relation(fields: [remetenteId], references: [id])
 
   @@map("mensagens")
+}
+
+model ConversaSolicitacao {
+  id            Int      @id @default(autoincrement())
+  solicitacaoId Int
+  companyId     Int
+  status        String   @default("aberta")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  solicitacao SolicitacaoColeta @relation(fields: [solicitacaoId], references: [id])
+  company     Company           @relation(fields: [companyId], references: [id])
+  mensagens   MensagemPreAceite[]
+
+  @@unique([solicitacaoId, companyId])
+  @@map("conversas_solicitacao")
+}
+
+model MensagemPreAceite {
+  id          Int      @id @default(autoincrement())
+  conversaId  Int
+  remetenteId Int
+  mensagem    String
+  createdAt   DateTime @default(now())
+
+  conversa  ConversaSolicitacao @relation(fields: [conversaId], references: [id])
+  remetente User                @relation(fields: [remetenteId], references: [id])
+
+  @@map("mensagens_pre_aceite")
 }

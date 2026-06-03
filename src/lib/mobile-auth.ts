@@ -3,12 +3,17 @@ import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
 
 type Role = "usuario" | "admin" | "empresa";
+type MobileRole = Exclude<Role, "admin">;
 
 type AuthUser = {
   id: number;
   name: string;
   email: string;
   role: Role;
+};
+
+type MobileAuthUser = Omit<AuthUser, "role"> & {
+  role: MobileRole;
 };
 
 type TokenType = "access" | "refresh";
@@ -69,7 +74,7 @@ async function signToken(
     .sign(getMobileJwtSecret());
 }
 
-export async function createMobileAuthTokens(user: AuthUser) {
+export async function createMobileAuthTokens(user: MobileAuthUser) {
   const [accessToken, refreshToken] = await Promise.all([
     signToken(user, "access", ACCESS_TOKEN_TTL),
     signToken(user, "refresh", REFRESH_TOKEN_TTL),
@@ -112,11 +117,15 @@ export async function getMobileUserFromAccessToken(token: string) {
     throw new Error("Usuario invalido");
   }
 
+  if (user.role.nome === "admin") {
+    throw new Error("Perfil administrativo nao disponivel no app mobile");
+  }
+
   return {
     id: user.id,
     name: user.nome,
     email: user.email,
-    role: user.role.nome as Role,
+    role: user.role.nome as MobileRole,
   };
 }
 

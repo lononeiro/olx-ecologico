@@ -1,4 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import {
+  maskEmail,
+  maskPhone,
+  toAdminSolicitacaoListDTO,
+  toEmpresaSolicitacaoDisponivelDTO,
+} from "@/lib/privacy";
 import type { Prisma } from "@prisma/client";
 
 const MAX_SOLICITACAO_IMAGENS = 5;
@@ -97,13 +103,86 @@ export async function listarSolicitacoesDoUsuario(userId: number, filtros: Filtr
   });
 }
 
+const solicitacaoDetailInclude = {
+  user: { select: { id: true, nome: true, email: true, telefone: true } },
+  material: true,
+  imagens: true,
+  coleta: {
+    include: {
+      company: {
+        include: { user: { select: { id: true, nome: true, email: true } } },
+      },
+    },
+  },
+} satisfies Prisma.SolicitacaoColetaInclude;
+
+export async function buscarSolicitacaoUsuarioDTO(id: number, userId: number) {
+  return prisma.solicitacaoColeta.findFirst({
+    where: { id, userId },
+    include: solicitacaoDetailInclude,
+  });
+}
+
+export async function buscarSolicitacaoAdminDetailDTO(id: number) {
+  const solicitacao = await prisma.solicitacaoColeta.findFirst({
+    where: { id },
+    include: solicitacaoDetailInclude,
+  });
+
+  if (!solicitacao) return null;
+
+  return {
+    ...solicitacao,
+    user: {
+      ...solicitacao.user,
+      email: maskEmail(solicitacao.user.email),
+      telefone: maskPhone(solicitacao.user.telefone),
+    },
+  };
+}
+
+export async function buscarSolicitacaoEmpresaDTO(id: number, companyId: number) {
+  const solicitacao = await prisma.solicitacaoColeta.findFirst({
+    where: {
+      id,
+      OR: [
+        { aprovado: true, status: "aprovada", coleta: null },
+        { coleta: { companyId } },
+      ],
+    },
+    include: {
+      user: { select: { id: true, nome: true, email: true, telefone: true } },
+      material: true,
+      imagens: true,
+      coleta: {
+        select: {
+          id: true,
+          companyId: true,
+          status: true,
+          dataAceite: true,
+          dataPrevisaoColeta: true,
+          dataConclusao: true,
+          company: {
+            include: { user: { select: { id: true, nome: true, email: true } } },
+          },
+        },
+      },
+    },
+  });
+
+  if (!solicitacao) return null;
+  if (!solicitacao.coleta) return toEmpresaSolicitacaoDisponivelDTO(solicitacao);
+
+  return solicitacao;
+}
+
 /**
  * Retorna uma solicitacao pelo id, verificando permissao de acesso.
+ * Mantido para chamadas internas legadas. Nao inclui chat.
  */
 export async function buscarSolicitacaoPorId(id: number, userId?: number) {
-  const where = userId ? { id, userId } : { id };
   return prisma.solicitacaoColeta.findFirst({
-    where,
+    where: userId ? { id, userId } : { id },
     include: {
       user: { select: { id: true, nome: true, email: true, telefone: true } },
       material: true,
@@ -112,10 +191,6 @@ export async function buscarSolicitacaoPorId(id: number, userId?: number) {
         include: {
           company: {
             include: { user: { select: { id: true, nome: true, email: true } } },
-          },
-          mensagens: {
-            include: { remetente: { select: { id: true, nome: true } } },
-            orderBy: { createdAt: "asc" },
           },
         },
       },
@@ -127,22 +202,22 @@ export async function buscarSolicitacaoPorId(id: number, userId?: number) {
  * Lista todas as solicitacoes pendentes de aprovacao (acesso Admin).
  */
 export async function listarSolicitacoesPendentes() {
-  return prisma.solicitacaoColeta.findMany({
+  const solicitacoes = await prisma.solicitacaoColeta.findMany({
     where: { status: "pendente", aprovado: false },
     include: {
-      user: { select: { id: true, nome: true, email: true } },
       material: true,
       imagens: true,
     },
     orderBy: { createdAt: "desc" },
   });
+
+  return solicitacoes.map(toAdminSolicitacaoListDTO);
 }
 
 export async function listarSolicitacoesAdmin() {
-  return prisma.solicitacaoColeta.findMany({
+  const solicitacoes = await prisma.solicitacaoColeta.findMany({
     where: getAdminSolicitacaoScope(),
     include: {
-      user: { select: { id: true, nome: true, email: true } },
       material: true,
       imagens: true,
       coleta: {
@@ -155,6 +230,8 @@ export async function listarSolicitacoesAdmin() {
     },
     orderBy: { createdAt: "desc" },
   });
+
+  return solicitacoes.map(toAdminSolicitacaoListDTO);
 }
 
 /**
@@ -195,15 +272,16 @@ export async function listarSolicitacoesAprovadas(filtros: FiltrosSolicitacao = 
       ],
     }),
   };
-  return prisma.solicitacaoColeta.findMany({
+  const solicitacoes = await prisma.solicitacaoColeta.findMany({
     where,
     include: {
-      user: { select: { id: true, nome: true, email: true, endereco: true } },
       material: true,
       imagens: true,
     },
     orderBy: { createdAt: "desc" },
   });
+
+  return solicitacoes.map(toEmpresaSolicitacaoDisponivelDTO);
 }
 
 /**

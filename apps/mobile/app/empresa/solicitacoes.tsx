@@ -14,8 +14,8 @@ import {
 } from "@/components/AppUI";
 import {
   acceptSolicitacao,
+  getEmpresaSolicitacoesDisponiveis,
   getReadableErrorMessage,
-  getSolicitacoes,
 } from "@/lib/api";
 import { useProtectedRoute } from "@/lib/navigation";
 import { withAutoRefresh } from "@/lib/session";
@@ -31,7 +31,9 @@ export default function EmpresaSolicitacoesScreen() {
     queryKey: ["empresa", "solicitacoes", "disponiveis"],
     enabled: hasAccess && !isLoading,
     queryFn: async () =>
-      withAutoRefresh(accessToken, refreshSession, (token) => getSolicitacoes(token)),
+      withAutoRefresh(accessToken, refreshSession, (token) =>
+        getEmpresaSolicitacoesDisponiveis(token)
+      ),
   });
 
   const acceptMutation = useMutation({
@@ -45,6 +47,7 @@ export default function EmpresaSolicitacoesScreen() {
       void queryClient.invalidateQueries({
         queryKey: ["empresa", "solicitacoes", "disponiveis"],
       });
+      void queryClient.invalidateQueries({ queryKey: ["empresa", "disponiveis"] });
       void queryClient.invalidateQueries({ queryKey: ["empresa", "coletas"] });
       router.push(`/empresa/coletas/${data.id}` as any);
     },
@@ -62,7 +65,7 @@ export default function EmpresaSolicitacoesScreen() {
         <SectionHeader
           eyebrow="EMPRESA"
           title="Solicitacoes disponiveis"
-          description="Estas solicitacoes ja foram aprovadas pela administracao e aguardam aceite."
+          description="Estas solicitacoes ja estao aprovadas para coleta e aguardam aceite de uma empresa."
         />
       </AppCard>
 
@@ -94,6 +97,11 @@ export default function EmpresaSolicitacoesScreen() {
           <Text style={{ color: "#537156", lineHeight: 22 }}>
             {item.quantidade} - {item.material.nome}
           </Text>
+          <AppButton
+            label="Tirar duvida"
+            tone="secondary"
+            onPress={() => router.push(`/empresa/solicitacoes/${item.id}/conversa` as any)}
+          />
           <AppButton
             label={
               acceptMutation.isPending ? "Aceitando solicitacao..." : "Aceitar solicitacao"

@@ -16,8 +16,8 @@ export default function IndexScreen() {
       <AppCard>
         <SectionHeader
           eyebrow="ECONECTA MOBILE"
-          title="Fluxo mobile alinhado ao web"
-          description="Login, cadastro, perfil, solicitacoes, coletas e administracao foram organizados para toque e telas menores."
+          title="Coletas e solicitacoes no celular"
+          description="O app concentra o dia a dia de cidadaos e empresas: solicitar, aceitar, acompanhar e conversar sobre coletas."
         />
       </AppCard>
 

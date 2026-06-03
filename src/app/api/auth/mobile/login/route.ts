@@ -42,7 +42,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return applyCors(req, NextResponse.json(await createMobileAuthTokens(user)));
+    if (user.role === "admin") {
+      return applyCors(
+        req,
+        NextResponse.json(
+          { error: "Acesso administrativo disponivel apenas na versao web." },
+          { status: 403 }
+        )
+      );
+    }
+
+    return applyCors(
+      req,
+      NextResponse.json(
+        await createMobileAuthTokens({
+          ...user,
+          role: user.role,
+        } as {
+          id: number;
+          name: string;
+          email: string;
+          role: "usuario" | "empresa";
+        })
+      )
+    );
   } catch (error: any) {
     return applyCors(
       req,

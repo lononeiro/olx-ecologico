@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const prismaMock = {
-  coleta: {
-    findUnique: vi.fn(),
+const { prismaMock } = vi.hoisted(() => ({
+  prismaMock: {
+    coleta: {
+      findUnique: vi.fn(),
+    },
+    mensagem: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+    },
   },
-  mensagem: {
-    findMany: vi.fn(),
-    create: vi.fn(),
-  },
-};
+}));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: prismaMock,
@@ -52,6 +54,17 @@ describe("mensagem.service", () => {
 
       await expect(verificarAcessoColeta(1, 7)).resolves.toBeNull();
     });
+
+    it("retorna a coleta quando o usuario e a empresa responsavel", async () => {
+      const coleta = {
+        id: 1,
+        solicitacao: { userId: 5 },
+        company: { userId: 10 },
+      };
+      prismaMock.coleta.findUnique.mockResolvedValueOnce(coleta);
+
+      await expect(verificarAcessoColeta(1, 10)).resolves.toEqual(coleta);
+    });
   });
 
   describe("listarMensagensColeta", () => {
@@ -59,6 +72,18 @@ describe("mensagem.service", () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce(null);
 
       await expect(listarMensagensColeta(9, 7)).rejects.toThrow(
+        /Acesso negado/
+      );
+    });
+
+    it("bloqueia admin quando nao for dono nem empresa responsavel", async () => {
+      prismaMock.coleta.findUnique.mockResolvedValueOnce({
+        id: 9,
+        solicitacao: { userId: 7 },
+        company: { userId: 11 },
+      });
+
+      await expect(listarMensagensColeta(9, 99)).rejects.toThrow(
         /Acesso negado/
       );
     });
@@ -74,6 +99,22 @@ describe("mensagem.service", () => {
 
       expect(prismaMock.mensagem.findMany).toHaveBeenCalledWith({
         where: { coletaId: 9 },
+        include: { remetente: { select: { id: true, nome: true } } },
+        orderBy: { createdAt: "asc" },
+      });
+    });
+
+    it("lista apenas mensagens novas quando sinceId e informado", async () => {
+      prismaMock.coleta.findUnique.mockResolvedValueOnce({
+        id: 9,
+        solicitacao: { userId: 7 },
+        company: { userId: 11 },
+      });
+
+      await listarMensagensColeta(9, 7, { sinceId: 44 });
+
+      expect(prismaMock.mensagem.findMany).toHaveBeenCalledWith({
+        where: { coletaId: 9, id: { gt: 44 } },
         include: { remetente: { select: { id: true, nome: true } } },
         orderBy: { createdAt: "asc" },
       });

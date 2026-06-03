@@ -55,16 +55,12 @@ export default async function EmpresaColetaDetailPage({
       include: {
         solicitacao: {
           include: {
-            user: { select: { id: true, nome: true, email: true, telefone: true, endereco: true } },
+            user: { select: { id: true, nome: true, email: true, telefone: true } },
             material: true,
             imagens: true,
           },
         },
         company: { include: { user: { select: { id: true, nome: true, email: true } } } },
-        mensagens: {
-          include: { remetente: { select: { id: true, nome: true } } },
-          orderBy: { createdAt: "asc" },
-        },
       },
     }),
   ]);
@@ -249,9 +245,6 @@ export default async function EmpresaColetaDetailPage({
                 {(s.user as any).telefone && (
                   <DocumentField label="Telefone" value={(s.user as any).telefone} />
                 )}
-                {s.user.endereco && (
-                  <DocumentField label="Endereco do perfil" value={s.user.endereco} full />
-                )}
               </div>
             </div>
           </article>
@@ -272,17 +265,16 @@ export default async function EmpresaColetaDetailPage({
               <ColetaStatusTracker coletaId={coleta.id} statusAtual={coleta.status} isEmpresa />
             </section>
 
-            <FloatingChat
-              title={`Chat com ${s.user.nome.split(" ")[0]}`}
-              description="Conversa vinculada a esta coleta."
-              messageCount={coleta.mensagens.length}
-            >
-              <ChatBox
-                coletaId={coleta.id}
-                currentUserId={userId}
-                initialMessages={coleta.mensagens as any}
-              />
-            </FloatingChat>
+              <FloatingChat
+                title={`Chat com ${s.user.nome.split(" ")[0]}`}
+                description="Conversa vinculada a esta coleta."
+                messageCount={0}
+              >
+                <ChatBox
+                  coletaId={coleta.id}
+                  currentUserId={userId}
+                />
+              </FloatingChat>
           </aside>
         </div>
       </div>

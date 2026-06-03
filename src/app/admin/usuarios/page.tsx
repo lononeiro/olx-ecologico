@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { AdminUsersFilters } from "./AdminUsersFilters";
 import { AdminUserActions } from "./AdminUserActions";
+import { maskEmail } from "@/lib/privacy";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,6 @@ export default async function AdminUsuariosPage({
     AND: [
       search ? { OR: [
         { nome:  { contains: search, mode: "insensitive" as const } },
-        { email: { contains: search, mode: "insensitive" as const } },
       ]} : {},
       roleFilter   ? { role:   { nome: roleFilter   } } : {},
       statusFilter ? { status: statusFilter           } : {},
@@ -53,7 +53,7 @@ export default async function AdminUsuariosPage({
       take: LIMIT,
       orderBy: { createdAt: "desc" },
       select: {
-        id: true, nome: true, email: true, telefone: true, status: true, createdAt: true,
+        id: true, nome: true, email: true, status: true, createdAt: true,
         role:    { select: { nome: true } },
         company: { select: { id: true } },
         _count:  { select: { solicitacoes: true } },
@@ -99,7 +99,7 @@ export default async function AdminUsuariosPage({
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 680 }}>
               <thead>
                 <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                  {["Nome / Email", "Telefone", "Perfil", "Status", "Solicitacoes", "Cadastro", "Acoes"].map(h => (
+                  {["Nome / Email", "Perfil", "Status", "Solicitacoes", "Cadastro", "Acoes"].map(h => (
                     <th key={h} style={{
                       padding: ".65rem 1rem", textAlign: "left",
                       fontSize: ".7rem", textTransform: "uppercase",
@@ -123,10 +123,7 @@ export default async function AdminUsuariosPage({
                       <p style={{ fontWeight: 600, fontSize: ".875rem", color: "var(--text)", marginBottom: ".1rem" }}>
                         {user.nome}
                       </p>
-                      <p style={{ fontSize: ".75rem", color: "var(--text-muted)" }}>{user.email}</p>
-                    </td>
-                    <td style={{ padding: ".75rem 1rem", fontSize: ".83rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
-                      {user.telefone ?? <span style={{ color: "var(--text-faint)" }}>—</span>}
+                      <p style={{ fontSize: ".75rem", color: "var(--text-muted)" }}>{maskEmail(user.email)}</p>
                     </td>
                     <td style={{ padding: ".75rem 1rem", whiteSpace: "nowrap" }}>
                       <span style={{

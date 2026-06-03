@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listarColetasDaEmpresa } from "@/services/coleta.service";
+import { listarSolicitacoesAprovadas } from "@/services/solicitacao.service";
 import { calcularMediaEmpresa } from "@/services/avaliacao.service";
 import { EmpresaDashboardClient, type EmpresaDashboardData } from "./EmpresaDashboardClient";
 
@@ -15,16 +16,7 @@ export default async function EmpresaDashboardPage() {
 
   const [coletas, solicitacoesDisponiveis, avaliacaoData] = await Promise.all([
     listarColetasDaEmpresa(company.id),
-    prisma.solicitacaoColeta.findMany({
-      where: { aprovado: true, status: "aprovada", coleta: null },
-      include: {
-        user: { select: { nome: true } },
-        material: true,
-        imagens: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 12,
-    }),
+    listarSolicitacoesAprovadas(),
     calcularMediaEmpresa(company.id),
   ]);
 
@@ -44,9 +36,9 @@ export default async function EmpresaDashboardPage() {
       titulo: item.titulo,
       descricao: item.descricao,
       quantidade: item.quantidade,
-      endereco: item.endereco,
+      endereco: item.endereco ?? "Regiao nao informada",
       materialNome: item.material.nome,
-      solicitanteNome: item.user.nome,
+      solicitanteNome: "Disponivel apos aceite",
       status: "pendente" as const,
       createdAt: item.createdAt.toISOString(),
       dataPrevisaoColeta: null,

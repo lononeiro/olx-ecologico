@@ -31,7 +31,7 @@ export function AdminUsersFilters({ search, role, status }: Props) {
           name="search"
           type="search"
           defaultValue={search}
-          placeholder="Buscar por nome ou e-mail..."
+          placeholder="Buscar por nome..."
           className="input-field"
           style={{ flex: 1, fontSize: ".875rem" }}
         />

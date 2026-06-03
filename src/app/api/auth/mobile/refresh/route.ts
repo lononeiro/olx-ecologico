@@ -41,6 +41,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (user.role.nome === "admin") {
+      return applyCors(
+        req,
+        NextResponse.json(
+          { error: "Acesso administrativo disponivel apenas na versao web." },
+          { status: 403 }
+        )
+      );
+    }
+
     return applyCors(
       req,
       NextResponse.json(
@@ -48,7 +58,7 @@ export async function POST(req: NextRequest) {
           id: user.id,
           name: user.nome,
           email: user.email,
-          role: user.role.nome as "usuario" | "admin" | "empresa",
+          role: user.role.nome as "usuario" | "empresa",
         })
       )
     );

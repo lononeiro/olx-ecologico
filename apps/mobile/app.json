@@ -13,13 +13,16 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiBaseUrl": "http://localhost:3000"
+      "apiBaseUrl": "https://olx-ecologico.vercel.app/"
     },
     "android": {
       "package": "com.econecta.mobile"
     },
     "ios": {
       "bundleIdentifier": "com.econecta.mobile"
-    }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }

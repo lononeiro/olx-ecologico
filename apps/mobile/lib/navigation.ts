@@ -7,7 +7,6 @@ export type AppRole = MobileAuthResponse["user"]["role"];
 
 export function getHomeRouteForRole(role: AppRole) {
   if (role === "empresa") return "/empresa" as any;
-  if (role === "admin") return "/admin" as any;
   return "/home" as any;
 }
 

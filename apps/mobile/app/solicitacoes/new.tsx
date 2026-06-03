@@ -156,7 +156,7 @@ export default function NewSolicitacaoScreen() {
         <SectionHeader
           eyebrow="NOVA SOLICITACAO"
           title="Criar coleta"
-          description="O fluxo segue o web: material, descricao, endereco e envio para analise administrativa."
+          description="Informe material, descricao, endereco e envie sua solicitacao para analise administrativa."
         />
       </AppCard>
 

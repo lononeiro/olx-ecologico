@@ -78,21 +78,19 @@ export default async function EmpresaSolicitacoesPage({
                 titulo={s.titulo}
                 descricao={s.descricao}
                 quantidade={s.quantidade}
-                endereco={s.endereco}
+                endereco={s.endereco ?? "Regiao nao informada"}
                 status={s.status}
                 createdAt={s.createdAt}
                 material={s.material}
                 imagens={s.imagens}
-                solicitanteNome={s.user.nome}
                 actions={
                   <AceitarSolicitacaoButton
                     solicitacaoId={s.id}
                     titulo={s.titulo}
                     descricao={s.descricao}
                     quantidade={s.quantidade}
-                    endereco={s.endereco}
+                    endereco={s.endereco ?? "Regiao nao informada"}
                     materialNome={s.material.nome}
-                    solicitanteNome={s.user.nome}
                     imagens={s.imagens}
                   />
                 }

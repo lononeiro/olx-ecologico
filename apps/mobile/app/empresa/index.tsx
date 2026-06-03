@@ -10,7 +10,12 @@ import {
   SectionHeader,
   StatRow,
 } from "@/components/AppUI";
-import { ApiError, getReadableErrorMessage, getEmpresaColetas, getSolicitacoes } from "@/lib/api";
+import {
+  ApiError,
+  getEmpresaColetas,
+  getEmpresaSolicitacoesDisponiveis,
+  getReadableErrorMessage,
+} from "@/lib/api";
 import { useProtectedRoute } from "@/lib/navigation";
 import { resolveAccessToken } from "@/lib/session";
 
@@ -26,12 +31,12 @@ export default function EmpresaHomeScreen() {
       if (!token) throw new Error("Sua sessao expirou. Entre novamente.");
 
       try {
-        return await getSolicitacoes(token);
+        return await getEmpresaSolicitacoesDisponiveis(token);
       } catch (error) {
         if (!(error instanceof ApiError) || error.status !== 401) throw error;
         const refreshed = await refreshSession();
         if (!refreshed) throw new Error("Sua sessao expirou. Entre novamente.");
-        return getSolicitacoes(refreshed);
+        return getEmpresaSolicitacoesDisponiveis(refreshed);
       }
     },
   });
@@ -75,7 +80,7 @@ export default function EmpresaHomeScreen() {
         <SectionHeader
           eyebrow="PAINEL DA EMPRESA"
           title={user.name}
-          description="Aceite solicitacoes aprovadas, acompanhe o status operacional e converse com o solicitante."
+          description="Aceite solicitacoes aprovadas para coleta, acompanhe o andamento e converse com o solicitante."
         />
       </AppCard>
 

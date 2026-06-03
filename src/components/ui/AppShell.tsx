@@ -16,6 +16,10 @@ const PAGE_TITLES: Record<string, { title: string; description: string }> = {
     title: "Solicitacoes",
     description: "Historico completo das solicitacoes abertas pelo usuario.",
   },
+  "/dashboard/mensagens": {
+    title: "Mensagens",
+    description: "Conversas com empresas antes e depois do aceite da coleta.",
+  },
   "/dashboard/solicitacoes/nova": {
     title: "Nova Solicitacao",
     description: "Preencha o formulario e envie um novo pedido de coleta.",
@@ -47,6 +51,10 @@ const PAGE_TITLES: Record<string, { title: string; description: string }> = {
   "/empresa/solicitacoes": {
     title: "Solicitacoes Disponiveis",
     description: "Pedidos aprovados aguardando aceite da empresa.",
+  },
+  "/empresa/mensagens": {
+    title: "Mensagens",
+    description: "Central de conversas com clientes antes e depois do aceite.",
   },
   "/empresa/coletas": {
     title: "Coletas",

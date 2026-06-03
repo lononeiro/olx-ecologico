@@ -343,7 +343,6 @@ function RequestRow({ item }: { item: EmpresaDashboardData["solicitacoes"][numbe
               quantidade={item.quantidade}
               endereco={item.endereco}
               materialNome={item.materialNome}
-              solicitanteNome={item.solicitanteNome}
               imagens={item.imagens}
             />
           ) : null}

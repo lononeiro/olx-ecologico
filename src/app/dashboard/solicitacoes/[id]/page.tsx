@@ -10,6 +10,7 @@ import { SolicitacaoBadge } from "@/components/ui/StatusBadge";
 import { CancelarSolicitacaoButton } from "@/components/ui/CancelarSolicitacaoButton";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { listarConversasDaSolicitacaoUsuario } from "@/services/conversa-solicitacao.service";
 
 export const dynamic = "force-dynamic";
 
@@ -53,10 +54,6 @@ export default async function SolicitacaoDetailPage({
       coleta: {
         include: {
           company: { include: { user: { select: { id: true, nome: true } } } },
-          mensagens: {
-            include: { remetente: { select: { id: true, nome: true } } },
-            orderBy: { createdAt: "asc" },
-          },
           avaliacao: true,
         },
       },
@@ -70,6 +67,10 @@ export default async function SolicitacaoDetailPage({
     description: "Acompanhe os dados atualizados desta solicitação.",
     tone: "border-slate-200 bg-slate-50 text-slate-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
   };
+  const conversasPreAceite =
+    !s.coleta && s.status === "aprovada"
+      ? await listarConversasDaSolicitacaoUsuario(s.id, userId)
+      : [];
 
   return (
     <div
@@ -293,6 +294,73 @@ export default async function SolicitacaoDetailPage({
             </div>
           </article>
 
+          {!s.coleta && s.status === "aprovada" && (
+            <section
+              className="card"
+              style={{
+                marginTop: "1rem",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                boxShadow: "var(--shadow)",
+              }}
+            >
+              <SectionHeading
+                eyebrow="Empresas interessadas"
+                title="Conversas antes do aceite"
+                description="Responda duvidas das empresas antes de uma delas assumir a coleta."
+              />
+
+              {conversasPreAceite.length === 0 ? (
+                <div
+                  style={{
+                    borderRadius: 20,
+                    border: "1px solid var(--border)",
+                    background: "var(--surface-3)",
+                    padding: "1rem 1.05rem",
+                    color: "var(--text-muted)",
+                    fontSize: ".9rem",
+                    lineHeight: 1.55,
+                  }}
+                >
+                  Nenhuma empresa iniciou conversa ainda. Quando houver duvidas, elas apareceram aqui.
+                </div>
+              ) : (
+                <div style={{ display: "grid", gap: "1rem" }}>
+                  {conversasPreAceite.map((conversa) => (
+                    <div
+                      key={conversa.id}
+                      style={{
+                        borderRadius: 22,
+                        border: "1px solid var(--border)",
+                        background: "var(--surface-3)",
+                        padding: "1rem",
+                      }}
+                    >
+                      <div style={{ marginBottom: ".8rem", display: "flex", justifyContent: "space-between", gap: ".75rem", flexWrap: "wrap" }}>
+                        <div>
+                          <p style={{ fontWeight: 800, color: "var(--text)" }}>
+                            {conversa.company.user.nome}
+                          </p>
+                          <p style={{ fontSize: ".78rem", color: "var(--text-muted)", marginTop: ".2rem" }}>
+                            Status da conversa: {conversa.status}
+                          </p>
+                        </div>
+                      </div>
+                      <ChatBox
+                        conversaId={conversa.id}
+                        currentUserId={userId}
+                        initialMessages={conversa.mensagens}
+                        apiPath={`/api/conversas-solicitacao/${conversa.id}/mensagens`}
+                        emptyText="Nenhuma mensagem nessa conversa"
+                        placeholder="Responda a empresa..."
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
           {s.coleta && (
             <aside className="chat-col">
               <section
@@ -314,12 +382,11 @@ export default async function SolicitacaoDetailPage({
               <FloatingChat
                 title="Chat com a empresa"
                 description={s.coleta.company.user.nome}
-                messageCount={s.coleta.mensagens.length}
+                messageCount={0}
               >
                 <ChatBox
                   coletaId={s.coleta.id}
                   currentUserId={userId}
-                  initialMessages={s.coleta.mensagens as any}
                 />
               </FloatingChat>
 

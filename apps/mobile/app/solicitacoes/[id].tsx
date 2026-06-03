@@ -12,7 +12,12 @@ import {
   StatusBadge,
 } from "@/components/AppUI";
 import { ChatThread } from "@/components/ChatThread";
-import { getReadableErrorMessage, getSolicitacaoById } from "@/lib/api";
+import {
+  getConversasSolicitacao,
+  getReadableErrorMessage,
+  getSolicitacaoById,
+  sendMensagemConversaSolicitacao,
+} from "@/lib/api";
 import { useProtectedRoute } from "@/lib/navigation";
 import { withAutoRefresh } from "@/lib/session";
 
@@ -34,6 +39,14 @@ export default function SolicitacaoDetailScreen() {
     queryFn: async () =>
       withAutoRefresh(accessToken, refreshSession, (token) =>
         getSolicitacaoById(token, id)
+      ),
+  });
+  const conversasQuery = useQuery({
+    queryKey: ["solicitacoes", id, "conversas"],
+    enabled: hasAccess && !isLoading && Number.isFinite(id),
+    queryFn: async () =>
+      withAutoRefresh(accessToken, refreshSession, (token) =>
+        getConversasSolicitacao(token, id)
       ),
   });
 
@@ -122,14 +135,64 @@ export default function SolicitacaoDetailScreen() {
               accessToken={accessToken}
               currentUserId={user.id}
               messages={item.coleta.mensagens}
+              placeholder="Escreva para a empresa"
             />
           ) : null}
         </>
       ) : (
-        <MessageBanner
-          message={STATUS_COPY[item.status] ?? "A solicitacao ainda nao possui coleta."}
-          tone={item.status === "rejeitada" ? "error" : "success"}
-        />
+        <>
+          <MessageBanner
+            message={STATUS_COPY[item.status] ?? "A solicitacao ainda nao possui coleta."}
+            tone={item.status === "rejeitada" ? "error" : "success"}
+          />
+
+          {item.status === "aprovada" ? (
+            <>
+              <AppCard>
+              <SectionHeader
+                eyebrow="EMPRESAS INTERESSADAS"
+                title="Conversas antes do aceite"
+                description="Responda duvidas das empresas enquanto a coleta ainda nao foi assumida."
+              />
+              </AppCard>
+              {conversasQuery.isLoading ? (
+                <LoadingCard text="Carregando conversas..." />
+              ) : conversasQuery.error ? (
+                <MessageBanner
+                  message={getReadableErrorMessage(
+                    conversasQuery.error,
+                    "Nao foi possivel carregar as conversas."
+                  )}
+                  tone="error"
+                />
+              ) : (conversasQuery.data?.length ?? 0) === 0 ? (
+                <Text style={{ color: "#537156", lineHeight: 22 }}>
+                  Nenhuma empresa iniciou conversa ainda.
+                </Text>
+              ) : (
+                conversasQuery.data?.map((conversa) => (
+                  <ChatThread
+                    key={conversa.id}
+                    threadId={conversa.id}
+                    accessToken={accessToken}
+                    currentUserId={user.id}
+                    messages={conversa.mensagens}
+                    title={conversa.company.user.nome}
+                    description={`Status da conversa: ${conversa.status}`}
+                    queryKey={["solicitacoes", id, "conversas"]}
+                    onSend={(mensagem) =>
+                      withAutoRefresh(accessToken, refreshSession, (token) =>
+                        sendMensagemConversaSolicitacao(token, conversa.id, mensagem)
+                      )
+                    }
+                    emptyText="Nenhuma mensagem nessa conversa."
+                    placeholder="Responda a empresa"
+                  />
+                ))
+              )}
+            </>
+          ) : null}
+        </>
       )}
 
       <AppButton
