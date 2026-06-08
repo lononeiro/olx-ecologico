@@ -64,17 +64,44 @@ export default async function EmpresaDashboardPage() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 10);
 
-  const materialTotals = new Map<string, number>();
+  const materialCounts = new Map<string, number>();
   coletas.forEach((item) => {
-    const parsed = Number.parseFloat(item.solicitacao.quantidade.replace(",", "."));
-    const quantidade = Number.isFinite(parsed) ? parsed : 1;
-    materialTotals.set(
-      item.solicitacao.material.nome,
-      (materialTotals.get(item.solicitacao.material.nome) ?? 0) + quantidade
-    );
+    const nome = item.solicitacao.material.nome;
+    materialCounts.set(nome, (materialCounts.get(nome) ?? 0) + 1);
   });
+  const materiaisContagem = Array.from(materialCounts.entries())
+    .map(([material, total]) => ({ material, total, color: getMaterialColor(material) }))
+    .sort((a, b) => b.total - a.total);
 
-  const materialColetado = Array.from(materialTotals.values()).reduce((total, value) => total + value, 0);
+  const statusOrder = ["concluida", "em_coleta", "a_caminho", "aceita", "cancelada"];
+  const statusCount = new Map<string, number>();
+  coletas.forEach((item) => {
+    statusCount.set(item.status, (statusCount.get(item.status) ?? 0) + 1);
+  });
+  const totalColetas = coletas.length;
+  const coletasPorStatus = statusOrder
+    .map((status) => ({ status, total: statusCount.get(status) ?? 0 }))
+    .filter((row) => row.total > 0)
+    .map((row) => ({
+      ...row,
+      percent: totalColetas > 0 ? Math.round((row.total / totalColetas) * 100) : 0,
+    }));
+
+  const cidadaosAtendidos = new Set(coletas.map((item) => item.solicitacao.userId)).size;
+  const tiposMaterial = materialCounts.size;
+
+  // Considera apenas coletas concluidas com duracao valida (conclusao depois do aceite).
+  // Registros inconsistentes (ex.: dados de seed com conclusao anterior ao aceite)
+  // sao ignorados para nao distorcer a media.
+  const duracoesValidas = concluidas
+    .filter((item) => item.dataConclusao)
+    .map((item) => new Date(item.dataConclusao!).getTime() - new Date(item.dataAceite).getTime())
+    .filter((ms) => ms > 0);
+  const tempoMedioMs =
+    duracoesValidas.length > 0
+      ? duracoesValidas.reduce((total, ms) => total + ms, 0) / duracoesValidas.length
+      : 0;
+
   const data: EmpresaDashboardData = {
     empresaNome: session!.user!.name ?? "Empresa",
     cnpj: company.cnpj,
@@ -84,37 +111,27 @@ export default async function EmpresaDashboardPage() {
       concluidasMes: concluidas.length,
       taxaConclusao,
       pendentesMais24h,
-      materialColetadoKg: Math.round(materialColetado || coletas.length * 24),
+      cidadaosAtendidos,
+      tiposMaterial,
+      tempoMedioConclusao: formatDuracao(tempoMedioMs),
     },
     solicitacoes,
-    materiais: buildMaterialPerformance(materialTotals),
+    materiaisContagem,
+    coletasPorStatus,
+    totalColetas,
     avaliacao: avaliacaoData,
   };
 
   return <EmpresaDashboardClient data={data} />;
 }
 
-function buildMaterialPerformance(materialTotals: Map<string, number>) {
-  const fallback = [
-    { material: "Plastico", kg: 420, color: "#60A5FA" },
-    { material: "Papel", kg: 312, color: "#A3E635" },
-    { material: "Vidro", kg: 198, color: "#34D399" },
-    { material: "Metal", kg: 156, color: "#94A3B8" },
-    { material: "Organico", kg: 148, color: "#FB923C" },
-  ];
-
-  const fromData = Array.from(materialTotals.entries()).map(([material, kg]) => ({
-    material,
-    kg: Math.round(kg),
-    color: getMaterialColor(material),
-  }));
-
-  const rows = fromData.length > 0 ? fromData : fallback;
-  const total = rows.reduce((sum, item) => sum + item.kg, 0) || 1;
-  return rows.slice(0, 5).map((item) => ({
-    ...item,
-    percent: Math.round((item.kg / total) * 100),
-  }));
+function formatDuracao(ms: number): string {
+  if (ms <= 0) return "—";
+  const horas = ms / (1000 * 60 * 60);
+  if (horas < 1) return `${Math.max(1, Math.round(ms / (1000 * 60)))} min`;
+  if (horas < 24) return `${Math.round(horas)} h`;
+  const dias = horas / 24;
+  return `${dias < 10 ? dias.toFixed(1) : Math.round(dias)} dias`;
 }
 
 function getMaterialColor(material: string) {

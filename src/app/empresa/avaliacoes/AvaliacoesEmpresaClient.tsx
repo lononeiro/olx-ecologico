@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RatingStars } from "@/components/ui/RatingStars";
 
 export type AvaliacoesEmpresaData = {
@@ -57,9 +57,12 @@ const SORTS: { value: SortOption; label: string }[] = [
   { value: "antigas", label: "Mais antigas" },
 ];
 
+const PAGE_SIZE = 8;
+
 export function AvaliacoesEmpresaClient({ data }: { data: AvaliacoesEmpresaData }) {
   const [filter, setFilter] = useState<RatingFilter>("todas");
   const [sort, setSort] = useState<SortOption>("recentes");
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     return data.coletas
@@ -85,6 +88,16 @@ export function AvaliacoesEmpresaClient({ data }: { data: AvaliacoesEmpresaData 
         return bDate - aDate;
       });
   }, [data.coletas, filter, sort]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const rangeStart = filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(currentPage * PAGE_SIZE, filtered.length);
 
   const satisfaction =
     data.resumo.totalAvaliacoes > 0
@@ -139,11 +152,22 @@ export function AvaliacoesEmpresaClient({ data }: { data: AvaliacoesEmpresaData 
           {filtered.length === 0 ? (
             <EmptyState />
           ) : (
-            <div style={{ display: "grid", gap: 12 }}>
-              {filtered.map((item) => (
-                <ReviewCard key={item.id} item={item} />
-              ))}
-            </div>
+            <>
+              <div style={{ display: "grid", gap: 12 }}>
+                {paginated.map((item) => (
+                  <ReviewCard key={item.id} item={item} />
+                ))}
+              </div>
+
+              {filtered.length > PAGE_SIZE ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
+                  <span style={{ color: "var(--color-gray-500)", fontSize: 12 }}>
+                    Mostrando {rangeStart}-{rangeEnd} de {filtered.length}
+                  </span>
+                  <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
+                </div>
+              ) : null}
+            </>
           )}
         </div>
 
@@ -286,6 +310,108 @@ function Info({ label, value }: { label: string; value: string }) {
       <p style={{ color: "var(--color-gray-500)", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".04em" }}>{label}</p>
       <p style={{ color: "var(--color-gray-900)", fontSize: 13, marginTop: 2 }}>{value}</p>
     </div>
+  );
+}
+
+function getPageWindow(current: number, total: number): (number | "ellipsis")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1);
+
+  const pages: (number | "ellipsis")[] = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+
+  if (start > 2) pages.push("ellipsis");
+  for (let p = start; p <= end; p += 1) pages.push(p);
+  if (end < total - 1) pages.push("ellipsis");
+  pages.push(total);
+
+  return pages;
+}
+
+function PageButton({
+  children,
+  onClick,
+  disabled,
+  active,
+  ariaLabel,
+}: {
+  children: ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  active?: boolean;
+  ariaLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      aria-current={active ? "page" : undefined}
+      style={{
+        minWidth: 34,
+        height: 34,
+        padding: "0 10px",
+        borderRadius: 8,
+        border: "1px solid var(--color-border)",
+        background: active ? "var(--color-primary-600)" : "var(--color-surface)",
+        color: active ? "#fff" : "var(--color-gray-700)",
+        fontSize: 13,
+        fontWeight: 600,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.45 : 1,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Pagination({
+  page,
+  totalPages,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  onChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <nav
+      aria-label="Paginação das avaliações"
+      style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}
+    >
+      <PageButton ariaLabel="Página anterior" disabled={page <= 1} onClick={() => onChange(page - 1)}>
+        ‹
+      </PageButton>
+
+      {getPageWindow(page, totalPages).map((item, index) =>
+        item === "ellipsis" ? (
+          <span key={`ellipsis-${index}`} style={{ color: "var(--color-gray-500)", padding: "0 2px" }}>
+            …
+          </span>
+        ) : (
+          <PageButton
+            key={item}
+            ariaLabel={`Página ${item}`}
+            active={item === page}
+            onClick={() => onChange(item)}
+          >
+            {item}
+          </PageButton>
+        )
+      )}
+
+      <PageButton
+        ariaLabel="Próxima página"
+        disabled={page >= totalPages}
+        onClick={() => onChange(page + 1)}
+      >
+        ›
+      </PageButton>
+    </nav>
   );
 }
 

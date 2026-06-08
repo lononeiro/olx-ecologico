@@ -14,7 +14,7 @@ export const STATUS_COLETA_LABEL: Record<string, string> = {
   aceita: "Aceita",
   a_caminho: "A Caminho",
   em_coleta: "Em Coleta",
-  concluida: "Concluida",
+  concluida: "Concluída",
   cancelada: "Cancelada",
 };
 

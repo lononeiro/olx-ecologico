@@ -10,7 +10,10 @@ type Props = {
   selectedMessages: InboxMessage[];
   search: string;
   filter: string;
+  page: number;
 };
+
+const PAGE_SIZE = 8;
 
 const FILTERS = [
   { value: "todas", label: "Todas" },
@@ -29,6 +32,7 @@ export function MessagesInbox({
   selectedMessages,
   search,
   filter,
+  page,
 }: Props) {
   const filtered = conversations.filter((item) => {
     const matchesFilter =
@@ -55,6 +59,22 @@ export function MessagesInbox({
     return matchesFilter && matchesSearch;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+
+  const queryFor = (overrides: { page?: number; c?: string }) => {
+    const params = new URLSearchParams();
+    params.set("filter", filter);
+    if (search) params.set("q", search);
+    const c = overrides.c ?? selected?.id;
+    if (c) params.set("c", c);
+    const targetPage = overrides.page ?? currentPage;
+    if (targetPage > 1) params.set("page", String(targetPage));
+    return `${basePath}?${params.toString()}`;
+  };
+
   return (
     <div className="page-enter">
       <style>{`
@@ -79,16 +99,24 @@ export function MessagesInbox({
           flex-direction: column;
         }
         .messages-list-body {
+          flex: 1;
+          min-height: 0;
           overflow-y: auto;
           padding: .75rem;
           display: grid;
           gap: .65rem;
+          align-content: start;
+          scrollbar-width: none; /* Firefox */
+          -ms-overflow-style: none; /* Edge antigo */
         }
         .messages-thread {
           padding: 1rem;
           display: flex;
           flex-direction: column;
         }
+          .messages-list-body::-webkit-scrollbar {
+  display: none; /* Chrome, Edge, Safari */
+}
         .messages-filter-row {
           display: flex;
           gap: .5rem;
@@ -137,6 +165,43 @@ export function MessagesInbox({
         }
         .message-status-badge {
           background: var(--surface-2);
+          color: var(--text-muted);
+        }
+        .messages-pagination {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: .5rem;
+          padding: .6rem .75rem;
+          border-top: 1px solid var(--border);
+          flex-shrink: 0;
+        }
+        .messages-page-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 12px;
+          border: 1px solid var(--border);
+          background: var(--surface);
+          color: var(--text);
+          font-size: 1rem;
+          font-weight: 700;
+          text-decoration: none;
+          transition: border-color .18s ease, background .18s ease;
+        }
+        .messages-page-btn:hover {
+          border-color: rgba(30,122,50,.35);
+          background: rgba(30,122,50,.05);
+        }
+        .messages-page-btn.is-disabled {
+          opacity: .4;
+          pointer-events: none;
+        }
+        .messages-page-info {
+          font-size: .82rem;
+          font-weight: 600;
           color: var(--text-muted);
         }
         @media (max-width: 900px) {
@@ -190,16 +255,38 @@ export function MessagesInbox({
                 Nenhuma conversa encontrada.
               </div>
             ) : (
-              filtered.map((item) => (
+              pageItems.map((item) => (
                 <ConversationLink
                   key={item.id}
                   item={item}
-                  href={`${basePath}?c=${encodeURIComponent(item.id)}&filter=${filter}${search ? `&q=${encodeURIComponent(search)}` : ""}`}
+                  href={queryFor({ c: item.id })}
                   active={selected?.id === item.id}
                 />
               ))
             )}
           </div>
+
+          {totalPages > 1 ? (
+            <nav className="messages-pagination" aria-label="Paginacao de conversas">
+              {currentPage > 1 ? (
+                <Link className="messages-page-btn" href={queryFor({ page: currentPage - 1 })} rel="prev" aria-label="Pagina anterior">
+                  ←
+                </Link>
+              ) : (
+                <span className="messages-page-btn is-disabled" aria-disabled="true">←</span>
+              )}
+              <span className="messages-page-info">
+                Pagina {currentPage} de {totalPages}
+              </span>
+              {currentPage < totalPages ? (
+                <Link className="messages-page-btn" href={queryFor({ page: currentPage + 1 })} rel="next" aria-label="Proxima pagina">
+                  →
+                </Link>
+              ) : (
+                <span className="messages-page-btn is-disabled" aria-disabled="true">→</span>
+              )}
+            </nav>
+          ) : null}
         </aside>
 
         <article className="messages-thread">

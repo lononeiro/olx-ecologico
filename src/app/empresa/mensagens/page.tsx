@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function EmpresaMensagensPage({
   searchParams,
 }: {
-  searchParams: { c?: string; q?: string; filter?: string };
+  searchParams: { c?: string; q?: string; filter?: string; page?: string };
 }) {
   const session = await getServerSession(authOptions);
   const userId = Number((session!.user as any).id);
@@ -31,6 +31,7 @@ export default async function EmpresaMensagensPage({
       selectedMessages={selectedMessages ?? []}
       search={searchParams.q ?? ""}
       filter={searchParams.filter ?? "todas"}
+      page={Number(searchParams.page) || 1}
     />
   );
 }

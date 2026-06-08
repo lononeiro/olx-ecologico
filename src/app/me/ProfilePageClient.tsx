@@ -346,20 +346,20 @@ export function ProfilePageClient({ initialProfile }: Props) {
           </ProfileField>
 
           {formData.endereco && !showAddressBuilder ? (
-            <ProfileField label="Endereco">
+            <ProfileField label="Endereço">
               <textarea
                 name="endereco"
                 value={formData.endereco}
                 onChange={handleChange}
                 className="input-field"
                 rows={4}
-                placeholder="Informe seu endereco"
+                placeholder="Informe seu endereço"
                 style={{ resize: "vertical" }}
               />
             </ProfileField>
           ) : (
             <div style={{ display: "grid", gap: ".8rem" }}>
-              <ProfileField label="Endereco cadastrado">
+              <ProfileField label="Endereço cadastrado">
                 <div
                   style={{
                     padding: "1rem 1.1rem",
@@ -421,13 +421,13 @@ export function ProfilePageClient({ initialProfile }: Props) {
                     <ProfileField label="Rua / Avenida">
                       <input type="text" name="rua" value={addressDraft.rua} onChange={handleAddressDraftChange} className="input-field" placeholder="Ex: Rua das Flores" />
                     </ProfileField>
-                    <ProfileField label="Numero">
+                    <ProfileField label="Número">
                       <input type="text" name="numero" value={addressDraft.numero} onChange={handleAddressDraftChange} className="input-field" placeholder="123" />
                     </ProfileField>
                   </div>
 
                   <ProfileField label="Complemento">
-                    <input type="text" name="complemento" value={addressDraft.complemento} onChange={handleAddressDraftChange} className="input-field" placeholder="Apto, bloco, referencia..." />
+                    <input type="text" name="complemento" value={addressDraft.complemento} onChange={handleAddressDraftChange} className="input-field" placeholder="Apto, bloco, referência..." />
                   </ProfileField>
 
                   <ProfileField label="Bairro">

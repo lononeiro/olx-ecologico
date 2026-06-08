@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Portal } from "@/components/ui/Portal";
 
 type FloatingChatProps = {
   title: string;
@@ -11,6 +12,7 @@ type FloatingChatProps = {
 
 export function FloatingChat({ title, description, messageCount, children }: FloatingChatProps) {
   const [open, setOpen] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -21,6 +23,12 @@ export function FloatingChat({ title, description, messageCount, children }: Flo
       document.body.style.paddingRight = `${scrollbarWidth}px`;
     }
 
+    const panel = panelRef.current;
+    const focusTarget =
+      panel?.querySelector<HTMLElement>("textarea, input, [contenteditable='true']") ?? panel;
+    // Aguarda a animação de abertura antes de focar para evitar scroll abrupto.
+    const focusTimer = window.setTimeout(() => focusTarget?.focus(), 80);
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
     }
@@ -30,6 +38,7 @@ export function FloatingChat({ title, description, messageCount, children }: Flo
     return () => {
       document.body.style.overflow = "";
       document.body.style.paddingRight = "";
+      window.clearTimeout(focusTimer);
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [open]);
@@ -37,7 +46,7 @@ export function FloatingChat({ title, description, messageCount, children }: Flo
   const badgeLabel = messageCount > 99 ? "99+" : String(messageCount);
 
   return (
-    <>
+    <Portal>
       {open ? (
         <button
           type="button"
@@ -48,6 +57,8 @@ export function FloatingChat({ title, description, messageCount, children }: Flo
       ) : null}
 
       <section
+        ref={panelRef}
+        tabIndex={open ? -1 : undefined}
         className={`floating-chat-inline card chat-card ${open ? "is-open" : ""}`}
         role={open ? "dialog" : undefined}
         aria-modal={open ? true : undefined}
@@ -66,7 +77,7 @@ export function FloatingChat({ title, description, messageCount, children }: Flo
         <MessageIcon />
         {messageCount > 0 ? <span>{badgeLabel}</span> : null}
       </button>
-    </>
+    </Portal>
   );
 }
 

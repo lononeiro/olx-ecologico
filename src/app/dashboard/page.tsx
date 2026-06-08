@@ -31,7 +31,7 @@ export default async function DashboardPage() {
     <div className="page-enter">
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 20 }}>
         <div>
-          <p className="section-label" style={{ marginBottom: 6 }}>Painel do cidadao</p>
+          <p className="section-label" style={{ marginBottom: 6 }}>Painel do cidadão</p>
           <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--color-gray-900)", lineHeight: 1.2 }}>
             {saudacao}, {primeiroNome}
           </h1>
@@ -56,12 +56,12 @@ export default async function DashboardPage() {
 
       <div className="dashboard-overview-grid">
         <SurfaceCard className="chart-card">
-          <PageSection title="Coletas por mes" description="Volume mensal das Solicitações criadas" />
+          <PageSection title="Coletas por mês" description="Volume mensal das solicitações criadas" />
           <MonthlyLineChart items={solicitacoes} />
         </SurfaceCard>
 
         <SurfaceCard>
-          <PageSection title="Solicitações recentes" description={`Ultimas ${Math.min(solicitacoes.length, 5)} movimentações`} />
+          <PageSection title="Solicitações recentes" description={`Últimas ${Math.min(solicitacoes.length, 5)} movimentações`} />
           <div className="request-list">
             {solicitacoes.slice(0, 5).map((item) => (
               <Link key={item.id} href={`/dashboard/solicitacoes/${item.id}`} className="request-row" style={{ textDecoration: "none" }}>

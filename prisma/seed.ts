@@ -324,6 +324,7 @@ async function main() {
       companyId: empresa1.id,
       status: "concluida",
       codigoConfirmacao: "M3N4O5P6",
+      dataAceite: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
       dataPrevisaoColeta: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
       dataConclusao: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
     },
@@ -362,6 +363,7 @@ async function main() {
       companyId: empresa2.id,
       status: "concluida",
       codigoConfirmacao: "Q7R8S9T0",
+      dataAceite: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
       dataPrevisaoColeta: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
       dataConclusao: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
     },
@@ -426,6 +428,7 @@ async function main() {
         companyId: empresa1.id,
         status: "concluida",
         codigoConfirmacao: `HIST${i}000`,
+        dataAceite: new Date(Date.now() - (12 + i) * 24 * 60 * 60 * 1000),
         dataConclusao: new Date(Date.now() - (10 + i) * 24 * 60 * 60 * 1000),
       },
     });

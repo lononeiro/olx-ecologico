@@ -13,7 +13,7 @@ const STEPS = [
   {
     key: "a_caminho",
     label: "A Caminho",
-    desc: "Equipe a caminho do endereco",
+    desc: "Equipe a caminho do endereço",
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-2"/><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>,
   },
   {
@@ -24,7 +24,7 @@ const STEPS = [
   },
   {
     key: "concluida",
-    label: "Concluida",
+    label: "Concluída",
     desc: "Coleta finalizada com sucesso",
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
   },
@@ -71,7 +71,7 @@ export function ColetaStatusTracker({ coletaId, statusAtual, isEmpresa }: Props)
     // Se for concluir, valida o código antes de enviar
     if (proximoEhConclusao) {
       if (!codigoInput.trim()) {
-        setCodigoErro("Insira o codigo de confirmacao do usuario.");
+        setCodigoErro("Insira o código de confirmação do usuário.");
         return;
       }
       setCodigoErro("");
@@ -144,7 +144,7 @@ export function ColetaStatusTracker({ coletaId, statusAtual, isEmpresa }: Props)
           <div>
             <p style={{ fontWeight: 700, color: "var(--red)", fontSize: ".9rem" }}>Coleta cancelada</p>
             <p style={{ fontSize: ".78rem", color: "var(--red-mid)", marginTop: ".1rem" }}>
-              Esta coleta foi encerrada antes da conclusao.
+              Esta coleta foi encerrada antes da conclusão.
             </p>
           </div>
         </div>
@@ -261,10 +261,10 @@ export function ColetaStatusTracker({ coletaId, statusAtual, isEmpresa }: Props)
             }}>
               <p style={{ fontSize: ".78rem", fontWeight: 700, color: "var(--text)", marginBottom: ".5rem", display: "flex", alignItems: "center", gap: ".4rem" }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Codigo de confirmacao do usuario
+                Código de confirmação do usuário
               </p>
               <p style={{ fontSize: ".75rem", color: "var(--text-muted)", marginBottom: ".75rem" }}>
-                Solicite ao usuario o codigo exibido na tela dele para confirmar a conclusao da coleta.
+                Solicite ao usuário o código exibido na tela dele para confirmar a conclusão da coleta.
               </p>
               <div style={{ display: "flex", gap: ".5rem" }}>
                 <input
@@ -315,7 +315,7 @@ export function ColetaStatusTracker({ coletaId, statusAtual, isEmpresa }: Props)
                     {STEPS.find(s => s.key === proximoPrincipal)?.icon}
                   </span>
                   <span style={{ display: "block", width: "100%", textAlign: "center" }}>
-                    {proximoEhConclusao ? "Confirmar conclusao" : `Avancar para ${STATUS_COLETA_LABEL[proximoPrincipal]}`}
+                    {proximoEhConclusao ? "Confirmar conclusão" : `Avançar para ${STATUS_COLETA_LABEL[proximoPrincipal]}`}
                   </span>
                 </>
               )}

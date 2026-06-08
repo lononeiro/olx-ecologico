@@ -43,7 +43,9 @@
       "Bash(mv apps/mobile/metro.config.js apps/mobile/metro.config.js.disabled)",
       "Bash(echo \"restarted \\(default config\\) pid $!\")",
       "Bash(curl -s -m 180 -o /tmp/webdefault.out -w \"HTTP %{http_code}  time=%{time_total}s\\\\n\" \"http://localhost:8082/apps/mobile/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&transform.routerRoot=app\")",
-      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\({deps:p.dependencies,dev:p.devDependencies,ws:p.workspaces},null,2\\)\\)\")"
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\({deps:p.dependencies,dev:p.devDependencies,ws:p.workspaces},null,2\\)\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(node *)"
     ]
   }
 }
