@@ -1,6 +1,5 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/ui/Navbar";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ProfilePageClient } from "./ProfilePageClient";
@@ -41,12 +40,5 @@ export default async function MyProfilePage() {
     redirect("/login");
   }
 
-  return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      <Navbar />
-      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "2rem 1.5rem" }}>
-        <ProfilePageClient initialProfile={user} />
-      </main>
-    </div>
-  );
+  return <ProfilePageClient initialProfile={user} />;
 }

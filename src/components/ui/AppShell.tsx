@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Navbar } from "@/components/ui/Navbar";
@@ -121,13 +122,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             <ThemeToggle compact />
 
-            <div className="app-user-chip">
+            <Link href="/me" className="app-user-chip" aria-label="Ver meu perfil" title="Meu perfil">
               <div className="app-user-avatar">{userName[0]?.toUpperCase() ?? "U"}</div>
-              <div>
+              <div className="app-user-chip-text">
                 <p className="app-user-name">{userName}</p>
                 <p className="app-user-role">{getRoleLabel(role)}</p>
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 
