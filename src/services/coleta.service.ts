@@ -1,53 +1,84 @@
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import {
+  notificarColetaAceita,
+  notificarColetaStatus,
+} from "@/services/notificacao.service";
 
-/**
- * Gera um código de confirmação único para a coleta.
- */
 function gerarCodigoConfirmacao(): string {
   return crypto.randomBytes(4).toString("hex").toUpperCase();
 }
 
-/**
- * Empresa aceita uma solicitação aprovada, criando uma Coleta.
- */
 export async function aceitarSolicitacao(
   solicitacaoId: number,
   companyId: number,
   dataPrevisaoColeta?: Date
 ) {
-  // Verifica se a solicitação já não foi aceita por outra empresa
-  const existente = await prisma.coleta.findUnique({
-    where: { solicitacaoId },
+  const coleta = await prisma.$transaction(async (tx) => {
+    const solicitacao = await tx.solicitacaoColeta.findFirst({
+      where: {
+        id: solicitacaoId,
+        aprovado: true,
+        status: "aprovada",
+        coleta: null,
+      },
+      select: { id: true },
+    });
+    if (!solicitacao) throw new Error("Solicitação indisponível para aceite.");
+
+    const existente = await tx.coleta.findUnique({
+      where: { solicitacaoId },
+    });
+    if (existente) throw new Error("Solicitação já foi aceita por outra empresa.");
+
+    const data: {
+      solicitacaoId: number;
+      companyId: number;
+      status: string;
+      codigoConfirmacao: string;
+      dataPrevisaoColeta?: Date;
+    } = {
+      solicitacaoId,
+      companyId,
+      status: "aceita",
+      codigoConfirmacao: gerarCodigoConfirmacao(),
+    };
+
+    if (dataPrevisaoColeta) data.dataPrevisaoColeta = dataPrevisaoColeta;
+
+    const novaColeta = await tx.coleta.create({
+      data,
+      include: { solicitacao: true, company: true },
+    });
+
+    await tx.conversaSolicitacao.updateMany({
+      where: { solicitacaoId, companyId },
+      data: { status: "convertida" },
+    });
+
+    await tx.conversaSolicitacao.updateMany({
+      where: { solicitacaoId, companyId: { not: companyId } },
+      data: { status: "encerrada" },
+    });
+
+    return novaColeta;
   });
-  if (existente) throw new Error("Solicitação já foi aceita por outra empresa.");
 
-  const data: {
-    solicitacaoId: number;
-    companyId: number;
-    status: string;
-    codigoConfirmacao: string;
-    dataPrevisaoColeta?: Date;
-  } = {
-    solicitacaoId,
-    companyId,
-    status: "aceita",
-    codigoConfirmacao: gerarCodigoConfirmacao(),
-  };
-
-  if (dataPrevisaoColeta) data.dataPrevisaoColeta = dataPrevisaoColeta;
-
-  return prisma.coleta.create({
-    data: {
-      ...data,
-    },
-    include: { solicitacao: true, company: true },
+  const empresa = await prisma.company.findUnique({
+    where: { id: coleta.companyId },
+    select: { user: { select: { nome: true } } },
   });
+
+  await notificarColetaAceita({
+    userId: coleta.solicitacao.userId,
+    solicitacaoId: coleta.solicitacaoId,
+    titulo: coleta.solicitacao.titulo,
+    empresaNome: empresa?.user.nome ?? "A empresa coletora",
+  });
+
+  return coleta;
 }
 
-/**
- * Atualiza o status de uma coleta (somente a empresa responsável).
- */
 export async function atualizarStatusColeta(
   coletaId: number,
   companyId: number,
@@ -55,6 +86,9 @@ export async function atualizarStatusColeta(
 ) {
   const coleta = await prisma.coleta.findFirst({
     where: { id: coletaId, companyId },
+    include: {
+      solicitacao: { select: { id: true, userId: true, titulo: true } },
+    },
   });
   if (!coleta) throw new Error("Coleta não encontrada ou sem permissão.");
 
@@ -63,12 +97,18 @@ export async function atualizarStatusColeta(
     data.dataConclusao = new Date();
   }
 
-  return prisma.coleta.update({ where: { id: coletaId }, data });
+  const atualizada = await prisma.coleta.update({ where: { id: coletaId }, data });
+
+  await notificarColetaStatus({
+    userId: coleta.solicitacao.userId,
+    solicitacaoId: coleta.solicitacao.id,
+    titulo: coleta.solicitacao.titulo,
+    status: novoStatus,
+  });
+
+  return atualizada;
 }
 
-/**
- * Lista todas as coletas de uma empresa.
- */
 export async function listarColetasDaEmpresa(companyId: number) {
   return prisma.coleta.findMany({
     where: { companyId },
@@ -85,20 +125,18 @@ export async function listarColetasDaEmpresa(companyId: number) {
   });
 }
 
-/**
- * Busca detalhes completos de uma coleta.
- */
 export async function buscarColetaPorId(
   coletaId: number,
   userId?: number,
-  companyId?: number
+  companyId?: number,
+  options: { includeMensagens?: boolean } = {}
 ) {
   const coleta = await prisma.coleta.findUnique({
     where: { id: coletaId },
     include: {
       solicitacao: {
         include: {
-          user: { select: { id: true, nome: true, email: true, telefone: true, endereco: true } },
+          user: { select: { id: true, nome: true, email: true, telefone: true } },
           material: true,
           imagens: true,
         },
@@ -106,16 +144,18 @@ export async function buscarColetaPorId(
       company: {
         include: { user: { select: { id: true, nome: true, email: true } } },
       },
-      mensagens: {
-        include: { remetente: { select: { id: true, nome: true } } },
-        orderBy: { createdAt: "asc" },
-      },
+      ...(options.includeMensagens
+        ? {
+            mensagens: {
+              include: { remetente: { select: { id: true, nome: true } } },
+              orderBy: { createdAt: "asc" as const },
+            },
+          }
+        : {}),
     },
   });
 
   if (!coleta) return null;
-
-  // Verifica se o usuário tem permissão de ver esta coleta
   if (userId && coleta.solicitacao.userId !== userId) return null;
   if (companyId && coleta.companyId !== companyId) return null;
 

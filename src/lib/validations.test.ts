@@ -9,7 +9,7 @@ import {
 
 describe("validations", () => {
   describe("registerSchema", () => {
-    it("aceita um cadastro de usuario valido", () => {
+    it("aceita um cadastro de usuário válido", () => {
       const result = registerSchema.safeParse({
         nome: "Maria Silva",
         email: "maria@example.com",
@@ -20,7 +20,7 @@ describe("validations", () => {
       expect(result.success).toBe(true);
     });
 
-    it("rejeita email invalido", () => {
+    it("rejeita e-mail inválido", () => {
       const result = registerSchema.safeParse({
         nome: "Maria Silva",
         email: "maria",
@@ -96,7 +96,7 @@ describe("validations", () => {
   });
 
   describe("profileUpdateSchema", () => {
-    it("converte telefone e endereco vazios para null e aplica trim", () => {
+    it("converte telefone e endereço vazios para null e aplica trim", () => {
       const result = profileUpdateSchema.parse({
         nome: "  Joao Silva  ",
         telefone: "   ",

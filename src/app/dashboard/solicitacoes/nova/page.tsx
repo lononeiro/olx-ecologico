@@ -88,7 +88,7 @@ export default function CriarSolicitacaoPage() {
   const lastFetchedCepRef = useRef('');
 
   const remainingSlots = MAX_IMAGES - imagens.length;
-  const stepTitles = ['Informacoes', 'Detalhes', 'Endereco'];
+  const stepTitles = ['Informações', 'Detalhes', 'Endereço'];
   const widgetPalette =
     theme === 'dark'
       ? {
@@ -269,11 +269,11 @@ export default function CriarSolicitacaoPage() {
 
     setImagens((current) => {
       if (current.includes(imageUrl)) {
-        setUploadMessage({ type: 'neutral', text: 'Essa imagem ja foi adicionada.' });
+        setUploadMessage({ type: 'neutral', text: 'Essa imagem já foi adicionada.' });
         return current;
       }
       if (current.length >= MAX_IMAGES) {
-        setUploadMessage({ type: 'error', text: `Voce pode adicionar no maximo ${MAX_IMAGES} imagens.` });
+        setUploadMessage({ type: 'error', text: `Você pode adicionar no máximo ${MAX_IMAGES} imagens.` });
         return current;
       }
       const next = [...current, imageUrl];
@@ -304,17 +304,17 @@ export default function CriarSolicitacaoPage() {
     setErro('');
 
     if (targetStep === 1) {
-      if (!formData.titulo.trim()) return setErro('Titulo e obrigatorio'), false;
-      if (formData.titulo.trim().length < 3) return setErro('Titulo deve ter no minimo 3 caracteres'), false;
-      if (!formData.tipoMaterial) return setErro('Tipo de material e obrigatorio'), false;
+      if (!formData.titulo.trim()) return setErro('Título é obrigatório'), false;
+      if (formData.titulo.trim().length < 3) return setErro('Título deve ter no mínimo 3 caracteres'), false;
+      if (!formData.tipoMaterial) return setErro('Tipo de material é obrigatório'), false;
     }
 
     if (targetStep === 2) {
-      if (!formData.quantidade.trim()) return setErro('Quantidade e obrigatoria'), false;
-      if (!formData.descricao.trim()) return setErro('Descrição e obrigatoria'), false;
-      if (formData.descricao.trim().length < 10) return setErro('Descrição deve ter no minimo 10 caracteres'), false;
+      if (!formData.quantidade.trim()) return setErro('Quantidade é obrigatória'), false;
+      if (!formData.descricao.trim()) return setErro('Descrição é obrigatória'), false;
+      if (formData.descricao.trim().length < 10) return setErro('Descrição deve ter no mínimo 10 caracteres'), false;
       if (uploadingImage) return setErro('Aguarde a finalização do upload antes de continuar'), false;
-      if (imagens.length > MAX_IMAGES) return setErro(`Voce pode adicionar no maximo ${MAX_IMAGES} imagens`), false;
+      if (imagens.length > MAX_IMAGES) return setErro(`Você pode adicionar no máximo ${MAX_IMAGES} imagens`), false;
     }
 
     if (targetStep === 3) {
@@ -392,7 +392,7 @@ export default function CriarSolicitacaoPage() {
               Nova Solicitação de Coleta
             </h1>
             <p className="mx-auto max-w-2xl text-gray-600 dark:text-zinc-400">
-              Preencha os dados do material e monte uma galeria com ate 5 imagens antes de enviar.
+              Preencha os dados do material e monte uma galeria com até 5 imagens antes de enviar.
             </p>
           </div>
 
@@ -433,9 +433,9 @@ export default function CriarSolicitacaoPage() {
 
                 <div className="space-y-6">
                   <div>
-                    <label className="mb-3 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Titulo *</label>
+                    <label className="mb-3 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Título *</label>
                     <div className="relative">
-                      <input type="text" name="titulo" value={formData.titulo} onChange={handleInputChange} maxLength={100} placeholder="Ex: Coleta de plastico do condominio" className="w-full rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-green-50 px-4 py-4 pr-16 text-lg text-slate-900 outline-none transition focus:border-green-600 focus:shadow-lg dark:border-zinc-700 dark:from-zinc-950 dark:to-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" />
+                      <input type="text" name="titulo" value={formData.titulo} onChange={handleInputChange} maxLength={100} placeholder="Ex: Coleta de plástico do condomínio" className="w-full rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-green-50 px-4 py-4 pr-16 text-lg text-slate-900 outline-none transition focus:border-green-600 focus:shadow-lg dark:border-zinc-700 dark:from-zinc-950 dark:to-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" />
                       <span className="absolute right-4 top-4 text-sm text-slate-400 dark:text-zinc-500">{formData.titulo.length}/100</span>
                     </div>
                   </div>
@@ -459,7 +459,7 @@ export default function CriarSolicitacaoPage() {
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                   <Link href="/dashboard" className="inline-flex items-center justify-center rounded-2xl border-2 border-slate-200 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800">Cancelar</Link>
-                  <button type="button" onClick={() => validarStep(1) && setStep(2)} className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-green-600 to-blue-600 px-8 py-3 font-semibold text-white shadow-lg shadow-green-200 transition hover:-translate-y-0.5 hover:shadow-xl">Proximo</button>
+                  <button type="button" onClick={() => validarStep(1) && setStep(2)} className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-green-600 to-blue-600 px-8 py-3 font-semibold text-white shadow-lg shadow-green-200 transition hover:-translate-y-0.5 hover:shadow-xl">Próximo</button>
                 </div>
               </div>
             )}
@@ -469,7 +469,7 @@ export default function CriarSolicitacaoPage() {
                 <div>
                   <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-green-600">Detalhes e imagens</p>
                   <h2 className="text-3xl font-bold text-slate-900 dark:text-zinc-100">Descrição do material</h2>
-                  <p className="mt-2 text-slate-600 dark:text-zinc-400">Adicione detalhes e monte uma galeria moderna com ate 5 imagens.</p>
+                  <p className="mt-2 text-slate-600 dark:text-zinc-400">Adicione detalhes e monte uma galeria moderna com até 5 imagens.</p>
                 </div>
 
                 <div className="space-y-6">
@@ -488,7 +488,7 @@ export default function CriarSolicitacaoPage() {
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                       <div>
                         <label className="mb-2 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Fotos do material <span className="font-normal text-slate-400 dark:text-zinc-500">(opcional)</span></label>
-                        <p className="text-sm text-slate-600 dark:text-zinc-400">Selecione varias imagens de uma vez, veja os previews e remova qualquer foto antes de salvar.</p>
+                        <p className="text-sm text-slate-600 dark:text-zinc-400">Selecione várias imagens de uma vez, veja os previews e remova qualquer foto antes de salvar.</p>
                       </div>
                       <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-600 dark:text-zinc-300">
                         <span className="rounded-full bg-white px-3 py-1 shadow-sm dark:bg-zinc-800 dark:text-zinc-200">{imagens.length}/{MAX_IMAGES} selecionadas</span>
@@ -500,7 +500,7 @@ export default function CriarSolicitacaoPage() {
                       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                         <div>
                           <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-green-600 to-blue-600 text-sm font-bold text-white shadow-lg shadow-green-200">IMG</div>
-                          <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">{remainingSlots > 0 ? `Voce ainda pode adicionar ${remainingSlots} imagem(ns)` : 'Limite maximo atingido'}</h3>
+                          <h3 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">{remainingSlots > 0 ? `Você ainda pode adicionar ${remainingSlots} imagem(ns)` : 'Limite máximo atingido'}</h3>
                           <p className="mt-1 text-sm text-slate-600 dark:text-zinc-400"></p>
                         </div>
 

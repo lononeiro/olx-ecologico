@@ -182,7 +182,7 @@ export function ResetPasswordClient({ token, email }: Props) {
                     value={novaSenha}
                     onChange={setNovaSenha}
                     required
-                    placeholder="Minimo 8 caracteres"
+                    placeholder="Mínimo 8 caracteres"
                     autoComplete="new-password"
                     labelStyle={labelStyle}
                     inputStyle={inputStyle}

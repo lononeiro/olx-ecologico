@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { autorizarRota } from "@/lib/route-guard";
 import { prisma } from "@/lib/prisma";
+import { maskEmail } from "@/lib/privacy";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,6 @@ export async function GET(req: NextRequest) {
     AND: [
       search ? { OR: [
         { nome:  { contains: search, mode: "insensitive" as const } },
-        { email: { contains: search, mode: "insensitive" as const } },
       ]} : {},
       role   ? { role:   { nome: role   } } : {},
       status ? { status: status          } : {},
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       take: limit,
       orderBy: { createdAt: "desc" },
       select: {
-        id: true, nome: true, email: true, telefone: true, status: true, createdAt: true,
+        id: true, nome: true, email: true, status: true, createdAt: true,
         role: { select: { nome: true } },
         company: { select: { id: true, cnpj: true } },
         _count: { select: { solicitacoes: true } },
@@ -42,5 +42,10 @@ export async function GET(req: NextRequest) {
     prisma.user.count({ where }),
   ]);
 
-  return NextResponse.json({ users, total, page, totalPages: Math.ceil(total / limit) });
+  return NextResponse.json({
+    users: users.map((user) => ({ ...user, email: maskEmail(user.email) })),
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  });
 }

@@ -4,11 +4,11 @@ import { useMemo, useRef, useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   buildAddressString,
-  EMPTY_ADDRESS_FIELDS,
   formatCep,
   getMissingAddressFields,
+  hasAddressDetails,
   normalizeCep,
-  type AddressFields,
+  parseAddressString,
   type CepLookupResult,
 } from "@/lib/address";
 
@@ -43,28 +43,47 @@ export function ProfilePageClient({ initialProfile }: Props) {
   const [formData, setFormData] = useState({
     nome: initialProfile.nome,
     telefone: initialProfile.telefone ?? "",
-    endereco: initialProfile.endereco ?? "",
   });
-  const [showAddressBuilder, setShowAddressBuilder] = useState(false);
-  const [addressDraft, setAddressDraft] = useState<AddressFields>(EMPTY_ADDRESS_FIELDS);
+  const [addressDraft, setAddressDraft] = useState(() =>
+    parseAddressString(initialProfile.endereco)
+  );
   const [cepLoading, setCepLoading] = useState(false);
   const [cepMessage, setCepMessage] = useState("");
-  const lastFetchedCepRef = useRef("");
-  const [copied, setCopied] = useState(false);
+  // Inicia com o CEP já salvo para não disparar busca automática ao abrir.
+  const lastFetchedCepRef = useRef(normalizeCep(parseAddressString(initialProfile.endereco).cep));
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const createdAtLabel = useMemo(
-    () => new Date(profile.createdAt).toLocaleString("pt-BR"),
+    () =>
+      new Date(profile.createdAt).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }),
     [profile.createdAt]
   );
   const companyCreatedAtLabel = useMemo(
     () =>
       profile.company
-        ? new Date(profile.company.createdAt).toLocaleString("pt-BR")
+        ? new Date(profile.company.createdAt).toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          })
         : "",
     [profile.company]
   );
+
+  const initials = useMemo(() => {
+    const parts = profile.nome.split(" ").filter(Boolean);
+    return (
+      (parts.slice(0, 2).map((p) => p[0]).join("") || "U").toUpperCase()
+    );
+  }, [profile.nome]);
+
+  const roleLabel = getRoleLabel(profile.role.nome);
+  const isAtivo = (profile.status ?? "").toLowerCase() === "ativo";
 
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -73,19 +92,13 @@ export function ProfilePageClient({ initialProfile }: Props) {
     setFormData((current) => ({ ...current, [name]: value }));
   };
 
-  const handleCopyId = async () => {
-    await navigator.clipboard.writeText(String(profile.id));
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
-  };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
     setSuccess("");
 
-    let enderecoPayload = formData.endereco.trim();
-    if (showAddressBuilder) {
+    let enderecoPayload = "";
+    if (hasAddressDetails(addressDraft)) {
       const missing = getMissingAddressFields(addressDraft);
       if (missing.length > 0) {
         setError(`Complete o endereço: ${missing.join(", ")}.`);
@@ -130,9 +143,10 @@ export function ProfilePageClient({ initialProfile }: Props) {
     setFormData({
       nome: data.nome,
       telefone: data.telefone ?? "",
-      endereco: data.endereco ?? "",
     });
-    setShowAddressBuilder(false);
+    const parsed = parseAddressString(data.endereco);
+    setAddressDraft(parsed);
+    lastFetchedCepRef.current = normalizeCep(parsed.cep);
     setSuccess("Perfil atualizado com sucesso.");
     startTransition(() => router.refresh());
   };
@@ -178,12 +192,12 @@ export function ProfilePageClient({ initialProfile }: Props) {
 
   useEffect(() => {
     const cep = normalizeCep(addressDraft.cep);
-    if (!showAddressBuilder || cep.length !== 8 || cepLoading || lastFetchedCepRef.current === cep) {
+    if (cep.length !== 8 || cepLoading || lastFetchedCepRef.current === cep) {
       return;
     }
 
     void buscarCep();
-  }, [addressDraft.cep, showAddressBuilder, cepLoading]);
+  }, [addressDraft.cep, cepLoading]);
 
   const handleAddressDraftChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -201,126 +215,135 @@ export function ProfilePageClient({ initialProfile }: Props) {
   const addressPreview = useMemo(() => buildAddressString(addressDraft), [addressDraft]);
 
   return (
-    <div className="page-enter" style={{ display: "grid", gap: "1.5rem" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "1rem",
-          flexWrap: "wrap",
-        }}
-      >
-        <div>
-          <p className="section-label" style={{ marginBottom: ".4rem" }}>
-            Minha Conta
-          </p>
-          <h1
-            style={{
-              fontSize: "clamp(1.6rem, 3vw, 2.1rem)",
-              fontWeight: 800,
-              color: "var(--text)",
-              lineHeight: 1.15,
-              letterSpacing: "-.04em",
-            }}
-          >
-            Meu Perfil
-          </h1>
-          <p style={{ marginTop: ".45rem", color: "var(--text-muted)", fontSize: ".92rem" }}>
-            Visualize os dados reais da sua conta e edite apenas as informacoes permitidas.
-          </p>
-        </div>
+    <div className="page-enter profile-page">
+      <style>{`
+        .profile-page { display: grid; gap: 1.25rem; max-width: 1080px; margin: 0 auto; }
 
-        <div
-          className="card"
-          style={{
-            minWidth: 220,
-            padding: "1rem 1.1rem",
-            display: "grid",
-            gap: ".55rem",
-            background: "linear-gradient(135deg, var(--surface), var(--surface-3))",
-          }}
-        >
-          <span className="section-label" style={{ marginBottom: 0 }}>
-            Codigo do usuario
-          </span>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: ".8rem",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "1.15rem",
-                fontWeight: 800,
-                color: "var(--text)",
-                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-              }}
-            >
-              #{profile.id}
+        .profile-hero {
+          display: flex;
+          align-items: center;
+          gap: 1.25rem;
+          padding: 1.5rem 1.6rem;
+          background: linear-gradient(135deg, rgba(30,122,50,.10), var(--surface) 60%);
+        }
+        .profile-hero-avatar {
+          width: 78px; height: 78px;
+          border-radius: 50%;
+          display: grid; place-items: center;
+          font-size: 1.75rem; font-weight: 800; color: #fff;
+          background: linear-gradient(135deg, var(--green), var(--green-dark));
+          box-shadow: 0 10px 26px rgba(30,122,50,.30);
+          flex-shrink: 0;
+        }
+        .profile-hero-info { min-width: 0; display: grid; gap: .32rem; }
+        .profile-hero-info h1 {
+          font-size: clamp(1.4rem, 3vw, 1.95rem);
+          font-weight: 800; color: var(--text);
+          line-height: 1.1; letter-spacing: -.02em;
+        }
+        .profile-hero-meta { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .1rem; }
+        .profile-chip {
+          display: inline-flex; align-items: center; gap: .35rem;
+          padding: .26rem .66rem; border-radius: 999px;
+          font-size: .74rem; font-weight: 700; white-space: nowrap;
+          background: var(--surface-3); color: var(--text-muted);
+        }
+        .profile-chip.is-role { background: rgba(30,122,50,.12); color: var(--green-dark); }
+        .profile-chip.is-ativo { background: rgba(30,122,50,.12); color: var(--green-dark); }
+        .profile-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+        .profile-hero-sub { font-size: .85rem; color: var(--text-muted); word-break: break-word; }
+
+        .profile-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+          gap: 1.25rem; align-items: start;
+        }
+        @media (max-width: 860px) { .profile-grid { grid-template-columns: 1fr; } }
+
+        .profile-card { display: grid; gap: 1.1rem; }
+        .profile-card-head h2 { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+        .profile-card-head p { margin-top: .2rem; font-size: .84rem; color: var(--text-muted); line-height: 1.5; }
+
+        .profile-field { display: grid; gap: .42rem; }
+        .profile-field > .label { font-size: .78rem; font-weight: 600; color: var(--text-muted); }
+
+        .profile-aside { display: grid; gap: 1.25rem; align-content: start; }
+
+        .profile-details { margin: 0; display: grid; }
+        .profile-details > div {
+          display: flex; align-items: baseline; justify-content: space-between;
+          gap: 1rem; padding: .72rem 0; border-bottom: 1px solid var(--border);
+        }
+        .profile-details > div:last-child { border-bottom: 0; padding-bottom: 0; }
+        .profile-details > div:first-child { padding-top: 0; }
+        .profile-details dt { font-size: .82rem; color: var(--text-muted); flex-shrink: 0; }
+        .profile-details dd {
+          margin: 0; font-size: .9rem; font-weight: 600; color: var(--text);
+          text-align: right; word-break: break-word;
+        }
+        .profile-details dd.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+        .profile-desc-block { padding-top: .72rem; border-top: 1px solid var(--border); }
+        .profile-desc-block .label { font-size: .82rem; color: var(--text-muted); }
+        .profile-desc-block p { margin-top: .3rem; font-size: .9rem; color: var(--text); line-height: 1.6; }
+
+        .profile-empty { font-size: .88rem; color: var(--text-muted); line-height: 1.6; }
+
+        .profile-alert { padding: .85rem 1.1rem; border-radius: 14px; font-size: .88rem; font-weight: 500; }
+        .profile-alert.is-error { background: var(--red-light); border: 1px solid rgba(184,50,40,.2); color: var(--red); }
+        .profile-alert.is-success { background: rgba(30,122,50,.08); border: 1px solid rgba(30,122,50,.2); color: var(--green-dark); }
+
+        .profile-address-box, .profile-builder {
+          padding: 1rem 1.1rem; border-radius: 14px;
+          background: var(--surface-3); border: 1px solid var(--border);
+          display: grid; gap: .85rem;
+        }
+        .profile-builder-head { display: grid; gap: .15rem; }
+        .profile-builder-head .label { font-size: .82rem; font-weight: 700; color: var(--text); }
+        .profile-builder-hint { font-size: .78rem; color: var(--text-muted); }
+        .profile-preview {
+          padding: .85rem 1rem; border-radius: 12px;
+          background: rgba(30,122,50,.08); border: 1px solid rgba(30,122,50,.18);
+        }
+        .profile-preview .label {
+          font-size: .72rem; text-transform: uppercase; letter-spacing: 1.2px;
+          color: var(--text-faint); font-weight: 700;
+        }
+        .profile-preview p { margin: .3rem 0 0; color: var(--text); font-weight: 600; }
+
+        .profile-form-foot {
+          display: flex; align-items: center; justify-content: space-between;
+          gap: .75rem; flex-wrap: wrap;
+          padding-top: 1rem; border-top: 1px solid var(--border);
+        }
+        .profile-form-foot p { font-size: .78rem; color: var(--text-faint); max-width: 320px; }
+      `}</style>
+
+      <section className="card profile-hero">
+        <div className="profile-hero-avatar" aria-hidden="true">{initials}</div>
+        <div className="profile-hero-info">
+          <p className="section-label" style={{ marginBottom: 0 }}>Minha conta</p>
+          <h1>{profile.nome}</h1>
+          <div className="profile-hero-meta">
+            <span className="profile-chip is-role">{roleLabel}</span>
+            <span className={`profile-chip ${isAtivo ? "is-ativo" : ""}`}>
+              <span className="dot" aria-hidden="true" />
+              {isAtivo ? "Conta ativa" : profile.status}
             </span>
-            <button
-              type="button"
-              onClick={handleCopyId}
-              className="btn btn-secondary"
-              style={{ padding: ".45rem .75rem", fontSize: ".78rem" }}
-            >
-              {copied ? "Copiado" : "Copiar"}
-            </button>
           </div>
-          <p style={{ fontSize: ".76rem", color: "var(--text-faint)" }}>
-            Identificador interno da sua conta.
-          </p>
+          <p className="profile-hero-sub">{profile.email} · Membro desde {createdAtLabel}</p>
         </div>
-      </div>
+      </section>
 
-      {error && (
-        <div
-          className="card"
-          style={{
-            padding: "1rem 1.1rem",
-            background: "var(--red-light)",
-            borderColor: "rgba(184,50,40,.18)",
-            color: "var(--red)",
-          }}
-        >
-          {error}
-        </div>
-      )}
+      {error ? <div className="profile-alert is-error" role="alert">{error}</div> : null}
+      {success ? <div className="profile-alert is-success" role="status">{success}</div> : null}
 
-      {success && (
-        <div
-          className="card"
-          style={{
-            padding: "1rem 1.1rem",
-            background: "rgba(30,122,50,.08)",
-            borderColor: "rgba(30,122,50,.18)",
-            color: "var(--green-dark)",
-          }}
-        >
-          {success}
-        </div>
-      )}
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-          gap: "1.5rem",
-        }}
-      >
-        <form className="card" onSubmit={handleSubmit} style={{ display: "grid", gap: "1.1rem" }}>
-          <div>
-            <p className="section-label">Dados Pessoais</p>
-            <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text)" }}>
-              Informacoes editaveis
-            </h2>
-            <p style={{ marginTop: ".25rem", fontSize: ".86rem", color: "var(--text-muted)" }}>
-              Nome, telefone e endereco podem ser atualizados aqui.
-            </p>
+      <div className="profile-grid">
+        <form className="card profile-card" onSubmit={handleSubmit}>
+          <div className="profile-card-head">
+            <p className="section-label">Dados pessoais</p>
+            <h2>Informações editáveis</h2>
+            <p>Atualize seu nome, telefone e endereço. Os demais dados são apenas leitura.</p>
           </div>
 
           <ProfileField label="Nome">
@@ -345,194 +368,118 @@ export function ProfilePageClient({ initialProfile }: Props) {
             />
           </ProfileField>
 
-          {formData.endereco && !showAddressBuilder ? (
-            <ProfileField label="Endereco">
-              <textarea
-                name="endereco"
-                value={formData.endereco}
-                onChange={handleChange}
-                className="input-field"
-                rows={4}
-                placeholder="Informe seu endereco"
-                style={{ resize: "vertical" }}
-              />
-            </ProfileField>
-          ) : (
-            <div style={{ display: "grid", gap: ".8rem" }}>
-              <ProfileField label="Endereco cadastrado">
-                <div
-                  style={{
-                    padding: "1rem 1.1rem",
-                    borderRadius: 14,
-                    background: "var(--surface-3)",
-                    border: "1px solid var(--border)",
-                    display: "grid",
-                    gap: ".6rem",
-                  }}
-                >
-                  <p style={{ margin: 0, color: "var(--text-muted)", fontSize: ".88rem", lineHeight: 1.6 }}>
-                    {showAddressBuilder
-                      ? "Preencha o endereço abaixo para salvar no seu perfil."
-                      : "Você ainda não tem endereço salvo no perfil."}
-                  </p>
-                  {!showAddressBuilder ? (
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      style={{ width: "fit-content" }}
-                      onClick={() => setShowAddressBuilder(true)}
-                    >
-                      Cadastrar endereço por CEP
-                    </button>
-                  ) : null}
-                </div>
-              </ProfileField>
-
-              {showAddressBuilder ? (
-                <div
-                  style={{
-                    display: "grid",
-                    gap: ".9rem",
-                    padding: "1rem 1.1rem",
-                    borderRadius: 14,
-                    background: "var(--surface-3)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: ".75rem", alignItems: "end" }}>
-                    <ProfileField label="CEP">
-                      <input
-                        type="text"
-                        name="cep"
-                        value={formatCep(addressDraft.cep)}
-                        onChange={handleAddressDraftChange}
-                        className="input-field"
-                        placeholder="00000-000"
-                      />
-                    </ProfileField>
-                    <button type="button" className="btn btn-secondary" onClick={buscarCep} disabled={cepLoading}>
-                      {cepLoading ? "Buscando..." : "Buscar CEP"}
-                    </button>
-                  </div>
-
-                  {cepMessage ? <p style={{ margin: 0, fontSize: ".82rem", color: "var(--text-muted)" }}>{cepMessage}</p> : null}
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 120px", gap: ".75rem" }}>
-                    <ProfileField label="Rua / Avenida">
-                      <input type="text" name="rua" value={addressDraft.rua} onChange={handleAddressDraftChange} className="input-field" placeholder="Ex: Rua das Flores" />
-                    </ProfileField>
-                    <ProfileField label="Numero">
-                      <input type="text" name="numero" value={addressDraft.numero} onChange={handleAddressDraftChange} className="input-field" placeholder="123" />
-                    </ProfileField>
-                  </div>
-
-                  <ProfileField label="Complemento">
-                    <input type="text" name="complemento" value={addressDraft.complemento} onChange={handleAddressDraftChange} className="input-field" placeholder="Apto, bloco, referencia..." />
-                  </ProfileField>
-
-                  <ProfileField label="Bairro">
-                    <input type="text" name="bairro" value={addressDraft.bairro} onChange={handleAddressDraftChange} className="input-field" placeholder="Ex: Centro" />
-                  </ProfileField>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 90px", gap: ".75rem" }}>
-                    <ProfileField label="Cidade">
-                      <input type="text" name="cidade" value={addressDraft.cidade} onChange={handleAddressDraftChange} className="input-field" placeholder="Ex: São Paulo" />
-                    </ProfileField>
-                    <ProfileField label="UF">
-                      <input type="text" name="uf" value={addressDraft.uf} onChange={handleAddressDraftChange} className="input-field" placeholder="SP" maxLength={2} />
-                    </ProfileField>
-                  </div>
-
-                  {addressPreview ? (
-                    <div
-                      style={{
-                        padding: ".9rem 1rem",
-                        borderRadius: 12,
-                        background: "rgba(30,122,50,.08)",
-                        border: "1px solid rgba(30,122,50,.18)",
-                      }}
-                    >
-                      <p style={{ margin: 0, fontSize: ".72rem", textTransform: "uppercase", letterSpacing: "1.2px", color: "var(--text-faint)", fontWeight: 700 }}>
-                        Previa do endereco
-                      </p>
-                      <p style={{ margin: ".35rem 0 0", color: "var(--text)", fontWeight: 600 }}>{addressPreview}</p>
-                    </div>
-                  ) : null}
-
-                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <button type="button" className="btn btn-ghost" onClick={() => setShowAddressBuilder(false)}>
-                      Fechar
-                    </button>
-                  </div>
-                </div>
-              ) : null}
+          <div className="profile-builder">
+            <div className="profile-builder-head">
+              <span className="label">Endereço</span>
+              <span className="profile-builder-hint">Edite os campos ou busque pelo CEP para preencher.</span>
             </div>
-          )}
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: ".75rem",
-              flexWrap: "wrap",
-              paddingTop: ".35rem",
-            }}
-          >
-            <p style={{ fontSize: ".78rem", color: "var(--text-faint)" }}>
-              Campos sensiveis continuam protegidos e não podem ser alterados nesta tela.
-            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: ".75rem", alignItems: "end" }}>
+              <ProfileField label="CEP">
+                <input
+                  type="text"
+                  name="cep"
+                  value={formatCep(addressDraft.cep)}
+                  onChange={handleAddressDraftChange}
+                  className="input-field"
+                  placeholder="00000-000"
+                />
+              </ProfileField>
+              <button type="button" className="btn btn-secondary" onClick={buscarCep} disabled={cepLoading}>
+                {cepLoading ? "Buscando..." : "Buscar CEP"}
+              </button>
+            </div>
+
+            {cepMessage ? <p style={{ margin: 0, fontSize: ".82rem", color: "var(--text-muted)" }}>{cepMessage}</p> : null}
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 120px", gap: ".75rem" }}>
+              <ProfileField label="Rua / Avenida">
+                <input type="text" name="rua" value={addressDraft.rua} onChange={handleAddressDraftChange} className="input-field" placeholder="Ex: Rua das Flores" />
+              </ProfileField>
+              <ProfileField label="Número">
+                <input type="text" name="numero" value={addressDraft.numero} onChange={handleAddressDraftChange} className="input-field" placeholder="123" />
+              </ProfileField>
+            </div>
+
+            <ProfileField label="Complemento">
+              <input type="text" name="complemento" value={addressDraft.complemento} onChange={handleAddressDraftChange} className="input-field" placeholder="Apto, bloco, referência..." />
+            </ProfileField>
+
+            <ProfileField label="Bairro">
+              <input type="text" name="bairro" value={addressDraft.bairro} onChange={handleAddressDraftChange} className="input-field" placeholder="Ex: Centro" />
+            </ProfileField>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 90px", gap: ".75rem" }}>
+              <ProfileField label="Cidade">
+                <input type="text" name="cidade" value={addressDraft.cidade} onChange={handleAddressDraftChange} className="input-field" placeholder="Ex: São Paulo" />
+              </ProfileField>
+              <ProfileField label="UF">
+                <input type="text" name="uf" value={addressDraft.uf} onChange={handleAddressDraftChange} className="input-field" placeholder="SP" maxLength={2} />
+              </ProfileField>
+            </div>
+
+            {addressPreview ? (
+              <div className="profile-preview">
+                <p className="label">Prévia do endereço</p>
+                <p>{addressPreview}</p>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="profile-form-foot">
+            <p>Campos sensíveis continuam protegidos e não podem ser alterados nesta tela.</p>
             <button type="submit" className="btn btn-primary" disabled={isPending}>
-              {isPending ? "Salvando..." : "Salvar alteracoes"}
+              {isPending ? "Salvando..." : "Salvar alterações"}
             </button>
           </div>
         </form>
 
-        <div style={{ display: "grid", gap: "1rem" }}>
-          <div className="card" style={{ display: "grid", gap: ".8rem" }}>
-            <div>
-              <p className="section-label">Informacoes da Conta</p>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>
-                Dados somente leitura
-              </h2>
+        <div className="profile-aside">
+          <div className="card profile-card">
+            <div className="profile-card-head">
+              <p className="section-label">Informações da conta</p>
+              <h2>Dados da sua conta</h2>
             </div>
 
-            <ReadOnlyRow label="Email" value={profile.email} />
-            <ReadOnlyRow label="Status" value={profile.status} />
-            <ReadOnlyRow label="Perfil" value={profile.role.nome} />
-            <ReadOnlyRow label="Role ID" value={String(profile.role.id)} mono />
-            <ReadOnlyRow label="Criado em" value={createdAtLabel} />
+            <dl className="profile-details">
+              <DetailRow label="Email" value={profile.email} />
+              <DetailRow label="Telefone" value={profile.telefone || "Não informado"} />
+              <DetailRow label="Perfil" value={roleLabel} />
+              <DetailRow label="Status" value={isAtivo ? "Ativo" : profile.status} />
+              <DetailRow label="Membro desde" value={createdAtLabel} />
+            </dl>
           </div>
 
-          <div className="card" style={{ display: "grid", gap: ".8rem" }}>
-            <div>
-              <p className="section-label">Empresa Vinculada</p>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)" }}>
-                Relacão atual da conta
-              </h2>
+          {profile.company ? (
+            <div className="card profile-card">
+              <div className="profile-card-head">
+                <p className="section-label">Empresa vinculada</p>
+                <h2>Dados da empresa</h2>
+              </div>
+
+              <dl className="profile-details">
+                <DetailRow label="CNPJ" value={profile.company.cnpj} mono />
+                <DetailRow label="Cadastro" value={companyCreatedAtLabel} />
+              </dl>
+
+              <div className="profile-desc-block">
+                <span className="label">Descrição</span>
+                <p>{profile.company.descricao || "Não informada"}</p>
+              </div>
             </div>
-
-            {profile.company ? (
-              <>
-                <ReadOnlyRow label="Empresa ID" value={String(profile.company.id)} mono />
-                <ReadOnlyRow label="CNPJ" value={profile.company.cnpj} mono />
-                <ReadOnlyRow
-                  label="Descrição"
-                  value={profile.company.descricao || "Não informada"}
-                  multiline
-                />
-                <ReadOnlyRow label="Cadastro da empresa" value={companyCreatedAtLabel} />
-              </>
-            ) : (
-              <p style={{ fontSize: ".88rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
-                Nenhuma empresa vinculada a este usuario no momento.
-              </p>
-            )}
-          </div>
+          ) : null}
         </div>
       </div>
     </div>
   );
+}
+
+function getRoleLabel(role: string) {
+  const r = (role ?? "").toLowerCase();
+  if (r === "admin") return "Administrador";
+  if (r === "empresa") return "Empresa parceira";
+  if (r === "usuario") return "Cidadão";
+  return role;
 }
 
 function ProfileField({
@@ -543,67 +490,26 @@ function ProfileField({
   children: React.ReactNode;
 }) {
   return (
-    <label style={{ display: "grid", gap: ".45rem" }}>
-      <span
-        style={{
-          fontSize: ".74rem",
-          textTransform: "uppercase",
-          letterSpacing: "1.5px",
-          fontWeight: 700,
-          color: "var(--text-faint)",
-        }}
-      >
-        {label}
-      </span>
+    <label className="profile-field">
+      <span className="label">{label}</span>
       {children}
     </label>
   );
 }
 
-function ReadOnlyRow({
+function DetailRow({
   label,
   value,
   mono,
-  multiline,
 }: {
   label: string;
   value: string;
   mono?: boolean;
-  multiline?: boolean;
 }) {
   return (
-    <div
-      style={{
-        padding: ".9rem 1rem",
-        borderRadius: 14,
-        background: "var(--surface-3)",
-        border: "1px solid var(--border)",
-      }}
-    >
-      <p
-        style={{
-          fontSize: ".7rem",
-          textTransform: "uppercase",
-          letterSpacing: "1.4px",
-          fontWeight: 700,
-          color: "var(--text-faint)",
-          marginBottom: ".32rem",
-        }}
-      >
-        {label}
-      </p>
-      <p
-        style={{
-          fontSize: ".92rem",
-          color: "var(--text)",
-          fontWeight: 600,
-          lineHeight: multiline ? 1.6 : 1.4,
-          whiteSpace: multiline ? "pre-line" : "normal",
-          fontFamily: mono ? "ui-monospace, SFMono-Regular, Menlo, monospace" : undefined,
-        }}
-      >
-        {value}
-      </p>
+    <div>
+      <dt>{label}</dt>
+      <dd className={mono ? "mono" : undefined}>{value}</dd>
     </div>
   );
 }

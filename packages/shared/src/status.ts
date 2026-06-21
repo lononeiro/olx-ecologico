@@ -1,4 +1,4 @@
-export const STATUS_SOLICITACAO = ["pendente", "aprovada", "rejeitada"] as const;
+export const STATUS_SOLICITACAO = ["pendente", "aprovada", "rejeitada", "cancelada"] as const;
 export const STATUS_COLETA = [
   "aceita",
   "a_caminho",
@@ -14,7 +14,7 @@ export const STATUS_COLETA_LABEL: Record<string, string> = {
   aceita: "Aceita",
   a_caminho: "A Caminho",
   em_coleta: "Em Coleta",
-  concluida: "Concluida",
+  concluida: "Concluída",
   cancelada: "Cancelada",
 };
 
@@ -22,6 +22,7 @@ export const STATUS_SOLICITACAO_LABEL: Record<string, string> = {
   pendente: "Pendente",
   aprovada: "Aprovada",
   rejeitada: "Rejeitada",
+  cancelada: "Cancelada",
 };
 
 export const STATUS_COLETA_COLOR: Record<string, string> = {
@@ -36,4 +37,5 @@ export const STATUS_SOLICITACAO_COLOR: Record<string, string> = {
   pendente: "badge-yellow",
   aprovada: "badge-green",
   rejeitada: "badge-red",
+  cancelada: "badge-red",
 };

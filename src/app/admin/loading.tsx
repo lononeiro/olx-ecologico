@@ -4,7 +4,7 @@ export default function AdminLoading() {
   return (
     <PageLoading
       title="Carregando painel"
-      description="Atualizando dados administrativos e pendencias."
+      description="Atualizando dados administrativos e pendências."
     />
   );
 }

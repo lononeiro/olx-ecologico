@@ -8,6 +8,7 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // Espelha os tokens --color-* de src/app/globals.css (fonte unica de verdade).
       colors: {
         primary: {
           50: "#F0FFF4",
@@ -18,8 +19,8 @@ module.exports = {
           900: "#1B4332",
         },
         ecoGray: {
-          50: "#F9FAFB",
-          100: "#F3F4F6",
+          50: "#F5FAF6",
+          100: "#EEF5F0",
           300: "#D1D5DB",
           500: "#6B7280",
           700: "#374151",

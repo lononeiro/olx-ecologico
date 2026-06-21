@@ -8,6 +8,9 @@ const { prismaMock } = vi.hoisted(() => ({
     findFirst: vi.fn(),
     update: vi.fn(),
   },
+  notificacao: {
+    create: vi.fn(),
+  },
   },
 }));
 
@@ -17,6 +20,7 @@ vi.mock("@/lib/prisma", () => ({
 
 import {
   atualizarStatusSolicitacao,
+  buscarSolicitacaoEmpresaDTO,
   buscarSolicitacaoPorId,
   criarSolicitacao,
   getAdminSolicitacaoScope,
@@ -32,7 +36,7 @@ describe("solicitacao.service", () => {
   });
 
   describe("criarSolicitacao", () => {
-    it("normaliza, remove duplicatas e cria a solicitacao com imagens", async () => {
+    it("normaliza, remove duplicatas e cria a solicitação com imagens", async () => {
       prismaMock.solicitacaoColeta.create.mockResolvedValueOnce({ id: 10 });
 
       await criarSolicitacao(7, {
@@ -70,7 +74,7 @@ describe("solicitacao.service", () => {
       });
     });
 
-    it("nao envia bloco de imagens quando a lista vier vazia", async () => {
+    it("não envia bloco de imagens quando a lista vier vazia", async () => {
       prismaMock.solicitacaoColeta.create.mockResolvedValueOnce({ id: 11 });
 
       await criarSolicitacao(5, {
@@ -97,7 +101,7 @@ describe("solicitacao.service", () => {
       });
     });
 
-    it("bloqueia quando mais de 5 imagens sao informadas", async () => {
+    it("bloqueia quando mais de 5 imagens são informadas", async () => {
       await expect(
         criarSolicitacao(1, {
           titulo: "Coleta de metal",
@@ -114,13 +118,13 @@ describe("solicitacao.service", () => {
             "https://img.com/6.jpg",
           ],
         })
-      ).rejects.toThrow("Voce pode adicionar no maximo 5 imagens por solicitacao.");
+      ).rejects.toThrow("Você pode adicionar no máximo 5 imagens por solicitação.");
 
       expect(prismaMock.solicitacaoColeta.create).not.toHaveBeenCalled();
     });
   });
 
-  it("lista solicitacoes do usuario por data decrescente", async () => {
+  it("lista solicitações do usuário por data decrescente", async () => {
     await listarSolicitacoesDoUsuario(12);
 
     expect(prismaMock.solicitacaoColeta.findMany).toHaveBeenCalledWith({
@@ -134,7 +138,7 @@ describe("solicitacao.service", () => {
     });
   });
 
-  it("busca solicitacao filtrando por usuario quando informado", async () => {
+  it("busca solicitação filtrando por usuário quando informado", async () => {
     await buscarSolicitacaoPorId(8, 2);
 
     expect(prismaMock.solicitacaoColeta.findFirst).toHaveBeenCalledWith(
@@ -144,13 +148,13 @@ describe("solicitacao.service", () => {
     );
   });
 
-  it("lista solicitacoes pendentes de aprovacao", async () => {
+  it("lista solicitações pendentes de aprovação", async () => {
+    prismaMock.solicitacaoColeta.findMany.mockResolvedValueOnce([]);
     await listarSolicitacoesPendentes();
 
     expect(prismaMock.solicitacaoColeta.findMany).toHaveBeenCalledWith({
       where: { status: "pendente", aprovado: false },
       include: {
-        user: { select: { id: true, nome: true, email: true } },
         material: true,
         imagens: true,
       },
@@ -159,13 +163,13 @@ describe("solicitacao.service", () => {
   });
 
   it("lista a fila operacional da admin", async () => {
+    prismaMock.solicitacaoColeta.findMany.mockResolvedValueOnce([]);
     const now = new Date("2026-04-08T12:00:00.000Z");
     await listarSolicitacoesAdmin();
 
     expect(prismaMock.solicitacaoColeta.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         include: {
-          user: { select: { id: true, nome: true, email: true } },
           material: true,
           imagens: true,
           coleta: {
@@ -179,6 +183,7 @@ describe("solicitacao.service", () => {
         orderBy: { createdAt: "desc" },
       })
     );
+    expect(JSON.stringify(prismaMock.solicitacaoColeta.findMany.mock.calls.at(-1)?.[0])).not.toContain("mensagens");
 
     expect(getAdminSolicitacaoScope(now)).toEqual({
       OR: [
@@ -193,7 +198,13 @@ describe("solicitacao.service", () => {
     });
   });
 
-  it("atualiza o status de aprovacao corretamente", async () => {
+  it("atualiza o status de aprovação corretamente", async () => {
+    prismaMock.solicitacaoColeta.update.mockResolvedValueOnce({
+      id: 4,
+      userId: 1,
+      titulo: "Coleta de teste",
+    });
+
     await atualizarStatusSolicitacao(4, true);
 
     expect(prismaMock.solicitacaoColeta.update).toHaveBeenCalledWith({
@@ -203,19 +214,69 @@ describe("solicitacao.service", () => {
         status: "aprovada",
       },
     });
+    expect(prismaMock.notificacao.create).toHaveBeenCalledTimes(1);
   });
 
-  it("lista apenas solicitacoes aprovadas e sem coleta para empresas", async () => {
+  it("lista apenas solicitações aprovadas e sem coleta para empresas", async () => {
+    prismaMock.solicitacaoColeta.findMany.mockResolvedValueOnce([]);
     await listarSolicitacoesAprovadas();
 
     expect(prismaMock.solicitacaoColeta.findMany).toHaveBeenCalledWith({
       where: { aprovado: true, status: "aprovada", coleta: null },
       include: {
-        user: { select: { id: true, nome: true, email: true, endereco: true } },
         material: true,
         imagens: true,
       },
       orderBy: { createdAt: "desc" },
     });
+  });
+
+  it("empresa não recebe PII em solicitações disponíveis", async () => {
+    prismaMock.solicitacaoColeta.findMany.mockResolvedValueOnce([
+      {
+        id: 1,
+        titulo: "Coleta",
+        descricao: "Material",
+        quantidade: "2 sacos",
+        endereco: "Rua Verde, 10, Bairro Centro, Campinas, SP",
+        material: { id: 1, nome: "Papel" },
+        imagens: [],
+        user: { nome: "Nao deveria sair", email: "a@b.com", telefone: "11999999999" },
+      },
+    ]);
+
+    const result = await listarSolicitacoesAprovadas();
+
+    expect(JSON.stringify(result)).not.toContain("a@b.com");
+    expect(JSON.stringify(result)).not.toContain("11999999999");
+    expect(JSON.stringify(result)).not.toContain("Rua Verde");
+    expect(result[0]).toMatchObject({
+      id: 1,
+      endereco: "Bairro Centro, Campinas",
+      regiao: "Bairro Centro, Campinas",
+    });
+  });
+
+  it("empresa só busca detalhe se disponível sem coleta ou se a coleta pertence a ela", async () => {
+    await buscarSolicitacaoEmpresaDTO(55, 9);
+
+    expect(prismaMock.solicitacaoColeta.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 55,
+          OR: [
+            { aprovado: true, status: "aprovada", coleta: null },
+            { coleta: { companyId: 9 } },
+          ],
+        },
+      })
+    );
+  });
+
+  it("endpoint genérico de solicitação não inclui mensagens", async () => {
+    await buscarSolicitacaoPorId(8, 2);
+
+    const call = prismaMock.solicitacaoColeta.findFirst.mock.calls.at(-1)?.[0];
+    expect(JSON.stringify(call)).not.toContain("mensagens");
   });
 });

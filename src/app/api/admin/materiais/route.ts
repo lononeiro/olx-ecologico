@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   const { nome } = await req.json();
 
   if (!nome || typeof nome !== "string" || !nome.trim()) {
-    return NextResponse.json({ error: "Nome e obrigatorio" }, { status: 400 });
+    return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
   }
 
   const nomeNormalizado = nome.trim();
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     where: { nome: { equals: nomeNormalizado, mode: "insensitive" } },
   });
   if (existente) {
-    return NextResponse.json({ error: "Ja existe um material com este nome" }, { status: 409 });
+    return NextResponse.json({ error: "Já existe um material com este nome" }, { status: 409 });
   }
 
   const material = await prisma.materialTipo.create({

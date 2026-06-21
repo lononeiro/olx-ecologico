@@ -79,7 +79,7 @@ export default async function AdminEmpresasPage({
         </p>
         {totalPages > 1 && (
           <p style={{ fontSize: ".82rem", color: "var(--text-faint)" }}>
-            Pagina {page} de {totalPages}
+            Página {page} de {totalPages}
           </p>
         )}
       </div>
@@ -103,7 +103,7 @@ export default async function AdminEmpresasPage({
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 680 }}>
               <thead>
                 <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                  {["Responsavel / Email", "CNPJ", "Status", "Coletas (total)", "Concluidas", "Cadastro", "Acoes"].map(h => (
+                  {["Responsável / E-mail", "CNPJ", "Status", "Coletas (total)", "Concluídas", "Cadastro", "Ações"].map(h => (
                     <th key={h} style={{
                       padding: ".65rem 1rem", textAlign: "left",
                       fontSize: ".7rem", textTransform: "uppercase",
@@ -173,7 +173,7 @@ export default async function AdminEmpresasPage({
           </span>
           {page < totalPages && (
             <Link href={`/admin/empresas?page=${page + 1}&search=${search}`} className="btn btn-ghost" style={{ fontSize: ".82rem" }}>
-              Proxima →
+              Próxima →
             </Link>
           )}
         </div>

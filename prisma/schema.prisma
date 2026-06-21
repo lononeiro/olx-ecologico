@@ -32,6 +32,9 @@ model User {
   company            Company?
   solicitacoes       SolicitacaoColeta[]
   mensagensEnviadas  Mensagem[]
+  mensagensPreAceite MensagemPreAceite[]
+  avaliacoesFeitas   Avaliacao[]
+  notificacoes       Notificacao[]
 
   @@map("users")
 }
@@ -45,6 +48,7 @@ model Company {
 
   user    User     @relation(fields: [userId], references: [id])
   coletas Coleta[]
+  conversasSolicitacao ConversaSolicitacao[]
 
   @@map("companies")
 }
@@ -73,6 +77,7 @@ model SolicitacaoColeta {
   material MaterialTipo @relation(fields: [materialId], references: [id])
   imagens  SolicitacaoImagem[]
   coleta   Coleta?
+  conversas ConversaSolicitacao[]
 
   @@map("solicitacao_coleta")
 }
@@ -100,8 +105,23 @@ model Coleta {
   solicitacao SolicitacaoColeta @relation(fields: [solicitacaoId], references: [id])
   company     Company           @relation(fields: [companyId], references: [id])
   mensagens   Mensagem[]
+  avaliacao   Avaliacao?
 
   @@map("coletas")
+}
+
+model Avaliacao {
+  id         Int      @id @default(autoincrement())
+  coletaId   Int      @unique
+  autorId    Int
+  nota       Int
+  comentario String?
+  createdAt  DateTime @default(now())
+
+  coleta Coleta @relation(fields: [coletaId], references: [id])
+  autor  User   @relation(fields: [autorId], references: [id])
+
+  @@map("avaliacoes")
 }
 
 model Mensagem {
@@ -115,4 +135,50 @@ model Mensagem {
   remetente User   @relation(fields: [remetenteId], references: [id])
 
   @@map("mensagens")
+}
+
+model ConversaSolicitacao {
+  id            Int      @id @default(autoincrement())
+  solicitacaoId Int
+  companyId     Int
+  status        String   @default("aberta")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  solicitacao SolicitacaoColeta @relation(fields: [solicitacaoId], references: [id])
+  company     Company           @relation(fields: [companyId], references: [id])
+  mensagens   MensagemPreAceite[]
+
+  @@unique([solicitacaoId, companyId])
+  @@map("conversas_solicitacao")
+}
+
+model MensagemPreAceite {
+  id          Int      @id @default(autoincrement())
+  conversaId  Int
+  remetenteId Int
+  mensagem    String
+  createdAt   DateTime @default(now())
+
+  conversa  ConversaSolicitacao @relation(fields: [conversaId], references: [id])
+  remetente User                @relation(fields: [remetenteId], references: [id])
+
+  @@map("mensagens_pre_aceite")
+}
+
+model Notificacao {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  tipo      String
+  titulo    String
+  descricao String
+  href      String?
+  lida      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, lida])
+  @@index([userId, id])
+  @@map("notificacoes")
 }

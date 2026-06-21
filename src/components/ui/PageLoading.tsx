@@ -9,7 +9,7 @@ type PageLoadingProps = {
 export function PageLoading({
   variant = "content",
   title = "Carregando",
-  description = "Preparando as informacoes da pagina.",
+  description = "Preparando as informações da página.",
 }: PageLoadingProps) {
   const isFull = variant === "full";
 

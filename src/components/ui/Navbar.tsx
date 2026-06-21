@@ -14,25 +14,23 @@ type NavbarProps = {
 const NAV_LINKS: Record<string, { href: string; label: string; icon: ReactNode }[]> = {
   usuario: [
     { href: "/dashboard", label: "Dashboard", icon: <IconDashboard /> },
-    { href: "/dashboard/solicitacoes", label: "Solicitacoes", icon: <IconClipboard /> },
-    { href: "/dashboard/solicitacoes/nova", label: "Nova solicitacao", icon: <IconPlus /> },
-    { href: "/me", label: "Usuarios", icon: <IconUser /> },
+    { href: "/dashboard/solicitacoes", label: "Solicitações", icon: <IconClipboard /> },
+    { href: "/dashboard/mensagens", label: "Mensagens", icon: <IconMessage /> },
+    { href: "/dashboard/solicitacoes/nova", label: "Nova solicitação", icon: <IconPlus /> },
   ],
   admin: [
     { href: "/admin", label: "Dashboard", icon: <IconDashboard /> },
-    { href: "/admin/solicitacoes", label: "Solicitacoes", icon: <IconClipboard /> },
-    { href: "/admin/usuarios", label: "Usuarios", icon: <IconUser /> },
+    { href: "/admin/solicitacoes", label: "Solicitações", icon: <IconClipboard /> },
+    { href: "/admin/usuarios", label: "Usuários", icon: <IconUser /> },
     { href: "/admin/empresas", label: "Empresas", icon: <IconBuilding /> },
     { href: "/admin/materiais", label: "Materiais", icon: <IconLeaf /> },
   ],
   empresa: [
     { href: "/empresa", label: "Dashboard", icon: <IconDashboard /> },
-    { href: "/empresa/solicitacoes", label: "Solicitacoes", icon: <IconClipboard /> },
-    { href: "/empresa/rotas", label: "Rotas", icon: <IconMapPin /> },
+    { href: "/empresa/solicitacoes", label: "Solicitações", icon: <IconClipboard /> },
     { href: "/empresa/mensagens", label: "Mensagens", icon: <IconMessage /> },
-    { href: "/empresa/relatorios", label: "Relatorios", icon: <IconChart /> },
-    { href: "/empresa/avaliacoes", label: "Avaliacoes", icon: <IconStar /> },
-    { href: "/empresa/configuracoes", label: "Configuracoes", icon: <IconSettings /> },
+    { href: "/empresa/coletas", label: "Coletas", icon: <IconMapPin /> },
+    { href: "/empresa/avaliacoes", label: "Avaliações", icon: <IconStar /> },
   ],
 };
 

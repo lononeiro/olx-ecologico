@@ -21,9 +21,13 @@ export async function GET(
     let coleta;
     if (role === "empresa") {
       const company = await prisma.company.findUnique({ where: { userId } });
-      coleta = await buscarColetaPorId(id, undefined, company?.id);
+      coleta = await buscarColetaPorId(id, undefined, company?.id, {
+        includeMensagens: true,
+      });
     } else {
-      coleta = await buscarColetaPorId(id, userId);
+      coleta = await buscarColetaPorId(id, userId, undefined, {
+        includeMensagens: true,
+      });
     }
 
     if (!coleta) {
@@ -67,18 +71,18 @@ export async function PATCH(
       return NextResponse.json({ error: "Empresa não encontrada" }, { status: 404 });
     }
 
-    // Quando concluir, valida o codigo de confirmacao do usuario
+    // Quando concluir, valida o código de confirmação do usuário
     if (parsed.data.status === "concluida") {
       const codigoEnviado = parsed.data.codigoConfirmacao?.trim().toUpperCase();
       if (!codigoEnviado) {
-        return NextResponse.json({ error: "Codigo de confirmacao obrigatorio para concluir." }, { status: 400 });
+        return NextResponse.json({ error: "Código de confirmação obrigatório para concluir." }, { status: 400 });
       }
       const coleta = await prisma.coleta.findFirst({ where: { id, companyId: company.id } });
       if (!coleta) {
-        return NextResponse.json({ error: "Coleta nao encontrada." }, { status: 404 });
+        return NextResponse.json({ error: "Coleta não encontrada." }, { status: 404 });
       }
       if (coleta.codigoConfirmacao !== codigoEnviado) {
-        return NextResponse.json({ error: "Codigo de confirmacao invalido." }, { status: 400 });
+        return NextResponse.json({ error: "Código de confirmação inválido." }, { status: 400 });
       }
     }
 

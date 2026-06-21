@@ -31,14 +31,14 @@ export default async function DashboardPage() {
     <div className="page-enter">
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 20 }}>
         <div>
-          <p className="section-label" style={{ marginBottom: 6 }}>Painel do cidadao</p>
+          <p className="section-label" style={{ marginBottom: 6 }}>Painel do cidadão</p>
           <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--color-gray-900)", lineHeight: 1.2 }}>
             {saudacao}, {primeiroNome}
           </h1>
           <p style={{ fontSize: 13, color: "var(--color-gray-500)", marginTop: 4 }}>
             {stats.total === 0
               ? "Crie sua primeira solicitação de coleta."
-              : `Voce tem ${stats.pendentes} ${textoSolicitacaoPendente} aguardando aprovação.`}
+              : `Você tem ${stats.pendentes} ${textoSolicitacaoPendente} aguardando aprovação.`}
           </p>
         </div>
         <Link href="/dashboard/solicitacoes/nova" className="btn btn-primary" aria-label="Criar nova solicitação">
@@ -56,12 +56,12 @@ export default async function DashboardPage() {
 
       <div className="dashboard-overview-grid">
         <SurfaceCard className="chart-card">
-          <PageSection title="Coletas por mes" description="Volume mensal das Solicitações criadas" />
+          <PageSection title="Coletas por mês" description="Volume mensal das solicitações criadas" />
           <MonthlyLineChart items={solicitacoes} />
         </SurfaceCard>
 
         <SurfaceCard>
-          <PageSection title="Solicitações recentes" description={`Ultimas ${Math.min(solicitacoes.length, 5)} movimentações`} />
+          <PageSection title="Solicitações recentes" description={`Últimas ${Math.min(solicitacoes.length, 5)} movimentações`} />
           <div className="request-list">
             {solicitacoes.slice(0, 5).map((item) => (
               <Link key={item.id} href={`/dashboard/solicitacoes/${item.id}`} className="request-row" style={{ textDecoration: "none" }}>
@@ -133,7 +133,7 @@ function MonthlyLineChart({ items }: { items: { createdAt: string | Date }[] }) 
   const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
 
   return (
-    <svg viewBox="0 0 470 190" width="100%" height="190" role="img" aria-label="Grafico de coletas por mes">
+    <svg viewBox="0 0 470 190" width="100%" height="190" role="img" aria-label="Gráfico de coletas por mês">
       {[40, 75, 110, 145].map((y) => <line key={y} x1="36" x2="440" y1={y} y2={y} className="chart-grid" />)}
       <path d={path} className="chart-line" />
       {points.map((point, index) => (

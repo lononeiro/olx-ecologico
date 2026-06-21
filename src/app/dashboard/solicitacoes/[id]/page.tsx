@@ -2,19 +2,22 @@ import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChatBox } from "@/components/forms/ChatBox";
+import { AvaliacaoForm } from "@/components/forms/AvaliacaoForm";
 import { FloatingChat } from "@/components/ui/FloatingChat";
 import { RequestImageGallery } from "@/components/ui/RequestImageGallery";
 import { ColetaStatusTracker } from "@/components/ui/ColetaStatusTracker";
 import { SolicitacaoBadge } from "@/components/ui/StatusBadge";
+import { CancelarSolicitacaoButton } from "@/components/ui/CancelarSolicitacaoButton";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { listarConversasDaSolicitacaoUsuario } from "@/services/conversa-solicitacao.service";
 
 export const dynamic = "force-dynamic";
 
 const STATUS_COPY: Record<string, { title: string; description: string; tone: string }> = {
   pendente: {
     title: "Aguardando aprovação",
-    description: "Sua solicitação esta em análise pela administração.",
+    description: "Sua solicitação está em análise pela administração.",
     tone: "border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-900/60 dark:bg-yellow-950/40 dark:text-yellow-200",
   },
   aprovada: {
@@ -25,6 +28,11 @@ const STATUS_COPY: Record<string, { title: string; description: string; tone: st
   rejeitada: {
     title: "Solicitação rejeitada",
     description: "Entre em contato com o suporte caso precise de mais informações.",
+    tone: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200",
+  },
+  cancelada: {
+    title: "Solicitação cancelada",
+    description: "Esta solicitação foi cancelada pelo solicitante.",
     tone: "border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200",
   },
 };
@@ -46,10 +54,7 @@ export default async function SolicitacaoDetailPage({
       coleta: {
         include: {
           company: { include: { user: { select: { id: true, nome: true } } } },
-          mensagens: {
-            include: { remetente: { select: { id: true, nome: true } } },
-            orderBy: { createdAt: "asc" },
-          },
+          avaliacao: true,
         },
       },
     },
@@ -62,6 +67,10 @@ export default async function SolicitacaoDetailPage({
     description: "Acompanhe os dados atualizados desta solicitação.",
     tone: "border-slate-200 bg-slate-50 text-slate-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200",
   };
+  const conversasPreAceite =
+    !s.coleta && s.status === "aprovada"
+      ? await listarConversasDaSolicitacaoUsuario(s.id, userId)
+      : [];
 
   return (
     <div
@@ -169,10 +178,17 @@ export default async function SolicitacaoDetailPage({
                       color: "var(--text-muted)",
                     }}
                   >
-                    Documento de referencia da solicitação de coleta com destaque visual para anexos e dados principais.
+                    Documento de referência da solicitação de coleta com destaque visual para anexos e dados principais.
                   </p>
                 </div>
-                <SolicitacaoBadge status={s.status} />
+                <div style={{ display: "flex", alignItems: "center", gap: ".65rem", flexWrap: "wrap" }}>
+                  <SolicitacaoBadge status={s.status} />
+                  <CancelarSolicitacaoButton
+                    solicitacaoId={s.id}
+                    statusSolicitacao={s.status}
+                    statusColeta={s.coleta?.status ?? null}
+                  />
+                </div>
               </div>
             </div>
 
@@ -240,7 +256,7 @@ export default async function SolicitacaoDetailPage({
                       }}>
                         <div style={{ flex: 1, minWidth: 160 }}>
                           <p style={{ fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1.5px", color: "var(--green)", fontWeight: 700, marginBottom: ".4rem" }}>
-                            Codigo de confirmacao
+                            Código de confirmação
                           </p>
                           <p style={{ fontSize: "2rem", fontFamily: "ui-monospace, SFMono-Regular, monospace", fontWeight: 700, letterSpacing: "8px", color: "var(--text)", lineHeight: 1 }}>
                             {s.coleta.codigoConfirmacao}
@@ -256,7 +272,7 @@ export default async function SolicitacaoDetailPage({
                           lineHeight: 1.55,
                           maxWidth: 240,
                         }}>
-                          <strong>Mostre este codigo ao coletor</strong> no momento da conclusao da coleta.
+                          <strong>Mostre este código ao coletor</strong> no momento da conclusão da coleta.
                         </div>
                       </div>
                     )}
@@ -277,6 +293,73 @@ export default async function SolicitacaoDetailPage({
               </div>
             </div>
           </article>
+
+          {!s.coleta && s.status === "aprovada" && (
+            <section
+              className="card"
+              style={{
+                marginTop: "1rem",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                boxShadow: "var(--shadow)",
+              }}
+            >
+              <SectionHeading
+                eyebrow="Empresas interessadas"
+                title="Conversas antes do aceite"
+                description="Responda dúvidas das empresas antes de uma delas assumir a coleta."
+              />
+
+              {conversasPreAceite.length === 0 ? (
+                <div
+                  style={{
+                    borderRadius: 20,
+                    border: "1px solid var(--border)",
+                    background: "var(--surface-3)",
+                    padding: "1rem 1.05rem",
+                    color: "var(--text-muted)",
+                    fontSize: ".9rem",
+                    lineHeight: 1.55,
+                  }}
+                >
+                  Nenhuma empresa iniciou conversa ainda. Quando houver dúvidas, elas aparecerão aqui.
+                </div>
+              ) : (
+                <div style={{ display: "grid", gap: "1rem" }}>
+                  {conversasPreAceite.map((conversa) => (
+                    <div
+                      key={conversa.id}
+                      style={{
+                        borderRadius: 22,
+                        border: "1px solid var(--border)",
+                        background: "var(--surface-3)",
+                        padding: "1rem",
+                      }}
+                    >
+                      <div style={{ marginBottom: ".8rem", display: "flex", justifyContent: "space-between", gap: ".75rem", flexWrap: "wrap" }}>
+                        <div>
+                          <p style={{ fontWeight: 800, color: "var(--text)" }}>
+                            {conversa.company.user.nome}
+                          </p>
+                          <p style={{ fontSize: ".78rem", color: "var(--text-muted)", marginTop: ".2rem" }}>
+                            Status da conversa: {conversa.status}
+                          </p>
+                        </div>
+                      </div>
+                      <ChatBox
+                        conversaId={conversa.id}
+                        currentUserId={userId}
+                        initialMessages={conversa.mensagens}
+                        apiPath={`/api/conversas-solicitacao/${conversa.id}/mensagens`}
+                        emptyText="Nenhuma mensagem nessa conversa"
+                        placeholder="Responda a empresa..."
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
 
           {s.coleta && (
             <aside className="chat-col">
@@ -299,14 +382,30 @@ export default async function SolicitacaoDetailPage({
               <FloatingChat
                 title="Chat com a empresa"
                 description={s.coleta.company.user.nome}
-                messageCount={s.coleta.mensagens.length}
+                messageCount={0}
               >
                 <ChatBox
                   coletaId={s.coleta.id}
                   currentUserId={userId}
-                  initialMessages={s.coleta.mensagens as any}
                 />
               </FloatingChat>
+
+              {s.coleta.status === "concluida" && (
+                <section
+                  className="card"
+                  style={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    boxShadow: "var(--shadow)",
+                  }}
+                >
+                  <SectionHeading eyebrow="Pós-coleta" title="Avalie a empresa" />
+                  <AvaliacaoForm
+                    coletaId={s.coleta.id}
+                    avaliacaoExistente={(s.coleta as any).avaliacao ?? null}
+                  />
+                </section>
+              )}
             </aside>
           )}
         </div>

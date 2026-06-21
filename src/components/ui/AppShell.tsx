@@ -2,38 +2,44 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Navbar } from "@/components/ui/Navbar";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { NotificationBell } from "@/components/ui/NotificationBell";
 
 const PAGE_TITLES: Record<string, { title: string; description: string }> = {
   "/dashboard": {
     title: "Dashboard",
-    description: "Acompanhe suas solicitacoes, coletas e proximos passos.",
+    description: "Acompanhe suas solicitações, coletas e próximos passos.",
   },
   "/dashboard/solicitacoes": {
-    title: "Solicitacoes",
-    description: "Historico completo das solicitacoes abertas pelo usuario.",
+    title: "Solicitações",
+    description: "Histórico completo das solicitações abertas pelo usuário.",
+  },
+  "/dashboard/mensagens": {
+    title: "Mensagens",
+    description: "Conversas com empresas antes e depois do aceite da coleta.",
   },
   "/dashboard/solicitacoes/nova": {
-    title: "Nova Solicitacao",
-    description: "Preencha o formulario e envie um novo pedido de coleta.",
+    title: "Nova Solicitação",
+    description: "Preencha o formulário e envie um novo pedido de coleta.",
   },
   "/admin": {
     title: "Painel Administrativo",
-    description: "Visao central da operacao, analises e pendencias.",
+    description: "Visão central da operação, análises e pendências.",
   },
   "/admin/solicitacoes": {
-    title: "Gestao de Solicitacoes",
-    description: "Todas as solicitacoes de coleta da plataforma.",
+    title: "Gestão de Solicitações",
+    description: "Todas as solicitações de coleta da plataforma.",
   },
   "/admin/usuarios": {
-    title: "Gestao de Usuarios",
-    description: "Visualize, ative, desative e gerencie os usuarios da plataforma.",
+    title: "Gestão de Usuários",
+    description: "Visualize, ative, desative e gerencie os usuários da plataforma.",
   },
   "/admin/empresas": {
-    title: "Gestao de Empresas",
+    title: "Gestão de Empresas",
     description: "Gerencie as empresas parceiras e acompanhe suas coletas.",
   },
   "/admin/materiais": {
@@ -42,19 +48,27 @@ const PAGE_TITLES: Record<string, { title: string; description: string }> = {
   },
   "/empresa": {
     title: "Painel da Empresa",
-    description: "Resumo das coletas, demandas disponiveis e performance.",
+    description: "Resumo das coletas, demandas disponíveis e performance.",
   },
   "/empresa/solicitacoes": {
-    title: "Solicitacoes Disponiveis",
+    title: "Solicitações Disponíveis",
     description: "Pedidos aprovados aguardando aceite da empresa.",
+  },
+  "/empresa/mensagens": {
+    title: "Mensagens",
+    description: "Central de conversas com clientes antes e depois do aceite.",
   },
   "/empresa/coletas": {
     title: "Coletas",
     description: "Lista operacional das coletas aceitas pela empresa.",
   },
+  "/empresa/avaliacoes": {
+    title: "Avaliações",
+    description: "Notas, comentários e reputação das coletas finalizadas.",
+  },
   "/me": {
     title: "Meu Perfil",
-    description: "Gerencie seus dados de conta e informacoes vinculadas.",
+    description: "Gerencie seus dados de conta e informações vinculadas.",
   },
 };
 
@@ -69,7 +83,7 @@ function getPageCopy(pathname: string) {
   return (
     matched?.[1] ?? {
       title: "ECOnecta",
-      description: "Plataforma de gestao para o ecossistema de coleta sustentavel.",
+      description: "Plataforma de gestão para o ecossistema de coleta sustentável.",
     }
   );
 }
@@ -79,7 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const page = getPageCopy(pathname);
-  const userName = session?.user?.name?.split(" ")[0] ?? "Usuario";
+  const userName = session?.user?.name?.split(" ")[0] ?? "Usuário";
   const role = ((session?.user as any)?.role ?? "") as string;
 
   return (
@@ -103,19 +117,17 @@ export function AppShell({ children }: { children: ReactNode }) {
               <MenuIcon />
             </button>
 
-            <button type="button" className="app-notification-button" aria-label="Notificacoes">
-              <BellIcon />
-            </button>
+            <NotificationBell />
 
             <ThemeToggle compact />
 
-            <div className="app-user-chip">
+            <Link href="/me" className="app-user-chip" aria-label="Ver meu perfil" title="Meu perfil">
               <div className="app-user-avatar">{userName[0]?.toUpperCase() ?? "U"}</div>
-              <div>
+              <div className="app-user-chip-text">
                 <p className="app-user-name">{userName}</p>
                 <p className="app-user-role">{getRoleLabel(role)}</p>
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 
@@ -128,7 +140,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 function getRoleLabel(role: string) {
   if (role === "admin") return "Administrador";
   if (role === "empresa") return "Empresa parceira";
-  if (role === "usuario") return "Cidadao";
+  if (role === "usuario") return "Cidadão";
   return "Conta ativa";
 }
 
@@ -142,11 +154,3 @@ function MenuIcon() {
   );
 }
 
-function BellIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
-      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
-    </svg>
-  );
-}

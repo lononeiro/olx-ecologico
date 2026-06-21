@@ -5,7 +5,7 @@ export default function AuthLoading() {
     <PageLoading
       variant="full"
       title="Abrindo acesso"
-      description="Carregando a area de autenticacao."
+      description="Carregando a área de autenticação."
     />
   );
 }

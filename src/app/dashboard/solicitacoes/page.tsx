@@ -2,14 +2,33 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { listarSolicitacoesDoUsuario } from "@/services/solicitacao.service";
 import { SolicitacaoCard } from "@/components/cards/SolicitacaoCard";
+import { FiltrosSolicitacoes } from "@/components/filters/FiltrosSolicitacoes";
+import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function SolicitacoesPage() {
+export default async function SolicitacoesPage({
+  searchParams,
+}: {
+  searchParams: { status?: string; materialId?: string; dataInicio?: string; dataFim?: string };
+}) {
   const session = await getServerSession(authOptions);
   const userId = Number((session!.user as any).id);
-  const solicitacoes = await listarSolicitacoesDoUsuario(userId);
+
+  const dataFimDate = searchParams.dataFim
+    ? new Date(searchParams.dataFim + "T23:59:59")
+    : undefined;
+
+  const [solicitacoes, materiais] = await Promise.all([
+    listarSolicitacoesDoUsuario(userId, {
+      status:     searchParams.status,
+      materialId: searchParams.materialId ? Number(searchParams.materialId) : undefined,
+      dataInicio: searchParams.dataInicio ? new Date(searchParams.dataInicio) : undefined,
+      dataFim:    dataFimDate,
+    }),
+    prisma.materialTipo.findMany({ orderBy: { nome: "asc" } }),
+  ]);
 
   return (
     <div className="page-enter">
@@ -35,6 +54,16 @@ export default async function SolicitacoesPage() {
           Nova Solicitação
         </Link>
       </div>
+
+      <FiltrosSolicitacoes
+        statusAtual={searchParams.status}
+        materialIdAtual={searchParams.materialId}
+        dataInicioAtual={searchParams.dataInicio}
+        dataFimAtual={searchParams.dataFim}
+        materiais={materiais}
+        mostrarStatus
+        mostrarBusca={false}
+      />
 
       {solicitacoes.length === 0 ? (
         <div className="card empty-state" style={{

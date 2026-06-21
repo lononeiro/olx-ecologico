@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MapaEndereco } from "@/components/ui/MapaEndereco";
 import { SolicitacaoBadge } from "@/components/ui/StatusBadge";
@@ -13,7 +14,6 @@ interface Props {
   quantidade: string;
   endereco: string;
   materialNome: string;
-  solicitanteNome: string;
   imagens: { id: number; url: string }[];
 }
 
@@ -24,7 +24,6 @@ export function AceitarSolicitacaoButton({
   quantidade,
   endereco,
   materialNome,
-  solicitanteNome,
   imagens,
 }: Props) {
   const router = useRouter();
@@ -62,7 +61,17 @@ export function AceitarSolicitacaoButton({
   }
 
   return (
-    <>
+    <div style={{ display: "grid", gap: ".55rem" }}>
+      <Link
+        href={`/empresa/solicitacoes/${solicitacaoId}/conversa`}
+        className="btn btn-secondary"
+        style={{ width: "100%", justifyContent: "center" }}
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+        Tirar dúvida
+      </Link>
       <button
         onClick={() => setModalAberto(true)}
         className="btn btn-blue"
@@ -231,9 +240,8 @@ export function AceitarSolicitacaoButton({
                 >
                   <InfoField label="Material" value={materialNome} />
                   <InfoField label="Quantidade" value={quantidade} />
-                  <InfoField label="Solicitante" value={solicitanteNome} />
                   <InfoField label="Status" value={<SolicitacaoBadge status="aprovada" />} />
-                  <InfoField label="Endereço da coleta" value={endereco} full />
+                  <InfoField label="Região aproximada" value={endereco} full />
                   {descricao && <InfoField label="Descrição" value={descricao} full muted />}
                 </div>
 
@@ -343,7 +351,7 @@ export function AceitarSolicitacaoButton({
                     lineHeight: 1.6,
                   }}
                 >
-                  Ao aceitar, voce se compromete a realizar a coleta neste endereco. O solicitante sera notificado e voce podera trocar mensagens com ele.
+                  Ao aceitar, a empresa receberá o endereço completo da coleta e poderá trocar mensagens com o solicitante.
                 </div>
               </div>
 
@@ -408,7 +416,7 @@ export function AceitarSolicitacaoButton({
           </div>
         </Portal>
       )}
-    </>
+    </div>
   );
 }
 

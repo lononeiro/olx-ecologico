@@ -4,7 +4,7 @@ export default function DashboardLoading() {
   return (
     <PageLoading
       title="Carregando dashboard"
-      description="Buscando suas solicitacoes e indicadores."
+      description="Buscando suas solicitações e indicadores."
     />
   );
 }

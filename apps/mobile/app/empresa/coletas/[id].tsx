@@ -1,7 +1,7 @@
 import { useLocalSearchParams, router } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 import {
   AppButton,
   AppCard,
@@ -26,6 +26,13 @@ const NEXT_STATUS: Record<string, string[]> = {
   aceita: ["a_caminho", "cancelada"],
   a_caminho: ["em_coleta", "cancelada"],
   em_coleta: ["concluida", "cancelada"],
+};
+
+const STATUS_ACTION_LABELS: Record<string, string> = {
+  a_caminho: "Marcar como a caminho",
+  em_coleta: "Marcar em coleta",
+  concluida: "Concluir coleta",
+  cancelada: "Cancelar coleta",
 };
 
 export default function EmpresaColetaDetailScreen() {
@@ -129,14 +136,27 @@ export default function EmpresaColetaDetailScreen() {
           <SectionHeader
             eyebrow="STATUS"
             title="Atualizar andamento"
-            description="O fluxo segue a mesma ordem do web."
+            description="Escolha o proximo passo da coleta aprovada."
           />
-          <AppField
-            label="Novo status"
-            value={novoStatus}
-            onChangeText={setNovoStatus}
-            placeholder={opcoes.join(" | ")}
-          />
+          <View style={{ gap: 10 }}>
+            {opcoes.map((status) => (
+              <AppButton
+                key={status}
+                label={STATUS_ACTION_LABELS[status] ?? status}
+                tone={
+                  novoStatus === status
+                    ? "primary"
+                    : status === "cancelada"
+                      ? "danger"
+                      : "secondary"
+                }
+                onPress={() => {
+                  setFeedback("");
+                  setNovoStatus(status);
+                }}
+              />
+            ))}
+          </View>
           {novoStatus === "concluida" && (
             <AppField
               label="Codigo de confirmacao"
@@ -147,12 +167,18 @@ export default function EmpresaColetaDetailScreen() {
             />
           )}
           <Text style={{ color: "#537156", lineHeight: 22 }}>
-            Status permitidos agora: {opcoes.join(", ")}.
+            {novoStatus
+              ? `Proximo passo selecionado: ${STATUS_ACTION_LABELS[novoStatus] ?? novoStatus}.`
+              : "Selecione o proximo passo para habilitar a atualizacao."}
           </Text>
           <AppButton
             label={statusMutation.isPending ? "Atualizando..." : "Atualizar status"}
             onPress={() => statusMutation.mutate()}
-            disabled={statusMutation.isPending || !novoStatus}
+            disabled={
+              statusMutation.isPending ||
+              !novoStatus ||
+              (novoStatus === "concluida" && !codigoConfirmacao.trim())
+            }
           />
         </AppCard>
       )}
@@ -162,7 +188,9 @@ export default function EmpresaColetaDetailScreen() {
           coletaId={coleta.id}
           accessToken={accessToken}
           currentUserId={user.id}
-          messages={coleta.mensagens}
+          messages={coleta.mensagens ?? []}
+          emptyText="Nenhuma mensagem ainda. Converse com o solicitante por aqui."
+          placeholder="Escreva para o solicitante"
         />
       ) : null}
 

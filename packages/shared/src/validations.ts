@@ -74,6 +74,12 @@ export const mensagemCreateSchema = z.object({
   mensagem: z.string().min(1, "Mensagem nao pode ser vazia"),
 });
 
+export const avaliacaoCreateSchema = z.object({
+  coletaId:   z.coerce.number().int().positive(),
+  nota:       z.number().int().min(1).max(5),
+  comentario: z.string().max(500).optional(),
+});
+
 export const profileUpdateSchema = z.object({
   nome: z
     .string()

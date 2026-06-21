@@ -31,7 +31,7 @@ export function AdminUsersFilters({ search, role, status }: Props) {
           name="search"
           type="search"
           defaultValue={search}
-          placeholder="Buscar por nome ou e-mail..."
+          placeholder="Buscar por nome..."
           className="input-field"
           style={{ flex: 1, fontSize: ".875rem" }}
         />
@@ -45,7 +45,7 @@ export function AdminUsersFilters({ search, role, status }: Props) {
         style={{ width: "auto", minWidth: 140, fontSize: ".875rem" }}
       >
         <option value="">Todos os perfis</option>
-        <option value="usuario">Cidadao</option>
+        <option value="usuario">Cidadão</option>
         <option value="empresa">Empresa</option>
         <option value="admin">Administrador</option>
       </select>

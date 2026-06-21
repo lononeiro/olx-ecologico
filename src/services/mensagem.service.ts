@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { notificarNovaMensagem } from "@/services/notificacao.service";
 
 /**
  * Verifica se o userId tem acesso à coleta (é o dono da solicitação
@@ -10,7 +11,7 @@ export async function verificarAcessoColeta(coletaId: number, userId: number) {
     where: { id: coletaId },
     select: {
       id: true,
-      solicitacao: { select: { userId: true } },
+      solicitacao: { select: { userId: true, titulo: true } },
       company:     { select: { userId: true } },
     },
   });
@@ -28,12 +29,19 @@ export async function verificarAcessoColeta(coletaId: number, userId: number) {
  * Lista mensagens de uma coleta.
  * Lança erro se o userId não tiver acesso.
  */
-export async function listarMensagensColeta(coletaId: number, userId: number) {
+export async function listarMensagensColeta(
+  coletaId: number,
+  userId: number,
+  options: { sinceId?: number } = {}
+) {
   const acesso = await verificarAcessoColeta(coletaId, userId);
   if (!acesso) throw new Error("Acesso negado a esta conversa.");
 
   return prisma.mensagem.findMany({
-    where: { coletaId },
+    where: {
+      coletaId,
+      ...(options.sinceId ? { id: { gt: options.sinceId } } : {}),
+    },
     include: { remetente: { select: { id: true, nome: true } } },
     orderBy: { createdAt: "asc" },
   });
@@ -51,8 +59,21 @@ export async function enviarMensagem(
   const acesso = await verificarAcessoColeta(coletaId, remetenteId);
   if (!acesso) throw new Error("Sem permissão para enviar mensagem nesta coleta.");
 
-  return prisma.mensagem.create({
+  const novaMensagem = await prisma.mensagem.create({
     data: { coletaId, remetenteId, mensagem },
     include: { remetente: { select: { id: true, nome: true } } },
   });
+
+  const remetenteEhSolicitante = acesso.solicitacao.userId === remetenteId;
+  await notificarNovaMensagem({
+    destinatarioId: remetenteEhSolicitante
+      ? acesso.company.userId
+      : acesso.solicitacao.userId,
+    destinatarioRole: remetenteEhSolicitante ? "empresa" : "usuario",
+    remetenteNome: novaMensagem.remetente.nome,
+    assunto: acesso.solicitacao.titulo,
+    previa: mensagem,
+  });
+
+  return novaMensagem;
 }

@@ -87,13 +87,32 @@ export interface SolicitacaoImage {
 export interface MessageItem {
   id: number;
   mensagem: string;
-  coletaId: number;
+  coletaId?: number;
+  conversaId?: number;
   remetenteId: number;
   createdAt: string;
   remetente: {
     id: number;
     nome: string;
   };
+}
+
+export interface PreAcceptConversation {
+  id: number;
+  solicitacaoId: number;
+  companyId: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  company: {
+    id: number;
+    user: {
+      id: number;
+      nome: string;
+    };
+  };
+  solicitacao?: SolicitacaoItem;
+  mensagens: MessageItem[];
 }
 
 export interface SolicitacaoItem {
@@ -154,7 +173,7 @@ export interface ColetaItem {
       email: string;
     };
   };
-  mensagens: MessageItem[];
+  mensagens?: MessageItem[];
 }
 
 function getFieldErrors(data: unknown): ApiFieldErrors | undefined {
@@ -328,6 +347,13 @@ export function getSolicitacoes(accessToken: string) {
   });
 }
 
+export function getEmpresaSolicitacoesDisponiveis(accessToken: string) {
+  return apiFetch<SolicitacaoItem[]>("/api/solicitacoes", {
+    method: "GET",
+    accessToken,
+  });
+}
+
 export function getSolicitacaoById(accessToken: string, id: number) {
   return apiFetch<SolicitacaoItem>(`/api/solicitacoes/${id}`, {
     method: "GET",
@@ -395,14 +421,34 @@ export function sendMensagem(
   });
 }
 
-export function moderateSolicitacao(
+export function getEmpresaConversaSolicitacao(accessToken: string, solicitacaoId: number) {
+  return apiFetch<PreAcceptConversation>(
+    `/api/empresa/solicitacoes/${solicitacaoId}/conversa`,
+    {
+      method: "GET",
+      accessToken,
+    }
+  );
+}
+
+export function getConversasSolicitacao(accessToken: string, solicitacaoId: number) {
+  return apiFetch<PreAcceptConversation[]>(
+    `/api/solicitacoes/${solicitacaoId}/conversas`,
+    {
+      method: "GET",
+      accessToken,
+    }
+  );
+}
+
+export function sendMensagemConversaSolicitacao(
   accessToken: string,
-  id: number,
-  aprovado: boolean
+  conversaId: number,
+  mensagem: string
 ) {
-  return apiFetch<SolicitacaoItem>(`/api/admin/solicitacoes/${id}`, {
-    method: "PATCH",
+  return apiFetch<MessageItem>(`/api/conversas-solicitacao/${conversaId}/mensagens`, {
+    method: "POST",
     accessToken,
-    body: JSON.stringify({ aprovado }),
+    body: JSON.stringify({ mensagem }),
   });
 }

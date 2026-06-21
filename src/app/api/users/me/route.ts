@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
   if (!user) {
     return applyCors(
       req,
-      NextResponse.json({ error: "Usuario nao encontrado" }, { status: 404 })
+      NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 })
     );
   }
 

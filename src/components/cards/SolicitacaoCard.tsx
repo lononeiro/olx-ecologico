@@ -34,7 +34,7 @@ const FALLBACK_IMAGE_BG =
 function getCardVisualState(status: string, coletaStatus?: string | null): CardVisualState {
   if (coletaStatus === "concluida") {
     return {
-      badgeLabel: "Concluida",
+      badgeLabel: "Concluída",
       progressLabel: "Fluxo finalizado",
       progressValue: 100,
       badgeBackground: "rgba(30,122,50,.12)",
@@ -112,7 +112,7 @@ function getCardVisualState(status: string, coletaStatus?: string | null): CardV
 
   return {
     badgeLabel: "Aguardando",
-    progressLabel: "Aguardando aprovacao",
+    progressLabel: "Aguardando aprovação",
     progressValue: 25,
     badgeBackground: "rgba(196,122,6,.1)",
     badgeText: "var(--yellow)",
@@ -337,7 +337,7 @@ export function SolicitacaoCard({ solicitacao: s, href, actions }: Props) {
             />
             <InfoTile
               icon={<IconPin />}
-              label="Endereco"
+              label="Endereço"
               value={s.endereco}
               wide
             />

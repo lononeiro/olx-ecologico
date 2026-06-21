@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { SolicitacaoBadge, ColetaBadge } from "@/components/ui/StatusBadge";
 import { AdminSolicitacoesFilters } from "./AdminSolicitacoesFilters";
+import { summarizeAddress } from "@/lib/privacy";
 
 export const dynamic = "force-dynamic";
 
@@ -10,22 +11,28 @@ const LIMIT = 20;
 export default async function AdminSolicitacoesPage({
   searchParams,
 }: {
-  searchParams: { page?: string; search?: string; status?: string };
+  searchParams: { page?: string; search?: string; status?: string; materialId?: string; dataInicio?: string; dataFim?: string };
 }) {
   const page         = Math.max(1, Number(searchParams.page   ?? 1));
   const search       = searchParams.search ?? "";
   const statusFilter = searchParams.status ?? "";
+  const materialId   = searchParams.materialId ?? "";
+  const dataInicio   = searchParams.dataInicio ?? "";
+  const dataFim      = searchParams.dataFim ?? "";
 
   const where = {
     AND: [
       statusFilter ? { status: statusFilter } : {},
+      materialId   ? { materialId: Number(materialId) } : {},
+      dataInicio   ? { createdAt: { gte: new Date(dataInicio) } } : {},
+      dataFim      ? { createdAt: { lte: new Date(dataFim + "T23:59:59") } } : {},
       search ? { OR: [
         { titulo: { contains: search, mode: "insensitive" as const } },
-        { user: { nome:  { contains: search, mode: "insensitive" as const } } },
-        { user: { email: { contains: search, mode: "insensitive" as const } } },
       ]} : {},
     ],
   };
+
+  const materiais = await prisma.materialTipo.findMany({ orderBy: { nome: "asc" } });
 
   const [solicitacoes, total, counts] = await Promise.all([
     prisma.solicitacaoColeta.findMany({
@@ -34,7 +41,6 @@ export default async function AdminSolicitacoesPage({
       take: LIMIT,
       orderBy: { createdAt: "desc" },
       include: {
-        user:     { select: { id: true, nome: true, email: true } },
         material: { select: { nome: true } },
         coleta: {
           select: {
@@ -98,14 +104,21 @@ export default async function AdminSolicitacoesPage({
         })}
       </div>
 
-      <AdminSolicitacoesFilters search={search} status={statusFilter} />
+      <AdminSolicitacoesFilters
+        search={search}
+        status={statusFilter}
+        materialId={materialId}
+        dataInicio={dataInicio}
+        dataFim={dataFim}
+        materiais={materiais}
+      />
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: ".75rem" }}>
         <p style={{ fontSize: ".82rem", color: "var(--text-muted)" }}>
-          {total === 0 ? "Nenhuma solicitacao encontrada" : `${total} solicitacao${total === 1 ? "" : "es"} encontrada${total === 1 ? "" : "s"}`}
+          {total === 0 ? "Nenhuma solicitação encontrada" : `${total} ${total === 1 ? "solicitação" : "solicitações"} encontrada${total === 1 ? "" : "s"}`}
         </p>
         {totalPages > 1 && (
-          <p style={{ fontSize: ".82rem", color: "var(--text-faint)" }}>Pagina {page} de {totalPages}</p>
+          <p style={{ fontSize: ".82rem", color: "var(--text-faint)" }}>Página {page} de {totalPages}</p>
         )}
       </div>
 
@@ -118,7 +131,7 @@ export default async function AdminSolicitacoesPage({
             </svg>
           </div>
           <div>
-            <p style={{ fontWeight: 700, color: "var(--text)", marginBottom: ".25rem" }}>Nenhuma solicitacao</p>
+            <p style={{ fontWeight: 700, color: "var(--text)", marginBottom: ".25rem" }}>Nenhuma solicitação</p>
             <p style={{ fontSize: ".85rem", color: "var(--text-muted)" }}>Tente ajustar os filtros.</p>
           </div>
         </div>
@@ -128,7 +141,7 @@ export default async function AdminSolicitacoesPage({
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
               <thead>
                 <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                  {["#", "Titulo / Solicitante", "Material", "Status", "Empresa / Coleta", "Endereco", "Data", ""].map(h => (
+                  {["#", "Título", "Material", "Status", "Empresa / Coleta", "Região", "Data", ""].map(h => (
                     <th key={h} style={{
                       padding: ".65rem 1rem", textAlign: "left",
                       fontSize: ".7rem", textTransform: "uppercase",
@@ -149,7 +162,6 @@ export default async function AdminSolicitacoesPage({
                       <p style={{ fontWeight: 600, fontSize: ".875rem", color: "var(--text)", marginBottom: ".1rem", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {s.titulo}
                       </p>
-                      <p style={{ fontSize: ".74rem", color: "var(--text-muted)" }}>{s.user.nome}</p>
                     </td>
                     <td style={{ padding: ".7rem 1rem", fontSize: ".82rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
                       {s.material.nome}
@@ -170,7 +182,7 @@ export default async function AdminSolicitacoesPage({
                       )}
                     </td>
                     <td style={{ padding: ".7rem 1rem", fontSize: ".78rem", color: "var(--text-muted)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {s.endereco}
+                      {summarizeAddress(s.endereco) ?? "Não informado"}
                     </td>
                     <td style={{ padding: ".7rem 1rem", fontSize: ".76rem", color: "var(--text-faint)", whiteSpace: "nowrap" }}>
                       {new Date(s.createdAt).toLocaleDateString("pt-BR")}
@@ -210,7 +222,7 @@ export default async function AdminSolicitacoesPage({
               href={`/admin/solicitacoes?page=${page + 1}&status=${statusFilter}&search=${search}`}
               className="btn btn-ghost" style={{ fontSize: ".82rem" }}
             >
-              Proxima →
+              Próxima →
             </Link>
           )}
         </div>

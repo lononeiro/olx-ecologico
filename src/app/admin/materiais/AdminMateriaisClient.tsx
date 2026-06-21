@@ -61,7 +61,7 @@ export function AdminMateriaisClient({ initialMateriais }: Props) {
       addInputRef.current?.focus();
       router.refresh();
     } catch {
-      setAddErro("Erro de conexao. Tente novamente.");
+      setAddErro("Erro de conexão. Tente novamente.");
     } finally {
       setAddLoading(false);
     }
@@ -81,7 +81,7 @@ export function AdminMateriaisClient({ initialMateriais }: Props) {
 
   async function handleEdit(id: number) {
     setEditErro("");
-    if (!editNome.trim()) { setEditErro("Nome nao pode ser vazio"); return; }
+    if (!editNome.trim()) { setEditErro("Nome não pode ser vazio"); return; }
     setEditLoading(true);
     try {
       const res = await fetch(`/api/admin/materiais/${id}`, {
@@ -98,7 +98,7 @@ export function AdminMateriaisClient({ initialMateriais }: Props) {
       cancelEdit();
       router.refresh();
     } catch {
-      setEditErro("Erro de conexao. Tente novamente.");
+      setEditErro("Erro de conexão. Tente novamente.");
     } finally {
       setEditLoading(false);
     }
@@ -116,7 +116,7 @@ export function AdminMateriaisClient({ initialMateriais }: Props) {
       setMateriais(prev => prev.filter(item => item.id !== m.id));
       router.refresh();
     } catch {
-      setDeleteErro("Erro de conexao. Tente novamente.");
+      setDeleteErro("Erro de conexão. Tente novamente.");
     } finally {
       setDeleteLoading(false);
       setDeleteId(null);
@@ -134,7 +134,7 @@ export function AdminMateriaisClient({ initialMateriais }: Props) {
             type="text"
             value={novoNome}
             onChange={e => { setNovoNome(e.target.value); setAddErro(""); }}
-            placeholder="Ex: Papel e Papelao"
+            placeholder="Ex: Papel e Papelão"
             className="input-field"
             style={{ flex: 1, minWidth: 200, fontSize: ".88rem" }}
             maxLength={80}
@@ -176,7 +176,7 @@ export function AdminMateriaisClient({ initialMateriais }: Props) {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                  {["Material", "Solicitacoes", "Acoes"].map(h => (
+                  {["Material", "Solicitações", "Ações"].map(h => (
                     <th key={h} style={{ padding: ".55rem 1rem", textAlign: "left", fontSize: ".68rem", textTransform: "uppercase", letterSpacing: "1px", color: "var(--text-faint)", fontWeight: 700, whiteSpace: "nowrap" }}>
                       {h}
                     </th>
@@ -228,7 +228,7 @@ export function AdminMateriaisClient({ initialMateriais }: Props) {
                         fontSize: ".78rem", fontWeight: 700,
                         color: m._count.solicitacoes > 0 ? "var(--blue)" : "var(--text-faint)",
                       }}>
-                        {m._count.solicitacoes} {m._count.solicitacoes === 1 ? "solicitacao" : "solicitacoes"}
+                        {m._count.solicitacoes} {m._count.solicitacoes === 1 ? "solicitação" : "solicitações"}
                       </span>
                     </td>
 
@@ -246,7 +246,7 @@ export function AdminMateriaisClient({ initialMateriais }: Props) {
                             onClick={() => handleDelete(m)}
                             disabled={m._count.solicitacoes > 0 || (deleteLoading && deleteId === m.id)}
                             className="btn btn-ghost"
-                            title={m._count.solicitacoes > 0 ? "Nao e possivel excluir: ha solicitacoes vinculadas" : "Excluir material"}
+                            title={m._count.solicitacoes > 0 ? "Não é possível excluir: há solicitações vinculadas" : "Excluir material"}
                             style={{
                               fontSize: ".74rem", padding: ".28rem .6rem",
                               color: m._count.solicitacoes > 0 ? "var(--text-faint)" : "var(--red)",
@@ -270,7 +270,7 @@ export function AdminMateriaisClient({ initialMateriais }: Props) {
 
       {/* Legend */}
       <p style={{ fontSize: ".75rem", color: "var(--text-faint)", marginTop: ".85rem", textAlign: "center" }}>
-        Materiais vinculados a solicitacoes nao podem ser excluidos.
+        Materiais vinculados a solicitações não podem ser excluídos.
       </p>
     </div>
   );

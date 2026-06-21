@@ -14,10 +14,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const id = Number(params.id);
   const body = await req.json();
   const parsed = patchSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Dados invalidos" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
 
   const company = await prisma.company.findUnique({ where: { id } });
-  if (!company) return NextResponse.json({ error: "Empresa nao encontrada" }, { status: 404 });
+  if (!company) return NextResponse.json({ error: "Empresa não encontrada" }, { status: 404 });
 
   await prisma.user.update({
     where: { id: company.userId },

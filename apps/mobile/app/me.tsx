@@ -92,7 +92,7 @@ export default function MeScreen() {
         id: profile.id,
         name: profile.nome,
         email: profile.email,
-        role: profile.role.nome as "usuario" | "admin" | "empresa",
+        role: profile.role.nome as "usuario" | "empresa",
       });
       queryClient.setQueryData(["me", user?.id], profile);
     },
@@ -157,7 +157,7 @@ export default function MeScreen() {
             <Text style={styles.heroEyebrow}>MINHA CONTA</Text>
             <Text style={styles.heroName}>{user.name}</Text>
             <Text style={styles.heroSubtitle}>
-              Seus dados pessoais, permissoes e informacoes de contato em um resumo claro para uso no app.
+              Seus dados pessoais e informacoes de contato em um resumo claro para uso no app.
             </Text>
           </View>
         </View>
@@ -188,7 +188,7 @@ export default function MeScreen() {
             <SectionHeader
               eyebrow="RESUMO"
               title="Dados da conta"
-              description="Informacoes principais da sua conta e da role vinculada."
+              description="Informacoes principais da sua conta e do seu tipo de acesso."
             />
             <InfoRow label="Nome" value={profileQuery.data.nome} />
             <InfoRow label="Email" value={profileQuery.data.email} />

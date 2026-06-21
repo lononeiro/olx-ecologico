@@ -64,7 +64,7 @@ export default function HomeScreen() {
     <AppScreen>
       <AppCard>
         <SectionHeader
-          eyebrow="PAINEL DO CIDADAO"
+          eyebrow="MEU PAINEL"
           title={`Ola, ${user.name.split(" ")[0]}`}
           description="Use este painel para criar solicitacoes, acompanhar aprovacoes e conversar com a empresa quando houver coleta."
         />

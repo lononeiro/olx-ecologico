@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BackButton } from "@/components/ui/BackButton";
 import { SolicitacaoBadge } from "@/components/ui/StatusBadge";
+import { maskEmail, maskPhone, summarizeAddress } from "@/lib/privacy";
 
 export const dynamic = "force-dynamic";
 
-const ROLE_LABEL: Record<string, string> = { usuario: "Cidadao", admin: "Administrador", empresa: "Empresa" };
+const ROLE_LABEL: Record<string, string> = { usuario: "Cidadão", admin: "Administrador", empresa: "Empresa" };
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -15,7 +16,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
         {label}
       </p>
       <p style={{ fontSize: ".9rem", color: "var(--text)", fontWeight: 600, lineHeight: 1.5 }}>
-        {value ?? <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>Nao informado</span>}
+        {value ?? <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>Não informado</span>}
       </p>
     </div>
   );
@@ -40,7 +41,7 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
   if (!user) notFound();
 
   const statCards = [
-    { label: "Solicitacoes",  value: user._count.solicitacoes,      color: "var(--blue)"  },
+    { label: "Solicitações",  value: user._count.solicitacoes,      color: "var(--blue)"  },
     { label: "Mensagens",     value: user._count.mensagensEnviadas, color: "var(--green)" },
   ];
 
@@ -52,7 +53,7 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
           ← Voltar
         </BackButton>
         <p style={{ fontSize: ".72rem", textTransform: "uppercase", letterSpacing: "1.6px", color: "var(--text-faint)", fontWeight: 700 }}>
-          Usuario #{user.id}
+          Usuário #{user.id}
         </p>
       </div>
 
@@ -71,7 +72,7 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
             <h1 style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--text)", marginBottom: ".25rem" }}>
               {user.nome}
             </h1>
-            <p style={{ fontSize: ".88rem", color: "var(--text-muted)", marginBottom: ".5rem" }}>{user.email}</p>
+            <p style={{ fontSize: ".88rem", color: "var(--text-muted)", marginBottom: ".5rem" }}>{maskEmail(user.email)}</p>
             <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
               <span style={{
                 fontSize: ".72rem", fontWeight: 700, padding: ".2rem .65rem", borderRadius: 50,
@@ -108,8 +109,8 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
       <div className="card" style={{ marginBottom: "1rem", padding: "1.25rem" }}>
         <p className="section-label" style={{ marginBottom: ".85rem" }}>Dados cadastrais</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: ".75rem" }}>
-          <Field label="Telefone" value={user.telefone} />
-          <Field label="Endereco" value={user.endereco} />
+          <Field label="Telefone" value={maskPhone(user.telefone)} />
+          <Field label="Região" value={summarizeAddress(user.endereco)} />
           <Field label="Cadastro em" value={new Date(user.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })} />
           {user.company && <Field label="CNPJ" value={user.company.cnpj} />}
         </div>
@@ -119,16 +120,16 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
       {user.solicitacoes.length > 0 && (
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border)" }}>
-            <p className="section-label">Historico</p>
+            <p className="section-label">Histórico</p>
             <h2 style={{ fontSize: ".95rem", fontWeight: 700, color: "var(--text)" }}>
-              Ultimas solicitacoes
+              Últimas solicitações
             </h2>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 500 }}>
               <thead>
                 <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                  {["#", "Titulo", "Material", "Status", "Data"].map(h => (
+                  {["#", "Título", "Material", "Status", "Data"].map(h => (
                     <th key={h} style={{
                       padding: ".55rem 1rem", textAlign: "left",
                       fontSize: ".68rem", textTransform: "uppercase",
@@ -161,9 +162,9 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
           </div>
           {user._count.solicitacoes > 10 && (
             <div style={{ padding: ".75rem 1.25rem", borderTop: "1px solid var(--border)", textAlign: "center" }}>
-              <Link href={`/admin/solicitacoes?search=${encodeURIComponent(user.email)}`}
+              <Link href={`/admin/solicitacoes`}
                 className="btn btn-ghost" style={{ fontSize: ".82rem" }}>
-                Ver todas as {user._count.solicitacoes} solicitacoes →
+                Ver todas as {user._count.solicitacoes} solicitações →
               </Link>
             </div>
           )}

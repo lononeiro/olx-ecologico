@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { autorizarRota } from "@/lib/route-guard";
 import { prisma } from "@/lib/prisma";
+import { toAdminSolicitacaoListDTO } from "@/lib/privacy";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +20,6 @@ export async function GET(req: NextRequest) {
       status ? { status } : {},
       search ? { OR: [
         { titulo: { contains: search, mode: "insensitive" as const } },
-        { user: { nome:  { contains: search, mode: "insensitive" as const } } },
-        { user: { email: { contains: search, mode: "insensitive" as const } } },
       ]} : {},
     ],
   };
@@ -32,7 +31,6 @@ export async function GET(req: NextRequest) {
       take: limit,
       orderBy: { createdAt: "desc" },
       include: {
-        user:     { select: { id: true, nome: true, email: true } },
         material: { select: { nome: true } },
         coleta: {
           select: {
@@ -45,5 +43,10 @@ export async function GET(req: NextRequest) {
     prisma.solicitacaoColeta.count({ where }),
   ]);
 
-  return NextResponse.json({ solicitacoes, total, page, totalPages: Math.ceil(total / limit) });
+  return NextResponse.json({
+    solicitacoes: solicitacoes.map(toAdminSolicitacaoListDTO),
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  });
 }

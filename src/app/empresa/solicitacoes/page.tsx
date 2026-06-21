@@ -1,11 +1,29 @@
 import { listarSolicitacoesAprovadas } from "@/services/solicitacao.service";
 import { AceitarSolicitacaoButton } from "./AceitarSolicitacaoButton";
 import { SolicitacaoCardVisual } from "@/components/cards/SolicitacaoCardVisual";
+import { FiltrosSolicitacoes } from "@/components/filters/FiltrosSolicitacoes";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export default async function EmpresaSolicitacoesPage() {
-  const solicitacoes = await listarSolicitacoesAprovadas();
+export default async function EmpresaSolicitacoesPage({
+  searchParams,
+}: {
+  searchParams: { materialId?: string; dataInicio?: string; dataFim?: string; q?: string };
+}) {
+  const dataFimDate = searchParams.dataFim
+    ? new Date(searchParams.dataFim + "T23:59:59")
+    : undefined;
+
+  const [solicitacoes, materiais] = await Promise.all([
+    listarSolicitacoesAprovadas({
+      materialId: searchParams.materialId ? Number(searchParams.materialId) : undefined,
+      dataInicio: searchParams.dataInicio ? new Date(searchParams.dataInicio) : undefined,
+      dataFim:    dataFimDate,
+      q:          searchParams.q,
+    }),
+    prisma.materialTipo.findMany({ orderBy: { nome: "asc" } }),
+  ]);
 
   return (
     <div className="page-enter">
@@ -17,9 +35,19 @@ export default async function EmpresaSolicitacoesPage() {
         <p style={{ fontSize: ".84rem", color: "var(--text-muted)", marginTop: ".3rem" }}>
           {solicitacoes.length === 0
             ? "Nenhuma solicitação disponível no momento."
-            : `${solicitacoes.length} solicitac${solicitacoes.length === 1 ? "ao" : "oes"} aguardando aceitação.`}
+            : `${solicitacoes.length} ${solicitacoes.length === 1 ? "solicitação" : "solicitações"} aguardando aceitação.`}
         </p>
       </div>
+
+      <FiltrosSolicitacoes
+        buscaAtual={searchParams.q}
+        materialIdAtual={searchParams.materialId}
+        dataInicioAtual={searchParams.dataInicio}
+        dataFimAtual={searchParams.dataFim}
+        materiais={materiais}
+        mostrarStatus={false}
+        mostrarBusca
+      />
 
       {solicitacoes.length === 0 ? (
         <div className="card empty-state" style={{ background: "linear-gradient(135deg, var(--surface), var(--surface-3))" }}>
@@ -30,10 +58,10 @@ export default async function EmpresaSolicitacoesPage() {
           </div>
           <div>
             <p style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--text)", marginBottom: ".3rem" }}>
-              Nenhuma solicitação disponivel
+              Nenhuma solicitação disponível
             </p>
             <p style={{ fontSize: ".86rem", color: "var(--text-muted)", maxWidth: 340, margin: "0 auto" }}>
-              Novas solicitações aprovadas apareceram aqui assim que estiverem disponíveis.
+              Novas solicitações aprovadas aparecerão aqui assim que estiverem disponíveis.
             </p>
           </div>
         </div>
@@ -50,21 +78,19 @@ export default async function EmpresaSolicitacoesPage() {
                 titulo={s.titulo}
                 descricao={s.descricao}
                 quantidade={s.quantidade}
-                endereco={s.endereco}
+                endereco={s.endereco ?? "Região não informada"}
                 status={s.status}
                 createdAt={s.createdAt}
                 material={s.material}
                 imagens={s.imagens}
-                solicitanteNome={s.user.nome}
                 actions={
                   <AceitarSolicitacaoButton
                     solicitacaoId={s.id}
                     titulo={s.titulo}
                     descricao={s.descricao}
                     quantidade={s.quantidade}
-                    endereco={s.endereco}
+                    endereco={s.endereco ?? "Região não informada"}
                     materialNome={s.material.nome}
-                    solicitanteNome={s.user.nome}
                     imagens={s.imagens}
                   />
                 }

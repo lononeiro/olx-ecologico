@@ -178,7 +178,7 @@ export default function ForgotPasswordPage() {
                 Link enviado!
               </div>
               <p style={{ color: "var(--auth-muted)", fontSize: ".95rem", lineHeight: 1.7, marginBottom: "2rem" }}>
-                Se o e-mail <strong style={{ color: "var(--auth-text)" }}>{email}</strong> estiver cadastrado, voce receberá as instrucoes em breve.
+                Se o e-mail <strong style={{ color: "var(--auth-text)" }}>{email}</strong> estiver cadastrado, você receberá as instruções em breve.
               </p>
 
               {devLink && (

@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { prismaMock, randomBytesMock } = vi.hoisted(() => ({
-  prismaMock: {
+const { prismaMock, randomBytesMock } = vi.hoisted(() => {
+  const prismaMock = {
+    solicitacaoColeta: {
+      findFirst: vi.fn(),
+    },
     coleta: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
@@ -9,9 +12,23 @@ const { prismaMock, randomBytesMock } = vi.hoisted(() => ({
       update: vi.fn(),
       findMany: vi.fn(),
     },
-  },
-  randomBytesMock: vi.fn(),
-}));
+    conversaSolicitacao: {
+      updateMany: vi.fn(),
+    },
+    company: {
+      findUnique: vi.fn(),
+    },
+    notificacao: {
+      create: vi.fn(),
+    },
+    $transaction: vi.fn((callback) => callback(prismaMock)),
+  };
+
+  return {
+    prismaMock,
+    randomBytesMock: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/prisma", () => ({
   prisma: prismaMock,
@@ -33,13 +50,26 @@ import {
 describe("coleta.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.solicitacaoColeta.findFirst.mockResolvedValue({ id: 10 });
+    prismaMock.company.findUnique.mockResolvedValue({ user: { nome: "EcoColeta" } });
     randomBytesMock.mockReturnValue({
       toString: vi.fn().mockReturnValue("ab12cd34"),
     });
   });
 
   describe("aceitarSolicitacao", () => {
-    it("impede aceitar uma solicitacao ja vinculada a outra coleta", async () => {
+    it("impede aceitar solicitação indisponível", async () => {
+      prismaMock.solicitacaoColeta.findFirst.mockResolvedValueOnce(null);
+
+      await expect(aceitarSolicitacao(10, 5)).rejects.toThrow(
+        "Solicitação indisponível para aceite."
+      );
+
+    expect(prismaMock.coleta.create).not.toHaveBeenCalled();
+      expect(prismaMock.conversaSolicitacao.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("impede aceitar uma solicitação já vinculada a outra coleta", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce({ id: 3 });
 
       await expect(aceitarSolicitacao(10, 5)).rejects.toThrow(
@@ -47,11 +77,17 @@ describe("coleta.service", () => {
       );
 
       expect(prismaMock.coleta.create).not.toHaveBeenCalled();
+      expect(prismaMock.conversaSolicitacao.updateMany).not.toHaveBeenCalled();
     });
 
-    it("cria a coleta com codigo de confirmacao em maiusculo", async () => {
+    it("cria a coleta com código de confirmação em maiúsculo", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce(null);
-      prismaMock.coleta.create.mockResolvedValueOnce({ id: 9 });
+      prismaMock.coleta.create.mockResolvedValueOnce({
+        id: 9,
+        companyId: 5,
+        solicitacaoId: 10,
+        solicitacao: { userId: 3, titulo: "Coleta de papel" },
+      });
 
       await aceitarSolicitacao(10, 5);
 
@@ -64,12 +100,25 @@ describe("coleta.service", () => {
         },
         include: { solicitacao: true, company: true },
       });
+      expect(prismaMock.conversaSolicitacao.updateMany).toHaveBeenCalledWith({
+        where: { solicitacaoId: 10, companyId: 5 },
+        data: { status: "convertida" },
+      });
+      expect(prismaMock.conversaSolicitacao.updateMany).toHaveBeenCalledWith({
+        where: { solicitacaoId: 10, companyId: { not: 5 } },
+        data: { status: "encerrada" },
+      });
     });
 
-    it("cria a coleta com data de previsao quando informada", async () => {
+    it("cria a coleta com data de previsão quando informada", async () => {
       const dataPrevisaoColeta = new Date("2026-04-27T17:30:00.000Z");
       prismaMock.coleta.findUnique.mockResolvedValueOnce(null);
-      prismaMock.coleta.create.mockResolvedValueOnce({ id: 9 });
+      prismaMock.coleta.create.mockResolvedValueOnce({
+        id: 9,
+        companyId: 5,
+        solicitacaoId: 10,
+        solicitacao: { userId: 3, titulo: "Coleta de papel" },
+      });
 
       await aceitarSolicitacao(10, 5, dataPrevisaoColeta);
 
@@ -87,7 +136,7 @@ describe("coleta.service", () => {
   });
 
   describe("atualizarStatusColeta", () => {
-    it("rejeita quando a coleta nao pertence a empresa", async () => {
+    it("rejeita quando a coleta não pertence à empresa", async () => {
       prismaMock.coleta.findFirst.mockResolvedValueOnce(null);
 
       await expect(atualizarStatusColeta(1, 2, "a_caminho")).rejects.toThrow(
@@ -96,7 +145,11 @@ describe("coleta.service", () => {
     });
 
     it("define dataConclusao ao concluir a coleta", async () => {
-      prismaMock.coleta.findFirst.mockResolvedValueOnce({ id: 1, companyId: 2 });
+      prismaMock.coleta.findFirst.mockResolvedValueOnce({
+        id: 1,
+        companyId: 2,
+        solicitacao: { id: 7, userId: 3, titulo: "Coleta de papel" },
+      });
 
       await atualizarStatusColeta(1, 2, "concluida");
 
@@ -109,8 +162,12 @@ describe("coleta.service", () => {
       });
     });
 
-    it("nao define dataConclusao para status intermediario", async () => {
-      prismaMock.coleta.findFirst.mockResolvedValueOnce({ id: 1, companyId: 2 });
+    it("não define dataConclusao para status intermediário", async () => {
+      prismaMock.coleta.findFirst.mockResolvedValueOnce({
+        id: 1,
+        companyId: 2,
+        solicitacao: { id: 7, userId: 3, titulo: "Coleta de papel" },
+      });
 
       await atualizarStatusColeta(1, 2, "a_caminho");
 
@@ -121,7 +178,7 @@ describe("coleta.service", () => {
     });
   });
 
-  it("lista coletas da empresa com relacionamento necessario", async () => {
+  it("lista coletas da empresa com relacionamento necessário", async () => {
     await listarColetasDaEmpresa(22);
 
     expect(prismaMock.coleta.findMany).toHaveBeenCalledWith({
@@ -140,13 +197,15 @@ describe("coleta.service", () => {
   });
 
   describe("buscarColetaPorId", () => {
-    it("retorna null quando a coleta nao existe", async () => {
+    it("retorna null quando a coleta não existe", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce(null);
 
       await expect(buscarColetaPorId(30)).resolves.toBeNull();
+      expect(JSON.stringify(prismaMock.coleta.findUnique.mock.calls.at(-1)?.[0])).not.toContain("mensagens");
+      expect(JSON.stringify(prismaMock.coleta.findUnique.mock.calls.at(-1)?.[0])).not.toContain("endereco");
     });
 
-    it("retorna null se o usuario nao for dono da solicitacao", async () => {
+    it("retorna null se o usuário não for dono da solicitação", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce({
         id: 30,
         solicitacao: { userId: 99 },
@@ -156,7 +215,7 @@ describe("coleta.service", () => {
       await expect(buscarColetaPorId(30, 10)).resolves.toBeNull();
     });
 
-    it("retorna null se a empresa nao for responsavel pela coleta", async () => {
+    it("retorna null se a empresa não for responsável pela coleta", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce({
         id: 30,
         solicitacao: { userId: 10 },
@@ -166,7 +225,7 @@ describe("coleta.service", () => {
       await expect(buscarColetaPorId(30, undefined, 5)).resolves.toBeNull();
     });
 
-    it("retorna a coleta quando a permissao confere", async () => {
+    it("retorna a coleta quando a permissão confere", async () => {
       const coleta = {
         id: 30,
         solicitacao: { userId: 10 },
@@ -175,6 +234,27 @@ describe("coleta.service", () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce(coleta);
 
       await expect(buscarColetaPorId(30, 10)).resolves.toEqual(coleta);
+    });
+
+    it("inclui mensagens ordenadas quando solicitado", async () => {
+      prismaMock.coleta.findUnique.mockResolvedValueOnce({
+        id: 30,
+        solicitacao: { userId: 10 },
+        companyId: 5,
+      });
+
+      await buscarColetaPorId(30, 10, undefined, { includeMensagens: true });
+
+      expect(prismaMock.coleta.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.objectContaining({
+            mensagens: {
+              include: { remetente: { select: { id: true, nome: true } } },
+              orderBy: { createdAt: "asc" },
+            },
+          }),
+        })
+      );
     });
   });
 });

@@ -14,21 +14,21 @@ export const dynamic = "force-dynamic";
 const STATUS_COPY: Record<string, { title: string; description: string; tone: string }> = {
   aceita: {
     title: "Coleta confirmada",
-    description: "A empresa assumiu a solicitação e pode alinhar os proximos passos com o solicitante.",
+    description: "A empresa assumiu a solicitação e pode alinhar os próximos passos com o solicitante.",
     tone: "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200",
   },
   a_caminho: {
     title: "Equipe a caminho",
-    description: "A coleta esta em deslocamento e o solicitante pode acompanhar o atendimento em andamento.",
+    description: "A coleta está em deslocamento e o solicitante pode acompanhar o atendimento em andamento.",
     tone: "border-indigo-200 bg-indigo-50 text-indigo-800 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-200",
   },
   em_coleta: {
     title: "Coleta em execução",
-    description: "O material esta sendo atendido no local, com o fluxo operacional ja em andamento.",
+    description: "O material está sendo atendido no local, com o fluxo operacional já em andamento.",
     tone: "border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/40 dark:text-violet-200",
   },
   concluida: {
-    title: "Coleta concluida",
+    title: "Coleta concluída",
     description: "Atendimento finalizado com registro completo da solicitação e da comunicação.",
     tone: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
   },
@@ -55,16 +55,12 @@ export default async function EmpresaColetaDetailPage({
       include: {
         solicitacao: {
           include: {
-            user: { select: { id: true, nome: true, email: true, telefone: true, endereco: true } },
+            user: { select: { id: true, nome: true, email: true, telefone: true } },
             material: true,
             imagens: true,
           },
         },
         company: { include: { user: { select: { id: true, nome: true, email: true } } } },
-        mensagens: {
-          include: { remetente: { select: { id: true, nome: true } } },
-          orderBy: { createdAt: "asc" },
-        },
       },
     }),
   ]);
@@ -229,11 +225,11 @@ export default async function EmpresaColetaDetailPage({
                 <DocumentField label="Status operacional" value={statusCopy.title} />
                 {coleta.dataConclusao && (
                   <DocumentField
-                    label="Concluida em"
+                    label="Concluída em"
                     value={new Date(coleta.dataConclusao).toLocaleDateString("pt-BR")}
                   />
                 )}
-                <DocumentField label="Endereco da coleta" value={s.endereco} full />
+                <DocumentField label="Endereço da coleta" value={s.endereco} full />
                 {s.descricao && (
                   <DocumentField label="Descrição do material" value={s.descricao} full muted />
                 )}
@@ -248,9 +244,6 @@ export default async function EmpresaColetaDetailPage({
                 <DocumentField label="Email" value={s.user.email} />
                 {(s.user as any).telefone && (
                   <DocumentField label="Telefone" value={(s.user as any).telefone} />
-                )}
-                {s.user.endereco && (
-                  <DocumentField label="Endereco do perfil" value={s.user.endereco} full />
                 )}
               </div>
             </div>
@@ -272,17 +265,16 @@ export default async function EmpresaColetaDetailPage({
               <ColetaStatusTracker coletaId={coleta.id} statusAtual={coleta.status} isEmpresa />
             </section>
 
-            <FloatingChat
-              title={`Chat com ${s.user.nome.split(" ")[0]}`}
-              description="Conversa vinculada a esta coleta."
-              messageCount={coleta.mensagens.length}
-            >
-              <ChatBox
-                coletaId={coleta.id}
-                currentUserId={userId}
-                initialMessages={coleta.mensagens as any}
-              />
-            </FloatingChat>
+              <FloatingChat
+                title={`Chat com ${s.user.nome.split(" ")[0]}`}
+                description="Conversa vinculada a esta coleta."
+                messageCount={0}
+              >
+                <ChatBox
+                  coletaId={coleta.id}
+                  currentUserId={userId}
+                />
+              </FloatingChat>
           </aside>
         </div>
       </div>

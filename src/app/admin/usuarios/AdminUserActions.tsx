@@ -34,7 +34,7 @@ export function AdminUserActions({ userId, currentStatus, userRole, solicitacoes
   }
 
   async function deleteUser() {
-    if (!confirm("Excluir este usuario? Esta acao nao pode ser desfeita.")) return;
+    if (!confirm("Excluir este usuário? Esta ação não pode ser desfeita.")) return;
     setLoading("delete");
     setErro("");
     const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
@@ -54,7 +54,7 @@ export function AdminUserActions({ userId, currentStatus, userRole, solicitacoes
           disabled={loading !== null || isAdmin}
           className="btn btn-ghost"
           style={{ fontSize: ".74rem", padding: ".28rem .6rem" }}
-          title={isAdmin ? "Nao e possivel alterar administradores" : undefined}
+          title={isAdmin ? "Não é possível alterar administradores" : undefined}
         >
           {loading === "status" ? "..." : currentStatus === "ativo" ? "Desativar" : "Ativar"}
         </button>

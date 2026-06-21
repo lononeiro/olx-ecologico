@@ -20,6 +20,10 @@ import {
 
 type SessionUser = MobileAuthResponse["user"];
 
+function isMobileUser(user: SessionUser | null) {
+  return user?.role === "usuario" || user?.role === "empresa";
+}
+
 type AuthContextValue = {
   isLoading: boolean;
   user: SessionUser | null;
@@ -38,6 +42,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const applySession = useCallback(async (session: MobileAuthResponse) => {
+    if (!isMobileUser(session.user)) {
+      await clearAuthSession();
+      throw new Error("Acesso administrativo disponivel apenas na versao web.");
+    }
+
     await saveAuthSession(session);
     setUser(session.user);
     setAccessToken(session.accessToken);
@@ -92,9 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!active) return;
 
-        if (storedUser && storedAccessToken) {
+        if (storedUser && storedAccessToken && isMobileUser(storedUser)) {
           setUser(storedUser);
           setAccessToken(storedAccessToken);
+        } else if ((storedUser as { role?: string } | null)?.role === "admin") {
+          await signOut();
         } else {
           await refreshSession();
         }
