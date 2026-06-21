@@ -13,7 +13,7 @@ export async function GET(
 
   const solicitacaoId = Number(params.id);
   if (!solicitacaoId || Number.isNaN(solicitacaoId)) {
-    return NextResponse.json({ error: "ID invalido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }
 
   try {
@@ -23,7 +23,7 @@ export async function GET(
     );
     return NextResponse.json(conversas);
   } catch (err: any) {
-    const status = err.message.includes("sem permissao") ? 403 : 400;
+    const status = err.message.includes("sem permissão") ? 403 : 400;
     return NextResponse.json({ error: err.message }, { status });
   }
 }

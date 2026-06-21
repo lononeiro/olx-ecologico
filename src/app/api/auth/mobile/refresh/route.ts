@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     if (!user || user.status !== "ativo") {
       return applyCors(
         req,
-        NextResponse.json({ error: "Usuario invalido" }, { status: 401 })
+        NextResponse.json({ error: "Usuário inválido" }, { status: 401 })
       );
     }
 
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       return applyCors(
         req,
         NextResponse.json(
-          { error: "Acesso administrativo disponivel apenas na versao web." },
+          { error: "Acesso administrativo disponível apenas na versão web." },
           { status: 403 }
         )
       );
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     return applyCors(
       req,
       NextResponse.json(
-        { error: error?.message ?? "Refresh token invalido" },
+        { error: error?.message ?? "Refresh token inválido" },
         { status: 401 }
       )
     );

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { notificarAvaliacaoRecebida } from "@/services/notificacao.service";
 
 export async function criarAvaliacao(
   coletaId: number,
@@ -8,19 +9,30 @@ export async function criarAvaliacao(
 ) {
   const coleta = await prisma.coleta.findUnique({
     where: { id: coletaId },
-    include: { solicitacao: true },
+    include: {
+      solicitacao: true,
+      company: { select: { userId: true } },
+    },
   });
 
-  if (!coleta) throw new Error("Coleta nao encontrada.");
-  if (coleta.solicitacao.userId !== autorId) throw new Error("Sem permissao para avaliar esta coleta.");
-  if (coleta.status !== "concluida") throw new Error("A coleta precisa estar concluida para ser avaliada.");
+  if (!coleta) throw new Error("Coleta não encontrada.");
+  if (coleta.solicitacao.userId !== autorId) throw new Error("Sem permissão para avaliar esta coleta.");
+  if (coleta.status !== "concluida") throw new Error("A coleta precisa estar concluída para ser avaliada.");
 
   const existente = await prisma.avaliacao.findUnique({ where: { coletaId } });
-  if (existente) throw new Error("Esta coleta ja foi avaliada.");
+  if (existente) throw new Error("Esta coleta já foi avaliada.");
 
-  return prisma.avaliacao.create({
+  const avaliacao = await prisma.avaliacao.create({
     data: { coletaId, autorId, nota, comentario },
   });
+
+  await notificarAvaliacaoRecebida({
+    empresaUserId: coleta.company.userId,
+    nota,
+    solicitacaoTitulo: coleta.solicitacao.titulo,
+  });
+
+  return avaliacao;
 }
 
 export async function buscarAvaliacaoDaColeta(coletaId: number) {

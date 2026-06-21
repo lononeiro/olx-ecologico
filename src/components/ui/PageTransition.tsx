@@ -87,7 +87,7 @@ export function PageTransitionProvider({ children }: { children: React.ReactNode
                 animation: "spin .75s linear infinite",
               }}
             />
-            <span style={{ fontSize: ".9rem", fontWeight: 700 }}>Carregando pagina...</span>
+            <span style={{ fontSize: ".9rem", fontWeight: 700 }}>Carregando página...</span>
           </div>
         </div>
       )}

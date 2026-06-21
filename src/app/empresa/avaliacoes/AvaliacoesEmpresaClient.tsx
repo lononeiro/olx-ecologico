@@ -45,9 +45,9 @@ const FILTERS: { value: RatingFilter; label: string }[] = [
   { value: "5", label: "5 estrelas" },
   { value: "4", label: "4 estrelas" },
   { value: "3menos", label: "3 ou menos" },
-  { value: "comComentario", label: "Com comentario" },
-  { value: "semComentario", label: "Sem comentario" },
-  { value: "pendentes", label: "Aguardando avaliacao" },
+  { value: "comComentario", label: "Com comentário" },
+  { value: "semComentario", label: "Sem comentário" },
+  { value: "pendentes", label: "Aguardando avaliação" },
 ];
 
 const SORTS: { value: SortOption; label: string }[] = [
@@ -108,8 +108,8 @@ export function AvaliacoesEmpresaClient({ data }: { data: AvaliacoesEmpresaData 
     <div className="page-enter" style={{ display: "grid", gap: 18 }}>
       <section className="empresa-page-topbar">
         <div>
-          <h1>Avaliacoes</h1>
-          <p>Coletas finalizadas, notas recebidas e comentarios dos solicitantes.</p>
+          <h1>Avaliações</h1>
+          <p>Coletas finalizadas, notas recebidas e comentários dos solicitantes.</p>
         </div>
         <Link href="/empresa/coletas" className="empresa-row-outline" style={{ padding: "8px 12px", borderRadius: 8 }}>
           Ver coletas
@@ -117,30 +117,30 @@ export function AvaliacoesEmpresaClient({ data }: { data: AvaliacoesEmpresaData 
       </section>
 
       <section className="empresa-kpi-grid">
-        <MetricCard label="Nota media" value={data.resumo.totalAvaliacoes > 0 ? data.resumo.media.toFixed(1) : "-"} detail={`${data.resumo.totalAvaliacoes} avaliacao${data.resumo.totalAvaliacoes === 1 ? "" : "es"}`} icon={<IconStar />} tone="#FEF3C7" color="#92400E" />
-        <MetricCard label="Coletas finalizadas" value={data.resumo.totalFinalizadas} detail="aptas para avaliacao" icon={<IconCheck />} tone="#DCFCE7" color="#166534" />
-        <MetricCard label="Satisfacao" value={`${satisfaction}%`} detail="notas 4 e 5" icon={<IconThumb />} tone="#DBEAFE" color="#1E40AF" />
-        <MetricCard label="Aguardando nota" value={data.resumo.aguardandoAvaliacao} detail="coletas sem avaliacao" icon={<IconClock />} tone="#F3E8FF" color="#6B21A8" />
+        <MetricCard label="Nota média" value={data.resumo.totalAvaliacoes > 0 ? data.resumo.media.toFixed(1) : "-"} detail={`${data.resumo.totalAvaliacoes} ${data.resumo.totalAvaliacoes === 1 ? "avaliação" : "avaliações"}`} icon={<IconStar />} tone="#FEF3C7" color="#92400E" />
+        <MetricCard label="Coletas finalizadas" value={data.resumo.totalFinalizadas} detail="aptas para avaliação" icon={<IconCheck />} tone="#DCFCE7" color="#166534" />
+        <MetricCard label="Satisfação" value={`${satisfaction}%`} detail="notas 4 e 5" icon={<IconThumb />} tone="#DBEAFE" color="#1E40AF" />
+        <MetricCard label="Aguardando nota" value={data.resumo.aguardandoAvaliacao} detail="coletas sem avaliação" icon={<IconClock />} tone="#F3E8FF" color="#6B21A8" />
       </section>
 
       <section className="empresa-main-grid">
         <div className="empresa-panel" style={{ display: "grid", gap: 16 }}>
           <div className="empresa-panel-header" style={{ marginBottom: 0 }}>
             <div>
-              <h2>Historico de avaliacoes</h2>
+              <h2>Histórico de avaliações</h2>
               <p style={{ color: "var(--color-gray-500)", fontSize: 12, marginTop: 4 }}>
                 {filtered.length} coleta{filtered.length === 1 ? "" : "s"} encontrada{filtered.length === 1 ? "" : "s"}
               </p>
             </div>
             <div className="empresa-panel-actions" style={{ flexWrap: "wrap" }}>
-              <label className="sr-only" htmlFor="rating-filter">Filtrar avaliacoes</label>
+              <label className="sr-only" htmlFor="rating-filter">Filtrar avaliações</label>
               <select id="rating-filter" value={filter} onChange={(event) => setFilter(event.target.value as RatingFilter)}>
                 {FILTERS.map((item) => (
                   <option key={item.value} value={item.value}>{item.label}</option>
                 ))}
               </select>
 
-              <label className="sr-only" htmlFor="rating-sort">Ordenar avaliacoes</label>
+              <label className="sr-only" htmlFor="rating-sort">Ordenar avaliações</label>
               <select id="rating-sort" value={sort} onChange={(event) => setSort(event.target.value as SortOption)}>
                 {SORTS.map((item) => (
                   <option key={item.value} value={item.value}>{item.label}</option>
@@ -254,7 +254,7 @@ function ReviewCard({ item }: { item: AvaliacoesEmpresaData["coletas"][number] }
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <h3 style={{ color: "var(--color-gray-900)", fontSize: 15, fontWeight: 600 }}>{item.solicitacao.titulo}</h3>
             <span className="empresa-status empresa-status-concluida">Finalizada</span>
-            {!avaliacao ? <span className="empresa-status empresa-status-pendente">Aguardando avaliacao</span> : null}
+            {!avaliacao ? <span className="empresa-status empresa-status-pendente">Aguardando avaliação</span> : null}
           </div>
           <p style={{ color: "var(--color-gray-500)", fontSize: 12, marginTop: 4 }}>
             Coleta #{item.id} - {item.solicitacao.materialNome} - {item.solicitacao.quantidade}
@@ -283,17 +283,17 @@ function ReviewCard({ item }: { item: AvaliacoesEmpresaData["coletas"][number] }
           avaliacao.comentario?.trim() ? (
             <p>&quot;{avaliacao.comentario}&quot;</p>
           ) : (
-            <p>O solicitante avaliou esta coleta, mas nao deixou comentario.</p>
+            <p>O solicitante avaliou esta coleta, mas não deixou comentário.</p>
           )
         ) : (
-          <p>Esta coleta foi finalizada e ainda nao recebeu avaliacao do solicitante.</p>
+          <p>Esta coleta foi finalizada e ainda não recebeu avaliação do solicitante.</p>
         )}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
         <Info label="Avaliador" value={avaliacao?.autorNome ?? item.solicitacao.solicitanteNome} />
-        <Info label="Conclusao" value={item.dataConclusao ? new Date(item.dataConclusao).toLocaleDateString("pt-BR") : "Data nao informada"} />
-        <Info label="Endereco" value={item.solicitacao.endereco} />
+        <Info label="Conclusão" value={item.dataConclusao ? new Date(item.dataConclusao).toLocaleDateString("pt-BR") : "Data não informada"} />
+        <Info label="Endereço" value={item.solicitacao.endereco} />
         <Info label="Comprovante" value="Previsto para etapa futura" />
       </div>
 
@@ -419,7 +419,7 @@ function EmptyState() {
   return (
     <div className="empresa-empty-state">
       <IconStar />
-      <strong>Nenhuma avaliacao encontrada</strong>
+      <strong>Nenhuma avaliação encontrada</strong>
       <p>Ajuste os filtros ou aguarde novas coletas finalizadas receberem nota.</p>
     </div>
   );

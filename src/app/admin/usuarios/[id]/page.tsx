@@ -7,7 +7,7 @@ import { maskEmail, maskPhone, summarizeAddress } from "@/lib/privacy";
 
 export const dynamic = "force-dynamic";
 
-const ROLE_LABEL: Record<string, string> = { usuario: "Cidadao", admin: "Administrador", empresa: "Empresa" };
+const ROLE_LABEL: Record<string, string> = { usuario: "Cidadão", admin: "Administrador", empresa: "Empresa" };
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -16,7 +16,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
         {label}
       </p>
       <p style={{ fontSize: ".9rem", color: "var(--text)", fontWeight: 600, lineHeight: 1.5 }}>
-        {value ?? <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>Nao informado</span>}
+        {value ?? <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>Não informado</span>}
       </p>
     </div>
   );
@@ -41,7 +41,7 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
   if (!user) notFound();
 
   const statCards = [
-    { label: "Solicitacoes",  value: user._count.solicitacoes,      color: "var(--blue)"  },
+    { label: "Solicitações",  value: user._count.solicitacoes,      color: "var(--blue)"  },
     { label: "Mensagens",     value: user._count.mensagensEnviadas, color: "var(--green)" },
   ];
 
@@ -53,7 +53,7 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
           ← Voltar
         </BackButton>
         <p style={{ fontSize: ".72rem", textTransform: "uppercase", letterSpacing: "1.6px", color: "var(--text-faint)", fontWeight: 700 }}>
-          Usuario #{user.id}
+          Usuário #{user.id}
         </p>
       </div>
 
@@ -110,7 +110,7 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
         <p className="section-label" style={{ marginBottom: ".85rem" }}>Dados cadastrais</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: ".75rem" }}>
           <Field label="Telefone" value={maskPhone(user.telefone)} />
-          <Field label="Regiao" value={summarizeAddress(user.endereco)} />
+          <Field label="Região" value={summarizeAddress(user.endereco)} />
           <Field label="Cadastro em" value={new Date(user.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })} />
           {user.company && <Field label="CNPJ" value={user.company.cnpj} />}
         </div>
@@ -120,16 +120,16 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
       {user.solicitacoes.length > 0 && (
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border)" }}>
-            <p className="section-label">Historico</p>
+            <p className="section-label">Histórico</p>
             <h2 style={{ fontSize: ".95rem", fontWeight: 700, color: "var(--text)" }}>
-              Ultimas solicitacoes
+              Últimas solicitações
             </h2>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 500 }}>
               <thead>
                 <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                  {["#", "Titulo", "Material", "Status", "Data"].map(h => (
+                  {["#", "Título", "Material", "Status", "Data"].map(h => (
                     <th key={h} style={{
                       padding: ".55rem 1rem", textAlign: "left",
                       fontSize: ".68rem", textTransform: "uppercase",
@@ -164,7 +164,7 @@ export default async function AdminUsuarioDetailPage({ params }: { params: { id:
             <div style={{ padding: ".75rem 1.25rem", borderTop: "1px solid var(--border)", textAlign: "center" }}>
               <Link href={`/admin/solicitacoes`}
                 className="btn btn-ghost" style={{ fontSize: ".82rem" }}>
-                Ver todas as {user._count.solicitacoes} solicitacoes →
+                Ver todas as {user._count.solicitacoes} solicitações →
               </Link>
             </div>
           )}

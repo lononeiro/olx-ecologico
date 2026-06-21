@@ -30,7 +30,7 @@ export function ChatBox({
   emptyText = "Nenhuma mensagem ainda",
   placeholder = "Digite uma mensagem...",
   disabled = false,
-  disabledText = "Esta conversa nao esta disponivel para novas mensagens.",
+  disabledText = "Esta conversa não está disponível para novas mensagens.",
 }: Props) {
   const threadId = conversaId ?? coletaId;
   const resolvedApiPath = apiPath ?? `/api/mensagens/${coletaId}`;
@@ -86,7 +86,7 @@ export function ChatBox({
         });
 
         if (!res.ok) {
-          setErro("Nao foi possivel carregar a conversa.");
+          setErro("Não foi possível carregar a conversa.");
           return;
         }
 
@@ -109,7 +109,7 @@ export function ChatBox({
         });
       } catch (error: any) {
         if (error?.name !== "AbortError") {
-          setErro("Nao foi possivel carregar a conversa.");
+          setErro("Não foi possível carregar a conversa.");
         }
       } finally {
         firstLoad = false;
@@ -161,7 +161,7 @@ export function ChatBox({
       return;
     }
 
-    setErro("Nao foi possivel enviar a mensagem.");
+    setErro("Não foi possível enviar a mensagem.");
   }
 
   return (

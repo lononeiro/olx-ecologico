@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 const STATUS_COPY: Record<string, { title: string; description: string; tone: string }> = {
   pendente: {
     title: "Aguardando aprovação",
-    description: "Sua solicitação esta em análise pela administração.",
+    description: "Sua solicitação está em análise pela administração.",
     tone: "border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-900/60 dark:bg-yellow-950/40 dark:text-yellow-200",
   },
   aprovada: {
@@ -178,7 +178,7 @@ export default async function SolicitacaoDetailPage({
                       color: "var(--text-muted)",
                     }}
                   >
-                    Documento de referencia da solicitação de coleta com destaque visual para anexos e dados principais.
+                    Documento de referência da solicitação de coleta com destaque visual para anexos e dados principais.
                   </p>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: ".65rem", flexWrap: "wrap" }}>
@@ -256,7 +256,7 @@ export default async function SolicitacaoDetailPage({
                       }}>
                         <div style={{ flex: 1, minWidth: 160 }}>
                           <p style={{ fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1.5px", color: "var(--green)", fontWeight: 700, marginBottom: ".4rem" }}>
-                            Codigo de confirmacao
+                            Código de confirmação
                           </p>
                           <p style={{ fontSize: "2rem", fontFamily: "ui-monospace, SFMono-Regular, monospace", fontWeight: 700, letterSpacing: "8px", color: "var(--text)", lineHeight: 1 }}>
                             {s.coleta.codigoConfirmacao}
@@ -272,7 +272,7 @@ export default async function SolicitacaoDetailPage({
                           lineHeight: 1.55,
                           maxWidth: 240,
                         }}>
-                          <strong>Mostre este codigo ao coletor</strong> no momento da conclusao da coleta.
+                          <strong>Mostre este código ao coletor</strong> no momento da conclusão da coleta.
                         </div>
                       </div>
                     )}
@@ -307,7 +307,7 @@ export default async function SolicitacaoDetailPage({
               <SectionHeading
                 eyebrow="Empresas interessadas"
                 title="Conversas antes do aceite"
-                description="Responda duvidas das empresas antes de uma delas assumir a coleta."
+                description="Responda dúvidas das empresas antes de uma delas assumir a coleta."
               />
 
               {conversasPreAceite.length === 0 ? (
@@ -322,7 +322,7 @@ export default async function SolicitacaoDetailPage({
                     lineHeight: 1.55,
                   }}
                 >
-                  Nenhuma empresa iniciou conversa ainda. Quando houver duvidas, elas apareceram aqui.
+                  Nenhuma empresa iniciou conversa ainda. Quando houver dúvidas, elas aparecerão aqui.
                 </div>
               ) : (
                 <div style={{ display: "grid", gap: "1rem" }}>

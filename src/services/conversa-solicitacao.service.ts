@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { toEmpresaSolicitacaoDisponivelDTO } from "@/lib/privacy";
+import { notificarNovaMensagem } from "@/services/notificacao.service";
 
 const MENSAGEM_MAX_LENGTH = 1000;
 
@@ -7,14 +8,14 @@ function normalizarMensagem(mensagem: string) {
   const text = mensagem.trim();
   if (!text) throw new Error("Digite uma mensagem antes de enviar.");
   if (text.length > MENSAGEM_MAX_LENGTH) {
-    throw new Error(`A mensagem deve ter no maximo ${MENSAGEM_MAX_LENGTH} caracteres.`);
+    throw new Error(`A mensagem deve ter no máximo ${MENSAGEM_MAX_LENGTH} caracteres.`);
   }
   return text;
 }
 
 async function buscarCompanyPorUsuario(userId: number) {
   const company = await prisma.company.findUnique({ where: { userId } });
-  if (!company) throw new Error("Empresa nao encontrada.");
+  if (!company) throw new Error("Empresa não encontrada.");
   return company;
 }
 
@@ -35,7 +36,7 @@ export async function obterOuCriarConversaEmpresa(
   });
 
   if (!solicitacao) {
-    throw new Error("Solicitacao indisponivel para conversa.");
+    throw new Error("Solicitação indisponível para conversa.");
   }
 
   const conversa = await prisma.conversaSolicitacao.upsert({
@@ -71,7 +72,7 @@ export async function listarConversasDaSolicitacaoUsuario(
     select: { id: true },
   });
 
-  if (!solicitacao) throw new Error("Solicitacao nao encontrada ou sem permissao.");
+  if (!solicitacao) throw new Error("Solicitação não encontrada ou sem permissão.");
 
   return prisma.conversaSolicitacao.findMany({
     where: { solicitacaoId },
@@ -96,6 +97,7 @@ export async function buscarConversaAutorizada(conversaId: number, userId: numbe
         select: {
           id: true,
           userId: true,
+          titulo: true,
           coleta: { select: { id: true, companyId: true } },
         },
       },
@@ -138,21 +140,34 @@ export async function enviarMensagemConversaSolicitacao(
   const conversa = await buscarConversaAutorizada(conversaId, remetenteId);
 
   if (!conversa) {
-    throw new Error("Sem permissao para enviar mensagem nesta conversa.");
+    throw new Error("Sem permissão para enviar mensagem nesta conversa.");
   }
 
   if (conversa.status !== "aberta") {
-    throw new Error("Esta conversa nao esta mais aberta.");
+    throw new Error("Esta conversa não está mais aberta.");
   }
 
   if (conversa.solicitacao.coleta) {
-    throw new Error("Esta solicitacao ja foi aceita por uma empresa.");
+    throw new Error("Esta solicitação já foi aceita por uma empresa.");
   }
 
-  return prisma.mensagemPreAceite.create({
+  const novaMensagem = await prisma.mensagemPreAceite.create({
     data: { conversaId, remetenteId, mensagem: text },
     include: { remetente: { select: { id: true, nome: true } } },
   });
+
+  const remetenteEhSolicitante = conversa.solicitacao.userId === remetenteId;
+  await notificarNovaMensagem({
+    destinatarioId: remetenteEhSolicitante
+      ? conversa.company.userId
+      : conversa.solicitacao.userId,
+    destinatarioRole: remetenteEhSolicitante ? "empresa" : "usuario",
+    remetenteNome: novaMensagem.remetente.nome,
+    assunto: conversa.solicitacao.titulo,
+    previa: text,
+  });
+
+  return novaMensagem;
 }
 
 const conversaInclude = {

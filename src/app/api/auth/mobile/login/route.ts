@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       return applyCors(
         req,
         NextResponse.json(
-          { error: "Acesso administrativo disponivel apenas na versao web." },
+          { error: "Acesso administrativo disponível apenas na versão web." },
           { status: 403 }
         )
       );

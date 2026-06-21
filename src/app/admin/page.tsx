@@ -87,18 +87,18 @@ export default async function AdminDashboardPage() {
 
   const coletaStatusData = [
     { label: "Aceitas",    value: coletasAceitas,    color: "var(--blue)"  },
-    { label: "Concluidas", value: coletasConcluidas, color: "var(--green)" },
+    { label: "Concluídas", value: coletasConcluidas, color: "var(--green)" },
     { label: "Canceladas", value: coletasCanceladas, color: "var(--red)"   },
   ];
   const maxColeta = Math.max(...coletaStatusData.map(c => c.value), 1);
 
   const statCards = [
-    { value: totalUsuarios,         label: "Usuarios cadastrados",  color: "var(--blue)",      icon: "👤" },
+    { value: totalUsuarios,         label: "Usuários cadastrados",  color: "var(--blue)",      icon: "👤" },
     { value: totalEmpresas,         label: "Empresas parceiras",    color: "var(--purple)",    icon: "🏭" },
-    { value: totalSolicitacoes,     label: "Total de solicitacoes", color: "var(--text-muted)", icon: "📋" },
-    { value: solicitacoesPendentes, label: "Aguardando aprovacao",  color: "var(--yellow)",    icon: "⏳" },
-    { value: coletasConcluidas,     label: "Coletas concluidas",    color: "var(--green)",     icon: "✅" },
-    { value: solicitacoesRejeitadas,label: "Solicitacoes rejeitadas",color: "var(--red)",      icon: "❌" },
+    { value: totalSolicitacoes,     label: "Total de solicitações", color: "var(--text-muted)", icon: "📋" },
+    { value: solicitacoesPendentes, label: "Aguardando aprovação",  color: "var(--yellow)",    icon: "⏳" },
+    { value: coletasConcluidas,     label: "Coletas concluídas",    color: "var(--green)",     icon: "✅" },
+    { value: solicitacoesRejeitadas,label: "Solicitações rejeitadas",color: "var(--red)",      icon: "❌" },
   ];
 
   return (
@@ -129,9 +129,9 @@ export default async function AdminDashboardPage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem", marginBottom: "1.75rem" }}>
         {/* Solicitações por mês */}
         <div className="card" style={{ padding: "1.4rem" }}>
-          <p className="section-label">Ultimos 6 meses</p>
+          <p className="section-label">Últimos 6 meses</p>
           <h2 style={{ fontSize: ".95rem", fontWeight: 700, color: "var(--text)", marginBottom: "1.25rem" }}>
-            Solicitacoes por mes
+            Solicitações por mês
           </h2>
           <div style={{ display: "flex", gap: ".35rem", alignItems: "flex-end", height: 96 }}>
             {porMes.map(m => (
@@ -212,12 +212,12 @@ export default async function AdminDashboardPage() {
 
         {/* Top empresas */}
         <div className="card" style={{ padding: "1.4rem" }}>
-          <p className="section-label">Coletas concluidas</p>
+          <p className="section-label">Coletas concluídas</p>
           <h2 style={{ fontSize: ".95rem", fontWeight: 700, color: "var(--text)", marginBottom: "1.2rem" }}>
             Empresas em destaque
           </h2>
           {empresasTop.length === 0 ? (
-            <p style={{ fontSize: ".84rem", color: "var(--text-faint)" }}>Nenhuma coleta concluida ainda.</p>
+            <p style={{ fontSize: ".84rem", color: "var(--text-faint)" }}>Nenhuma coleta concluída ainda.</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: ".5rem" }}>
               {empresasTop.map((e, i) => (
@@ -252,8 +252,8 @@ export default async function AdminDashboardPage() {
       {/* Quick nav */}
       <div style={{ display: "flex", gap: ".75rem", flexWrap: "wrap", marginBottom: "1.75rem" }}>
         {[
-          { href: "/admin/solicitacoes", label: "Gerenciar solicitacoes", color: "var(--green)" },
-          { href: "/admin/usuarios", label: "Gerenciar usuarios", color: "var(--blue)" },
+          { href: "/admin/solicitacoes", label: "Gerenciar solicitações", color: "var(--green)" },
+          { href: "/admin/usuarios", label: "Gerenciar usuários", color: "var(--blue)" },
           { href: "/admin/empresas", label: "Gerenciar empresas", color: "var(--purple)" },
         ].map(link => (
           <Link
@@ -271,7 +271,7 @@ export default async function AdminDashboardPage() {
       {/* Pending list */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
         <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text)", display: "flex", alignItems: "center", gap: ".5rem" }}>
-          Pendentes de aprovacao
+          Pendentes de aprovação
           {solicitacoesPendentes > 0 && (
             <span style={{
               background: "var(--yellow-light)", color: "var(--yellow)",
@@ -297,8 +297,8 @@ export default async function AdminDashboardPage() {
             </svg>
           </div>
           <div>
-            <p style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text)", marginBottom: ".3rem" }}>Nenhuma pendencia</p>
-            <p style={{ fontSize: ".85rem", color: "var(--text-muted)" }}>Todas as solicitacoes foram processadas.</p>
+            <p style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text)", marginBottom: ".3rem" }}>Nenhuma pendência</p>
+            <p style={{ fontSize: ".85rem", color: "var(--text-muted)" }}>Todas as solicitações foram processadas.</p>
           </div>
         </div>
       ) : (
@@ -310,7 +310,7 @@ export default async function AdminDashboardPage() {
                 titulo={s.titulo}
                 descricao={s.descricao}
                 quantidade={s.quantidade}
-                endereco={s.regiao ?? "Nao informado"}
+                endereco={s.regiao ?? "Não informado"}
                 status={s.status}
                 createdAt={s.createdAt}
                 material={s.material}

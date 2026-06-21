@@ -70,7 +70,7 @@ export function AceitarSolicitacaoButton({
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
-        Tirar duvida
+        Tirar dúvida
       </Link>
       <button
         onClick={() => setModalAberto(true)}
@@ -241,7 +241,7 @@ export function AceitarSolicitacaoButton({
                   <InfoField label="Material" value={materialNome} />
                   <InfoField label="Quantidade" value={quantidade} />
                   <InfoField label="Status" value={<SolicitacaoBadge status="aprovada" />} />
-                  <InfoField label="Regiao aproximada" value={endereco} full />
+                  <InfoField label="Região aproximada" value={endereco} full />
                   {descricao && <InfoField label="Descrição" value={descricao} full muted />}
                 </div>
 
@@ -351,7 +351,7 @@ export function AceitarSolicitacaoButton({
                     lineHeight: 1.6,
                   }}
                 >
-                  Ao aceitar, a empresa recebera o endereco completo da coleta e podera trocar mensagens com o solicitante.
+                  Ao aceitar, a empresa receberá o endereço completo da coleta e poderá trocar mensagens com o solicitante.
                 </div>
               </div>
 

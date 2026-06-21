@@ -38,7 +38,7 @@ export default async function DashboardPage() {
           <p style={{ fontSize: 13, color: "var(--color-gray-500)", marginTop: 4 }}>
             {stats.total === 0
               ? "Crie sua primeira solicitação de coleta."
-              : `Voce tem ${stats.pendentes} ${textoSolicitacaoPendente} aguardando aprovação.`}
+              : `Você tem ${stats.pendentes} ${textoSolicitacaoPendente} aguardando aprovação.`}
           </p>
         </div>
         <Link href="/dashboard/solicitacoes/nova" className="btn btn-primary" aria-label="Criar nova solicitação">
@@ -133,7 +133,7 @@ function MonthlyLineChart({ items }: { items: { createdAt: string | Date }[] }) 
   const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
 
   return (
-    <svg viewBox="0 0 470 190" width="100%" height="190" role="img" aria-label="Grafico de coletas por mes">
+    <svg viewBox="0 0 470 190" width="100%" height="190" role="img" aria-label="Gráfico de coletas por mês">
       {[40, 75, 110, 145].map((y) => <line key={y} x1="36" x2="440" y1={y} y2={y} className="chart-grid" />)}
       <path d={path} className="chart-line" />
       {points.map((point, index) => (

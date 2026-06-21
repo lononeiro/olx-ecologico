@@ -9,6 +9,9 @@ const { prismaMock } = vi.hoisted(() => ({
       findMany: vi.fn(),
       create: vi.fn(),
     },
+    notificacao: {
+      create: vi.fn(),
+    },
   },
 }));
 
@@ -28,13 +31,13 @@ describe("mensagem.service", () => {
   });
 
   describe("verificarAcessoColeta", () => {
-    it("retorna null quando a coleta nao existe", async () => {
+    it("retorna null quando a coleta não existe", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce(null);
 
       await expect(verificarAcessoColeta(1, 5)).resolves.toBeNull();
     });
 
-    it("retorna a coleta quando o usuario e dono da solicitacao", async () => {
+    it("retorna a coleta quando o usuário é dono da solicitação", async () => {
       const coleta = {
         id: 1,
         solicitacao: { userId: 5 },
@@ -45,7 +48,7 @@ describe("mensagem.service", () => {
       await expect(verificarAcessoColeta(1, 5)).resolves.toEqual(coleta);
     });
 
-    it("retorna null quando o usuario nao tem acesso", async () => {
+    it("retorna null quando o usuário não tem acesso", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce({
         id: 1,
         solicitacao: { userId: 3 },
@@ -55,7 +58,7 @@ describe("mensagem.service", () => {
       await expect(verificarAcessoColeta(1, 7)).resolves.toBeNull();
     });
 
-    it("retorna a coleta quando o usuario e a empresa responsavel", async () => {
+    it("retorna a coleta quando o usuário é a empresa responsável", async () => {
       const coleta = {
         id: 1,
         solicitacao: { userId: 5 },
@@ -68,7 +71,7 @@ describe("mensagem.service", () => {
   });
 
   describe("listarMensagensColeta", () => {
-    it("bloqueia acesso a conversa quando o usuario nao pertence a coleta", async () => {
+    it("bloqueia acesso à conversa quando o usuário não pertence à coleta", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce(null);
 
       await expect(listarMensagensColeta(9, 7)).rejects.toThrow(
@@ -76,7 +79,7 @@ describe("mensagem.service", () => {
       );
     });
 
-    it("bloqueia admin quando nao for dono nem empresa responsavel", async () => {
+    it("bloqueia admin quando não for dono nem empresa responsável", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce({
         id: 9,
         solicitacao: { userId: 7 },
@@ -104,7 +107,7 @@ describe("mensagem.service", () => {
       });
     });
 
-    it("lista apenas mensagens novas quando sinceId e informado", async () => {
+    it("lista apenas mensagens novas quando sinceId é informado", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce({
         id: 9,
         solicitacao: { userId: 7 },
@@ -122,7 +125,7 @@ describe("mensagem.service", () => {
   });
 
   describe("enviarMensagem", () => {
-    it("impede envio quando o remetente nao tem permissao", async () => {
+    it("impede envio quando o remetente não tem permissão", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce(null);
 
       await expect(enviarMensagem(4, 2, "Oi")).rejects.toThrow(
@@ -133,10 +136,13 @@ describe("mensagem.service", () => {
     it("cria mensagem com o remetente quando autorizado", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce({
         id: 4,
-        solicitacao: { userId: 2 },
+        solicitacao: { userId: 2, titulo: "Coleta de papel" },
         company: { userId: 8 },
       });
-      prismaMock.mensagem.create.mockResolvedValueOnce({ id: 99 });
+      prismaMock.mensagem.create.mockResolvedValueOnce({
+        id: 99,
+        remetente: { id: 2, nome: "Fulano" },
+      });
 
       await enviarMensagem(4, 2, "Mensagem de teste");
 
@@ -144,6 +150,7 @@ describe("mensagem.service", () => {
         data: { coletaId: 4, remetenteId: 2, mensagem: "Mensagem de teste" },
         include: { remetente: { select: { id: true, nome: true } } },
       });
+      expect(prismaMock.notificacao.create).toHaveBeenCalledTimes(1);
     });
   });
 });

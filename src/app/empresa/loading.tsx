@@ -4,7 +4,7 @@ export default function EmpresaLoading() {
   return (
     <PageLoading
       title="Carregando empresa"
-      description="Preparando coletas, solicitacoes e desempenho."
+      description="Preparando coletas, solicitações e desempenho."
     />
   );
 }

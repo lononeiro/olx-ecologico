@@ -27,7 +27,7 @@ export async function GET(
     const sinceId = sinceIdParam ? Number(sinceIdParam) : undefined;
 
     if (sinceIdParam && (!sinceId || Number.isNaN(sinceId))) {
-      return NextResponse.json({ error: "sinceId invalido" }, { status: 400 });
+      return NextResponse.json({ error: "sinceId inválido" }, { status: 400 });
     }
 
     const mensagens = await listarMensagensColeta(coletaId, userId, { sinceId });

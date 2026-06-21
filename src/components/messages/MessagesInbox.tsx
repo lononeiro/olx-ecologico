@@ -223,7 +223,7 @@ export function MessagesInbox({
             name="q"
             defaultValue={search}
             className="input-field"
-            placeholder="Buscar por solicitacao, pessoa, material ou ultima mensagem"
+            placeholder="Buscar por solicitação, pessoa, material ou última mensagem"
           />
           <input type="hidden" name="filter" value={filter} />
           <div className="messages-filter-row">
@@ -276,10 +276,10 @@ export function MessagesInbox({
                 <span className="messages-page-btn is-disabled" aria-disabled="true">←</span>
               )}
               <span className="messages-page-info">
-                Pagina {currentPage} de {totalPages}
+                Página {currentPage} de {totalPages}
               </span>
               {currentPage < totalPages ? (
-                <Link className="messages-page-btn" href={queryFor({ page: currentPage + 1 })} rel="next" aria-label="Proxima pagina">
+                <Link className="messages-page-btn" href={queryFor({ page: currentPage + 1 })} rel="next" aria-label="Próxima página">
                   →
                 </Link>
               ) : (
@@ -320,7 +320,7 @@ export function MessagesInbox({
                 emptyText="Nenhuma mensagem nessa conversa"
                 placeholder={selected.canSend ? "Escreva uma mensagem..." : "Conversa encerrada"}
                 disabled={!selected.canSend}
-                disabledText="Esta conversa nao esta mais aberta para novas mensagens."
+                disabledText="Esta conversa não está mais aberta para novas mensagens."
               />
             </>
           ) : (
@@ -329,7 +329,7 @@ export function MessagesInbox({
                 <p style={{ fontWeight: 800, color: "var(--text)", marginBottom: ".3rem" }}>
                   Selecione uma conversa
                 </p>
-                <p>As mensagens de coletas e de pre-aceite aparecem juntas nesta pagina.</p>
+                <p>As mensagens de coletas e de pré-aceite aparecem juntas nesta página.</p>
               </div>
             </div>
           )}

@@ -84,13 +84,13 @@ export default async function EmpresaConversaSolicitacaoPage({
           >
             <Info label="Material" value={solicitacao.material.nome} />
             <Info label="Quantidade" value={solicitacao.quantidade} />
-            <Info label="Regiao aproximada" value={solicitacao.endereco ?? "Regiao nao informada"} />
-            <Info label="Descricao" value={solicitacao.descricao} full muted />
+            <Info label="Região aproximada" value={solicitacao.endereco ?? "Região não informada"} />
+            <Info label="Descrição" value={solicitacao.descricao} full muted />
           </div>
 
           <div style={{ display: "flex", gap: ".65rem", flexWrap: "wrap", marginTop: "1.2rem" }}>
             <Link href="/empresa/solicitacoes" className="btn btn-secondary" style={{ flex: "1 1 180px", justifyContent: "center" }}>
-              Ver outras solicitacoes
+              Ver outras solicitações
             </Link>
             <Link href="/empresa/solicitacoes" className="btn btn-blue" style={{ flex: "1 1 220px", justifyContent: "center" }}>
               Voltar e aceitar coleta

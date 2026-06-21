@@ -8,12 +8,12 @@ export default function NotFound() {
           404
         </div>
         <h1 style={{ marginBottom: ".5rem", fontSize: "clamp(1.5rem, 4vw, 2.2rem)", fontWeight: 700, color: "var(--text)" }}>
-          Pagina nao encontrada
+          Página não encontrada
         </h1>
         <p style={{ marginBottom: "1.5rem", color: "var(--text-muted)", fontSize: ".95rem", lineHeight: 1.6, maxWidth: 400 }}>
-          O conteudo que voce tentou abrir nao existe ou mudou de endereco.
+          O conteúdo que você tentou abrir não existe ou mudou de endereço.
         </p>
-        <BackButton className="btn btn-primary">Voltar para a pagina anterior</BackButton>
+        <BackButton className="btn btn-primary">Voltar para a página anterior</BackButton>
       </div>
     </div>
   );

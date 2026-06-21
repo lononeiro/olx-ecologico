@@ -35,7 +35,7 @@ export default async function EmpresaSolicitacoesPage({
         <p style={{ fontSize: ".84rem", color: "var(--text-muted)", marginTop: ".3rem" }}>
           {solicitacoes.length === 0
             ? "Nenhuma solicitação disponível no momento."
-            : `${solicitacoes.length} solicitac${solicitacoes.length === 1 ? "ao" : "oes"} aguardando aceitação.`}
+            : `${solicitacoes.length} ${solicitacoes.length === 1 ? "solicitação" : "solicitações"} aguardando aceitação.`}
         </p>
       </div>
 
@@ -58,10 +58,10 @@ export default async function EmpresaSolicitacoesPage({
           </div>
           <div>
             <p style={{ fontWeight: 700, fontSize: "1.05rem", color: "var(--text)", marginBottom: ".3rem" }}>
-              Nenhuma solicitação disponivel
+              Nenhuma solicitação disponível
             </p>
             <p style={{ fontSize: ".86rem", color: "var(--text-muted)", maxWidth: 340, margin: "0 auto" }}>
-              Novas solicitações aprovadas apareceram aqui assim que estiverem disponíveis.
+              Novas solicitações aprovadas aparecerão aqui assim que estiverem disponíveis.
             </p>
           </div>
         </div>
@@ -78,7 +78,7 @@ export default async function EmpresaSolicitacoesPage({
                 titulo={s.titulo}
                 descricao={s.descricao}
                 quantidade={s.quantidade}
-                endereco={s.endereco ?? "Regiao nao informada"}
+                endereco={s.endereco ?? "Região não informada"}
                 status={s.status}
                 createdAt={s.createdAt}
                 material={s.material}
@@ -89,7 +89,7 @@ export default async function EmpresaSolicitacoesPage({
                     titulo={s.titulo}
                     descricao={s.descricao}
                     quantidade={s.quantidade}
-                    endereco={s.endereco ?? "Regiao nao informada"}
+                    endereco={s.endereco ?? "Região não informada"}
                     materialNome={s.material.nome}
                     imagens={s.imagens}
                   />

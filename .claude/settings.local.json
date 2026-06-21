@@ -45,7 +45,21 @@
       "Bash(curl -s -m 180 -o /tmp/webdefault.out -w \"HTTP %{http_code}  time=%{time_total}s\\\\n\" \"http://localhost:8082/apps/mobile/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&transform.routerRoot=app\")",
       "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\({deps:p.dependencies,dev:p.devDependencies,ws:p.workspaces},null,2\\)\\)\")",
       "Bash(npx tsc *)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(python3 /tmp/find2.py)",
+      "Bash(python3 -c \"import json,sys; print\\('\\\\n'.join\\(f'{k}: {v}' for k,v in json.load\\(sys.stdin\\).get\\('scripts',{}\\).items\\(\\)\\)\\)\")",
+      "Bash(npx vitest *)",
+      "Bash(npx prisma *)",
+      "PowerShell($p = \"C:\\\\Users\\\\lucas.g\\\\tcc\\\\olx-ecologico\\\\Matriz de Risco_Aedb_2026_alunoa.xls\"; $bytes = [System.IO.File]::ReadAllBytes\\($p\\)[0..7]; \\($bytes | ForEach-Object { $_.ToString\\('X2'\\) }\\) -join ' '; \"Size: $\\(\\(Get-Item $p\\).Length\\) bytes\")",
+      "Bash(python *)",
+      "PowerShell(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\lucas.g\\\\tcc\\\\olx-ecologico\\\\_fill_riscos.ps1\")",
+      "PowerShell(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\lucas.g\\\\tcc\\\\olx-ecologico\\\\_fix_datas.ps1\")",
+      "PowerShell(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\lucas.g\\\\tcc\\\\olx-ecologico\\\\_diag_datas.ps1\")",
+      "PowerShell(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\lucas.g\\\\tcc\\\\olx-ecologico\\\\_fix_fmt.ps1\")",
+      "PowerShell(explorer.exe .)",
+      "PowerShell(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\lucas.g\\\\tcc\\\\olx-ecologico\\\\_upd.ps1\")",
+      "PowerShell(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\lucas.g\\\\tcc\\\\olx-ecologico\\\\_upd_attach.ps1\")",
+      "PowerShell(npx vitest run src/services/mensagem.service.test.ts src/services/coleta.service.test.ts src/services/solicitacao.service.test.ts 2>&1 | Select-Object -Last 40)"
     ]
   }
 }

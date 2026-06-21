@@ -13,7 +13,7 @@ export async function GET(
 
   const solicitacaoId = Number(params.id);
   if (!solicitacaoId || Number.isNaN(solicitacaoId)) {
-    return NextResponse.json({ error: "ID invalido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }
 
   try {

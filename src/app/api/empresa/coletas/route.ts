@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     if (dataPrevisaoColeta) {
       previsao = new Date(dataPrevisaoColeta);
       if (Number.isNaN(previsao.getTime())) {
-        return NextResponse.json({ error: "dataPrevisaoColeta invalida" }, { status: 400 });
+        return NextResponse.json({ error: "dataPrevisaoColeta inválida" }, { status: 400 });
       }
     }
 

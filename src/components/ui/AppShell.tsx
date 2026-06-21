@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Navbar } from "@/components/ui/Navbar";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { NotificationBell } from "@/components/ui/NotificationBell";
 
 const PAGE_TITLES: Record<string, { title: string; description: string }> = {
   "/dashboard": {
@@ -82,7 +83,7 @@ function getPageCopy(pathname: string) {
   return (
     matched?.[1] ?? {
       title: "ECOnecta",
-      description: "Plataforma de gestao para o ecossistema de coleta sustentavel.",
+      description: "Plataforma de gestão para o ecossistema de coleta sustentável.",
     }
   );
 }
@@ -92,7 +93,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const page = getPageCopy(pathname);
-  const userName = session?.user?.name?.split(" ")[0] ?? "Usuario";
+  const userName = session?.user?.name?.split(" ")[0] ?? "Usuário";
   const role = ((session?.user as any)?.role ?? "") as string;
 
   return (
@@ -116,9 +117,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <MenuIcon />
             </button>
 
-            <button type="button" className="app-notification-button" aria-label="Notificacoes">
-              <BellIcon />
-            </button>
+            <NotificationBell />
 
             <ThemeToggle compact />
 
@@ -155,11 +154,3 @@ function MenuIcon() {
   );
 }
 
-function BellIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
-      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
-    </svg>
-  );
-}

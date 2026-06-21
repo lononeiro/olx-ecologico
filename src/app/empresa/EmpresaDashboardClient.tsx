@@ -57,7 +57,7 @@ const FILTERS: { value: "todas" | RequestStatus; label: string }[] = [
   { value: "todas", label: "Todas" },
   { value: "pendente", label: "Pendentes" },
   { value: "em_andamento", label: "Em andamento" },
-  { value: "concluida", label: "Concluidas" },
+  { value: "concluida", label: "Concluídas" },
 ];
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
@@ -134,7 +134,7 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
       {data.metrics.pendentesMais24h > 0 ? (
         <section className="empresa-alert">
           <div>
-            <strong>Voce tem {data.metrics.pendentesMais24h} solicitação{data.metrics.pendentesMais24h === 1 ? "" : "oes"} aguardando resposta ha mais de 24h.</strong>
+            <strong>Você tem {data.metrics.pendentesMais24h} {data.metrics.pendentesMais24h === 1 ? "solicitação" : "solicitações"} aguardando resposta há mais de 24h.</strong>
             <span>Responda logo para manter sua avaliação.</span>
           </div>
           <Link href="/empresa/solicitacoes">Ver solicitações -&gt;</Link>
@@ -143,7 +143,7 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
 
       <section className="empresa-kpi-grid">
         <OperationalKpi icon={<IconInbox />} iconBg="#DBEAFE" iconColor="#1E40AF" label="Novas solicitações" value={data.metrics.novasSolicitacoes} trend={`↑ ${Math.min(3, data.metrics.novasSolicitacoes)} hoje`} />
-        <OperationalKpi icon={<IconTruck />} iconBg="#FEF9C3" iconColor="#854D0E" label="Em andamento" value={data.metrics.emAndamento} trend={nextScheduled ? `prox: ${new Date(nextScheduled.dataPrevisaoColeta!).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "sem previsao"} info />
+        <OperationalKpi icon={<IconTruck />} iconBg="#FEF9C3" iconColor="#854D0E" label="Em andamento" value={data.metrics.emAndamento} trend={nextScheduled ? `próx: ${new Date(nextScheduled.dataPrevisaoColeta!).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "sem previsão"} info />
         <OperationalKpi icon={<IconCheckCircle />} iconBg="#DCFCE7" iconColor="#166534" label="Concluídas este mês" value={data.metrics.concluidasMes} trend="↑ 12% vs mês ant" />
         <OperationalKpi icon={<IconBars />} iconBg="#F3E8FF" iconColor="#6B21A8" label="Taxa de conclusão" value={`${data.metrics.taxaConclusao}%`} trend="↑ 2pp vs mês ant" />
       </section>

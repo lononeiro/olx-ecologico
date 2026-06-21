@@ -22,14 +22,14 @@ export async function GET(
 
   const conversaId = Number(params.id);
   if (!conversaId || Number.isNaN(conversaId)) {
-    return NextResponse.json({ error: "ID invalido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }
 
   const sinceIdParam = req.nextUrl.searchParams.get("sinceId");
   const sinceId = sinceIdParam ? Number(sinceIdParam) : undefined;
 
   if (sinceIdParam && (!sinceId || Number.isNaN(sinceId))) {
-    return NextResponse.json({ error: "sinceId invalido" }, { status: 400 });
+    return NextResponse.json({ error: "sinceId inválido" }, { status: 400 });
   }
 
   try {
@@ -63,7 +63,7 @@ export async function POST(
 
   const conversaId = Number(params.id);
   if (!conversaId || Number.isNaN(conversaId)) {
-    return NextResponse.json({ error: "ID invalido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }
 
   try {
@@ -84,7 +84,7 @@ export async function POST(
 
     return NextResponse.json(mensagem, { status: 201 });
   } catch (err: any) {
-    const status = err.message.startsWith("Sem permissao") ? 403 : 400;
+    const status = err.message.startsWith("Sem permissão") ? 403 : 400;
     return NextResponse.json({ error: err.message }, { status });
   }
 }

@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import {
+  notificarColetaAceita,
+  notificarColetaStatus,
+} from "@/services/notificacao.service";
 
 function gerarCodigoConfirmacao(): string {
   return crypto.randomBytes(4).toString("hex").toUpperCase();
@@ -10,7 +14,7 @@ export async function aceitarSolicitacao(
   companyId: number,
   dataPrevisaoColeta?: Date
 ) {
-  return prisma.$transaction(async (tx) => {
+  const coleta = await prisma.$transaction(async (tx) => {
     const solicitacao = await tx.solicitacaoColeta.findFirst({
       where: {
         id: solicitacaoId,
@@ -20,12 +24,12 @@ export async function aceitarSolicitacao(
       },
       select: { id: true },
     });
-    if (!solicitacao) throw new Error("Solicitacao indisponivel para aceite.");
+    if (!solicitacao) throw new Error("Solicitação indisponível para aceite.");
 
     const existente = await tx.coleta.findUnique({
       where: { solicitacaoId },
     });
-    if (existente) throw new Error("Solicitacao ja foi aceita por outra empresa.");
+    if (existente) throw new Error("Solicitação já foi aceita por outra empresa.");
 
     const data: {
       solicitacaoId: number;
@@ -42,7 +46,7 @@ export async function aceitarSolicitacao(
 
     if (dataPrevisaoColeta) data.dataPrevisaoColeta = dataPrevisaoColeta;
 
-    const coleta = await tx.coleta.create({
+    const novaColeta = await tx.coleta.create({
       data,
       include: { solicitacao: true, company: true },
     });
@@ -57,8 +61,22 @@ export async function aceitarSolicitacao(
       data: { status: "encerrada" },
     });
 
-    return coleta;
+    return novaColeta;
   });
+
+  const empresa = await prisma.company.findUnique({
+    where: { id: coleta.companyId },
+    select: { user: { select: { nome: true } } },
+  });
+
+  await notificarColetaAceita({
+    userId: coleta.solicitacao.userId,
+    solicitacaoId: coleta.solicitacaoId,
+    titulo: coleta.solicitacao.titulo,
+    empresaNome: empresa?.user.nome ?? "A empresa coletora",
+  });
+
+  return coleta;
 }
 
 export async function atualizarStatusColeta(
@@ -68,15 +86,27 @@ export async function atualizarStatusColeta(
 ) {
   const coleta = await prisma.coleta.findFirst({
     where: { id: coletaId, companyId },
+    include: {
+      solicitacao: { select: { id: true, userId: true, titulo: true } },
+    },
   });
-  if (!coleta) throw new Error("Coleta nao encontrada ou sem permissao.");
+  if (!coleta) throw new Error("Coleta não encontrada ou sem permissão.");
 
   const data: Record<string, unknown> = { status: novoStatus };
   if (novoStatus === "concluida") {
     data.dataConclusao = new Date();
   }
 
-  return prisma.coleta.update({ where: { id: coletaId }, data });
+  const atualizada = await prisma.coleta.update({ where: { id: coletaId }, data });
+
+  await notificarColetaStatus({
+    userId: coleta.solicitacao.userId,
+    solicitacaoId: coleta.solicitacao.id,
+    titulo: coleta.solicitacao.titulo,
+    status: novoStatus,
+  });
+
+  return atualizada;
 }
 
 export async function listarColetasDaEmpresa(companyId: number) {

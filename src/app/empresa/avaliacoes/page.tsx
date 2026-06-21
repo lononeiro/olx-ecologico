@@ -11,7 +11,7 @@ export default async function EmpresaAvaliacoesPage() {
   const userId = Number((session!.user as any).id);
 
   const company = await prisma.company.findUnique({ where: { userId } });
-  if (!company) return <p>Empresa nao configurada.</p>;
+  if (!company) return <p>Empresa não configurada.</p>;
 
   const result = await listarAvaliacoesDaEmpresa(company.id);
 

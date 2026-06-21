@@ -49,7 +49,7 @@ export function ProfilePageClient({ initialProfile }: Props) {
   );
   const [cepLoading, setCepLoading] = useState(false);
   const [cepMessage, setCepMessage] = useState("");
-  // Inicia com o CEP ja salvo para nao disparar busca automatica ao abrir.
+  // Inicia com o CEP já salvo para não disparar busca automática ao abrir.
   const lastFetchedCepRef = useRef(normalizeCep(parseAddressString(initialProfile.endereco).cep));
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");

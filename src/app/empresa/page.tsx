@@ -12,7 +12,7 @@ export default async function EmpresaDashboardPage() {
   const session = await getServerSession(authOptions);
   const userId = Number((session!.user as any).id);
   const company = await prisma.company.findUnique({ where: { userId } });
-  if (!company) return <p>Empresa nao configurada.</p>;
+  if (!company) return <p>Empresa não configurada.</p>;
 
   const [coletas, solicitacoesDisponiveis, avaliacaoData] = await Promise.all([
     listarColetasDaEmpresa(company.id),
@@ -36,9 +36,9 @@ export default async function EmpresaDashboardPage() {
       titulo: item.titulo,
       descricao: item.descricao,
       quantidade: item.quantidade,
-      endereco: item.endereco ?? "Regiao nao informada",
+      endereco: item.endereco ?? "Região não informada",
       materialNome: item.material.nome,
-      solicitanteNome: "Disponivel apos aceite",
+      solicitanteNome: "Disponível após aceite",
       status: "pendente" as const,
       createdAt: item.createdAt.toISOString(),
       dataPrevisaoColeta: null,
@@ -90,9 +90,9 @@ export default async function EmpresaDashboardPage() {
   const cidadaosAtendidos = new Set(coletas.map((item) => item.solicitacao.userId)).size;
   const tiposMaterial = materialCounts.size;
 
-  // Considera apenas coletas concluidas com duracao valida (conclusao depois do aceite).
-  // Registros inconsistentes (ex.: dados de seed com conclusao anterior ao aceite)
-  // sao ignorados para nao distorcer a media.
+  // Considera apenas coletas concluídas com duração válida (conclusão depois do aceite).
+  // Registros inconsistentes (ex.: dados de seed com conclusão anterior ao aceite)
+  // são ignorados para não distorcer a média.
   const duracoesValidas = concluidas
     .filter((item) => item.dataConclusao)
     .map((item) => new Date(item.dataConclusao!).getTime() - new Date(item.dataAceite).getTime())

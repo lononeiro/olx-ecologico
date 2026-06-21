@@ -15,6 +15,12 @@ const { prismaMock, randomBytesMock } = vi.hoisted(() => {
     conversaSolicitacao: {
       updateMany: vi.fn(),
     },
+    company: {
+      findUnique: vi.fn(),
+    },
+    notificacao: {
+      create: vi.fn(),
+    },
     $transaction: vi.fn((callback) => callback(prismaMock)),
   };
 
@@ -45,37 +51,43 @@ describe("coleta.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prismaMock.solicitacaoColeta.findFirst.mockResolvedValue({ id: 10 });
+    prismaMock.company.findUnique.mockResolvedValue({ user: { nome: "EcoColeta" } });
     randomBytesMock.mockReturnValue({
       toString: vi.fn().mockReturnValue("ab12cd34"),
     });
   });
 
   describe("aceitarSolicitacao", () => {
-    it("impede aceitar solicitacao indisponivel", async () => {
+    it("impede aceitar solicitação indisponível", async () => {
       prismaMock.solicitacaoColeta.findFirst.mockResolvedValueOnce(null);
 
       await expect(aceitarSolicitacao(10, 5)).rejects.toThrow(
-        "Solicitacao indisponivel para aceite."
+        "Solicitação indisponível para aceite."
       );
 
     expect(prismaMock.coleta.create).not.toHaveBeenCalled();
       expect(prismaMock.conversaSolicitacao.updateMany).not.toHaveBeenCalled();
     });
 
-    it("impede aceitar uma solicitacao ja vinculada a outra coleta", async () => {
+    it("impede aceitar uma solicitação já vinculada a outra coleta", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce({ id: 3 });
 
       await expect(aceitarSolicitacao(10, 5)).rejects.toThrow(
-        "Solicitacao ja foi aceita por outra empresa."
+        "Solicitação já foi aceita por outra empresa."
       );
 
       expect(prismaMock.coleta.create).not.toHaveBeenCalled();
       expect(prismaMock.conversaSolicitacao.updateMany).not.toHaveBeenCalled();
     });
 
-    it("cria a coleta com codigo de confirmacao em maiusculo", async () => {
+    it("cria a coleta com código de confirmação em maiúsculo", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce(null);
-      prismaMock.coleta.create.mockResolvedValueOnce({ id: 9 });
+      prismaMock.coleta.create.mockResolvedValueOnce({
+        id: 9,
+        companyId: 5,
+        solicitacaoId: 10,
+        solicitacao: { userId: 3, titulo: "Coleta de papel" },
+      });
 
       await aceitarSolicitacao(10, 5);
 
@@ -98,10 +110,15 @@ describe("coleta.service", () => {
       });
     });
 
-    it("cria a coleta com data de previsao quando informada", async () => {
+    it("cria a coleta com data de previsão quando informada", async () => {
       const dataPrevisaoColeta = new Date("2026-04-27T17:30:00.000Z");
       prismaMock.coleta.findUnique.mockResolvedValueOnce(null);
-      prismaMock.coleta.create.mockResolvedValueOnce({ id: 9 });
+      prismaMock.coleta.create.mockResolvedValueOnce({
+        id: 9,
+        companyId: 5,
+        solicitacaoId: 10,
+        solicitacao: { userId: 3, titulo: "Coleta de papel" },
+      });
 
       await aceitarSolicitacao(10, 5, dataPrevisaoColeta);
 
@@ -119,16 +136,20 @@ describe("coleta.service", () => {
   });
 
   describe("atualizarStatusColeta", () => {
-    it("rejeita quando a coleta nao pertence a empresa", async () => {
+    it("rejeita quando a coleta não pertence à empresa", async () => {
       prismaMock.coleta.findFirst.mockResolvedValueOnce(null);
 
       await expect(atualizarStatusColeta(1, 2, "a_caminho")).rejects.toThrow(
-        "Coleta nao encontrada ou sem permissao."
+        "Coleta não encontrada ou sem permissão."
       );
     });
 
     it("define dataConclusao ao concluir a coleta", async () => {
-      prismaMock.coleta.findFirst.mockResolvedValueOnce({ id: 1, companyId: 2 });
+      prismaMock.coleta.findFirst.mockResolvedValueOnce({
+        id: 1,
+        companyId: 2,
+        solicitacao: { id: 7, userId: 3, titulo: "Coleta de papel" },
+      });
 
       await atualizarStatusColeta(1, 2, "concluida");
 
@@ -141,8 +162,12 @@ describe("coleta.service", () => {
       });
     });
 
-    it("nao define dataConclusao para status intermediario", async () => {
-      prismaMock.coleta.findFirst.mockResolvedValueOnce({ id: 1, companyId: 2 });
+    it("não define dataConclusao para status intermediário", async () => {
+      prismaMock.coleta.findFirst.mockResolvedValueOnce({
+        id: 1,
+        companyId: 2,
+        solicitacao: { id: 7, userId: 3, titulo: "Coleta de papel" },
+      });
 
       await atualizarStatusColeta(1, 2, "a_caminho");
 
@@ -153,7 +178,7 @@ describe("coleta.service", () => {
     });
   });
 
-  it("lista coletas da empresa com relacionamento necessario", async () => {
+  it("lista coletas da empresa com relacionamento necessário", async () => {
     await listarColetasDaEmpresa(22);
 
     expect(prismaMock.coleta.findMany).toHaveBeenCalledWith({
@@ -172,7 +197,7 @@ describe("coleta.service", () => {
   });
 
   describe("buscarColetaPorId", () => {
-    it("retorna null quando a coleta nao existe", async () => {
+    it("retorna null quando a coleta não existe", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce(null);
 
       await expect(buscarColetaPorId(30)).resolves.toBeNull();
@@ -180,7 +205,7 @@ describe("coleta.service", () => {
       expect(JSON.stringify(prismaMock.coleta.findUnique.mock.calls.at(-1)?.[0])).not.toContain("endereco");
     });
 
-    it("retorna null se o usuario nao for dono da solicitacao", async () => {
+    it("retorna null se o usuário não for dono da solicitação", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce({
         id: 30,
         solicitacao: { userId: 99 },
@@ -190,7 +215,7 @@ describe("coleta.service", () => {
       await expect(buscarColetaPorId(30, 10)).resolves.toBeNull();
     });
 
-    it("retorna null se a empresa nao for responsavel pela coleta", async () => {
+    it("retorna null se a empresa não for responsável pela coleta", async () => {
       prismaMock.coleta.findUnique.mockResolvedValueOnce({
         id: 30,
         solicitacao: { userId: 10 },
@@ -200,7 +225,7 @@ describe("coleta.service", () => {
       await expect(buscarColetaPorId(30, undefined, 5)).resolves.toBeNull();
     });
 
-    it("retorna a coleta quando a permissao confere", async () => {
+    it("retorna a coleta quando a permissão confere", async () => {
       const coleta = {
         id: 30,
         solicitacao: { userId: 10 },

@@ -12,11 +12,11 @@ export async function PATCH(
   if (auth.error) return auth.error;
 
   const id = Number(params.id);
-  if (isNaN(id)) return NextResponse.json({ error: "ID invalido" }, { status: 400 });
+  if (isNaN(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
   const { nome } = await req.json();
   if (!nome || typeof nome !== "string" || !nome.trim()) {
-    return NextResponse.json({ error: "Nome e obrigatorio" }, { status: 400 });
+    return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
   }
 
   const nomeNormalizado = nome.trim();
@@ -25,7 +25,7 @@ export async function PATCH(
     where: { nome: { equals: nomeNormalizado, mode: "insensitive" }, NOT: { id } },
   });
   if (existente) {
-    return NextResponse.json({ error: "Ja existe um material com este nome" }, { status: 409 });
+    return NextResponse.json({ error: "Já existe um material com este nome" }, { status: 409 });
   }
 
   const material = await prisma.materialTipo.update({
@@ -45,7 +45,7 @@ export async function DELETE(
   if (auth.error) return auth.error;
 
   const id = Number(params.id);
-  if (isNaN(id)) return NextResponse.json({ error: "ID invalido" }, { status: 400 });
+  if (isNaN(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
   const material = await prisma.materialTipo.findUnique({
     where: { id },
@@ -53,12 +53,12 @@ export async function DELETE(
   });
 
   if (!material) {
-    return NextResponse.json({ error: "Material nao encontrado" }, { status: 404 });
+    return NextResponse.json({ error: "Material não encontrado" }, { status: 404 });
   }
 
   if (material._count.solicitacoes > 0) {
     return NextResponse.json(
-      { error: `Nao e possivel excluir: ${material._count.solicitacoes} solicitacao(oes) vinculada(s)` },
+      { error: `Não é possível excluir: ${material._count.solicitacoes} solicitação(ões) vinculada(s)` },
       { status: 409 }
     );
   }

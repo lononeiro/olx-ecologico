@@ -45,7 +45,7 @@ export function AdminUsersFilters({ search, role, status }: Props) {
         style={{ width: "auto", minWidth: 140, fontSize: ".875rem" }}
       >
         <option value="">Todos os perfis</option>
-        <option value="usuario">Cidadao</option>
+        <option value="usuario">Cidadão</option>
         <option value="empresa">Empresa</option>
         <option value="admin">Administrador</option>
       </select>

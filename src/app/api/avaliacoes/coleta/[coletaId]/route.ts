@@ -13,7 +13,7 @@ export async function GET(
   if (error) return error;
 
   const coletaId = Number(params.coletaId);
-  if (isNaN(coletaId)) return NextResponse.json({ error: "coletaId invalido" }, { status: 400 });
+  if (isNaN(coletaId)) return NextResponse.json({ error: "coletaId inválido" }, { status: 400 });
 
   const userId = getUserId(session!);
   const coleta = await prisma.coleta.findUnique({
@@ -22,7 +22,7 @@ export async function GET(
   });
 
   if (!coleta || coleta.solicitacao.userId !== userId) {
-    return NextResponse.json({ error: "Sem permissao" }, { status: 403 });
+    return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
   }
 
   const avaliacao = await buscarAvaliacaoDaColeta(coletaId);

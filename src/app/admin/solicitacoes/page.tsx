@@ -115,10 +115,10 @@ export default async function AdminSolicitacoesPage({
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: ".75rem" }}>
         <p style={{ fontSize: ".82rem", color: "var(--text-muted)" }}>
-          {total === 0 ? "Nenhuma solicitacao encontrada" : `${total} solicitacao${total === 1 ? "" : "es"} encontrada${total === 1 ? "" : "s"}`}
+          {total === 0 ? "Nenhuma solicitação encontrada" : `${total} ${total === 1 ? "solicitação" : "solicitações"} encontrada${total === 1 ? "" : "s"}`}
         </p>
         {totalPages > 1 && (
-          <p style={{ fontSize: ".82rem", color: "var(--text-faint)" }}>Pagina {page} de {totalPages}</p>
+          <p style={{ fontSize: ".82rem", color: "var(--text-faint)" }}>Página {page} de {totalPages}</p>
         )}
       </div>
 
@@ -131,7 +131,7 @@ export default async function AdminSolicitacoesPage({
             </svg>
           </div>
           <div>
-            <p style={{ fontWeight: 700, color: "var(--text)", marginBottom: ".25rem" }}>Nenhuma solicitacao</p>
+            <p style={{ fontWeight: 700, color: "var(--text)", marginBottom: ".25rem" }}>Nenhuma solicitação</p>
             <p style={{ fontSize: ".85rem", color: "var(--text-muted)" }}>Tente ajustar os filtros.</p>
           </div>
         </div>
@@ -141,7 +141,7 @@ export default async function AdminSolicitacoesPage({
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760 }}>
               <thead>
                 <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                  {["#", "Titulo", "Material", "Status", "Empresa / Coleta", "Regiao", "Data", ""].map(h => (
+                  {["#", "Título", "Material", "Status", "Empresa / Coleta", "Região", "Data", ""].map(h => (
                     <th key={h} style={{
                       padding: ".65rem 1rem", textAlign: "left",
                       fontSize: ".7rem", textTransform: "uppercase",
@@ -182,7 +182,7 @@ export default async function AdminSolicitacoesPage({
                       )}
                     </td>
                     <td style={{ padding: ".7rem 1rem", fontSize: ".78rem", color: "var(--text-muted)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {summarizeAddress(s.endereco) ?? "Nao informado"}
+                      {summarizeAddress(s.endereco) ?? "Não informado"}
                     </td>
                     <td style={{ padding: ".7rem 1rem", fontSize: ".76rem", color: "var(--text-faint)", whiteSpace: "nowrap" }}>
                       {new Date(s.createdAt).toLocaleDateString("pt-BR")}
@@ -222,7 +222,7 @@ export default async function AdminSolicitacoesPage({
               href={`/admin/solicitacoes?page=${page + 1}&status=${statusFilter}&search=${search}`}
               className="btn btn-ghost" style={{ fontSize: ".82rem" }}
             >
-              Proxima →
+              Próxima →
             </Link>
           )}
         </div>

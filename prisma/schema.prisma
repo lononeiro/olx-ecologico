@@ -34,6 +34,7 @@ model User {
   mensagensEnviadas  Mensagem[]
   mensagensPreAceite MensagemPreAceite[]
   avaliacoesFeitas   Avaliacao[]
+  notificacoes       Notificacao[]
 
   @@map("users")
 }
@@ -163,4 +164,21 @@ model MensagemPreAceite {
   remetente User                @relation(fields: [remetenteId], references: [id])
 
   @@map("mensagens_pre_aceite")
+}
+
+model Notificacao {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  tipo      String
+  titulo    String
+  descricao String
+  href      String?
+  lida      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, lida])
+  @@index([userId, id])
+  @@map("notificacoes")
 }

@@ -6,6 +6,7 @@ import {
   toEmpresaSolicitacaoDisponivelDTO,
 } from "@/lib/privacy";
 import type { Prisma } from "@prisma/client";
+import { notificarSolicitacaoAvaliada } from "@/services/notificacao.service";
 
 const MAX_SOLICITACAO_IMAGENS = 5;
 const PRAZO_ANALISE_HORAS = 24;
@@ -31,7 +32,7 @@ export function getAdminSolicitacaoScope(now = new Date()) {
 }
 
 /**
- * Cria uma nova solicitacao de coleta para o usuario autenticado.
+ * Cria uma nova solicitação de coleta para o usuário autenticado.
  */
 export async function criarSolicitacao(
   userId: number,
@@ -55,7 +56,7 @@ export async function criarSolicitacao(
 
   if (imagens.length > MAX_SOLICITACAO_IMAGENS) {
     throw new Error(
-      `Voce pode adicionar no maximo ${MAX_SOLICITACAO_IMAGENS} imagens por solicitacao.`
+      `Você pode adicionar no máximo ${MAX_SOLICITACAO_IMAGENS} imagens por solicitação.`
     );
   }
 
@@ -78,7 +79,7 @@ export async function criarSolicitacao(
 }
 
 /**
- * Lista todas as solicitacoes de um usuario especifico.
+ * Lista todas as solicitações de um usuário específico.
  */
 export async function listarSolicitacoesDoUsuario(userId: number, filtros: FiltrosSolicitacao = {}) {
   const where: Prisma.SolicitacaoColetaWhereInput = {
@@ -178,7 +179,7 @@ export async function buscarSolicitacaoEmpresaDTO(id: number, companyId: number)
 
 /**
  * Retorna uma solicitacao pelo id, verificando permissao de acesso.
- * Mantido para chamadas internas legadas. Nao inclui chat.
+ * Mantido para chamadas internas legadas. Não inclui chat.
  */
 export async function buscarSolicitacaoPorId(id: number, userId?: number) {
   return prisma.solicitacaoColeta.findFirst({
@@ -241,13 +242,22 @@ export async function atualizarStatusSolicitacao(
   id: number,
   aprovado: boolean
 ) {
-  return prisma.solicitacaoColeta.update({
+  const solicitacao = await prisma.solicitacaoColeta.update({
     where: { id },
     data: {
       aprovado,
       status: aprovado ? "aprovada" : "rejeitada",
     },
   });
+
+  await notificarSolicitacaoAvaliada({
+    userId: solicitacao.userId,
+    solicitacaoId: solicitacao.id,
+    titulo: solicitacao.titulo,
+    aprovado,
+  });
+
+  return solicitacao;
 }
 
 /**
@@ -285,7 +295,7 @@ export async function listarSolicitacoesAprovadas(filtros: FiltrosSolicitacao = 
 }
 
 /**
- * Cancela uma solicitacao pelo proprio cidadao dono.
+ * Cancela uma solicitação pelo próprio cidadão dono.
  */
 export async function cancelarSolicitacao(solicitacaoId: number, userId: number) {
   return prisma.$transaction(async (tx) => {
@@ -294,15 +304,15 @@ export async function cancelarSolicitacao(solicitacaoId: number, userId: number)
       include: { coleta: true },
     });
 
-    if (!solicitacao) throw new Error("Solicitacao nao encontrada ou sem permissao.");
+    if (!solicitacao) throw new Error("Solicitação não encontrada ou sem permissão.");
     if (solicitacao.status === "rejeitada" || solicitacao.status === "cancelada") {
-      throw new Error("Solicitacao nao pode ser cancelada neste estado.");
+      throw new Error("Solicitação não pode ser cancelada neste estado.");
     }
     if (
       solicitacao.coleta &&
       ["em_coleta", "concluida"].includes(solicitacao.coleta.status)
     ) {
-      throw new Error("Nao e possivel cancelar: coleta ja em andamento avancado.");
+      throw new Error("Não é possível cancelar: coleta já em andamento avançado.");
     }
 
     let coletaCancelada = false;

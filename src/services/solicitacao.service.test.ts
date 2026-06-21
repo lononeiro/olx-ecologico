@@ -8,6 +8,9 @@ const { prismaMock } = vi.hoisted(() => ({
     findFirst: vi.fn(),
     update: vi.fn(),
   },
+  notificacao: {
+    create: vi.fn(),
+  },
   },
 }));
 
@@ -33,7 +36,7 @@ describe("solicitacao.service", () => {
   });
 
   describe("criarSolicitacao", () => {
-    it("normaliza, remove duplicatas e cria a solicitacao com imagens", async () => {
+    it("normaliza, remove duplicatas e cria a solicitação com imagens", async () => {
       prismaMock.solicitacaoColeta.create.mockResolvedValueOnce({ id: 10 });
 
       await criarSolicitacao(7, {
@@ -71,7 +74,7 @@ describe("solicitacao.service", () => {
       });
     });
 
-    it("nao envia bloco de imagens quando a lista vier vazia", async () => {
+    it("não envia bloco de imagens quando a lista vier vazia", async () => {
       prismaMock.solicitacaoColeta.create.mockResolvedValueOnce({ id: 11 });
 
       await criarSolicitacao(5, {
@@ -98,7 +101,7 @@ describe("solicitacao.service", () => {
       });
     });
 
-    it("bloqueia quando mais de 5 imagens sao informadas", async () => {
+    it("bloqueia quando mais de 5 imagens são informadas", async () => {
       await expect(
         criarSolicitacao(1, {
           titulo: "Coleta de metal",
@@ -115,13 +118,13 @@ describe("solicitacao.service", () => {
             "https://img.com/6.jpg",
           ],
         })
-      ).rejects.toThrow("Voce pode adicionar no maximo 5 imagens por solicitacao.");
+      ).rejects.toThrow("Você pode adicionar no máximo 5 imagens por solicitação.");
 
       expect(prismaMock.solicitacaoColeta.create).not.toHaveBeenCalled();
     });
   });
 
-  it("lista solicitacoes do usuario por data decrescente", async () => {
+  it("lista solicitações do usuário por data decrescente", async () => {
     await listarSolicitacoesDoUsuario(12);
 
     expect(prismaMock.solicitacaoColeta.findMany).toHaveBeenCalledWith({
@@ -135,7 +138,7 @@ describe("solicitacao.service", () => {
     });
   });
 
-  it("busca solicitacao filtrando por usuario quando informado", async () => {
+  it("busca solicitação filtrando por usuário quando informado", async () => {
     await buscarSolicitacaoPorId(8, 2);
 
     expect(prismaMock.solicitacaoColeta.findFirst).toHaveBeenCalledWith(
@@ -145,7 +148,7 @@ describe("solicitacao.service", () => {
     );
   });
 
-  it("lista solicitacoes pendentes de aprovacao", async () => {
+  it("lista solicitações pendentes de aprovação", async () => {
     prismaMock.solicitacaoColeta.findMany.mockResolvedValueOnce([]);
     await listarSolicitacoesPendentes();
 
@@ -195,7 +198,13 @@ describe("solicitacao.service", () => {
     });
   });
 
-  it("atualiza o status de aprovacao corretamente", async () => {
+  it("atualiza o status de aprovação corretamente", async () => {
+    prismaMock.solicitacaoColeta.update.mockResolvedValueOnce({
+      id: 4,
+      userId: 1,
+      titulo: "Coleta de teste",
+    });
+
     await atualizarStatusSolicitacao(4, true);
 
     expect(prismaMock.solicitacaoColeta.update).toHaveBeenCalledWith({
@@ -205,9 +214,10 @@ describe("solicitacao.service", () => {
         status: "aprovada",
       },
     });
+    expect(prismaMock.notificacao.create).toHaveBeenCalledTimes(1);
   });
 
-  it("lista apenas solicitacoes aprovadas e sem coleta para empresas", async () => {
+  it("lista apenas solicitações aprovadas e sem coleta para empresas", async () => {
     prismaMock.solicitacaoColeta.findMany.mockResolvedValueOnce([]);
     await listarSolicitacoesAprovadas();
 
@@ -221,7 +231,7 @@ describe("solicitacao.service", () => {
     });
   });
 
-  it("empresa nao recebe PII em solicitacoes disponiveis", async () => {
+  it("empresa não recebe PII em solicitações disponíveis", async () => {
     prismaMock.solicitacaoColeta.findMany.mockResolvedValueOnce([
       {
         id: 1,
@@ -247,7 +257,7 @@ describe("solicitacao.service", () => {
     });
   });
 
-  it("empresa so busca detalhe se disponivel sem coleta ou se a coleta pertence a ela", async () => {
+  it("empresa só busca detalhe se disponível sem coleta ou se a coleta pertence a ela", async () => {
     await buscarSolicitacaoEmpresaDTO(55, 9);
 
     expect(prismaMock.solicitacaoColeta.findFirst).toHaveBeenCalledWith(
@@ -263,7 +273,7 @@ describe("solicitacao.service", () => {
     );
   });
 
-  it("endpoint generico de solicitacao nao inclui mensagens", async () => {
+  it("endpoint genérico de solicitação não inclui mensagens", async () => {
     await buscarSolicitacaoPorId(8, 2);
 
     const call = prismaMock.solicitacaoColeta.findFirst.mock.calls.at(-1)?.[0];

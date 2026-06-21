@@ -6,7 +6,7 @@ import { maskEmail } from "@/lib/privacy";
 
 export const dynamic = "force-dynamic";
 
-const ROLE_LABEL: Record<string, string> = { usuario: "Cidadao", admin: "Administrador", empresa: "Empresa" };
+const ROLE_LABEL: Record<string, string> = { usuario: "Cidadão", admin: "Administrador", empresa: "Empresa" };
 const LIMIT = 15;
 
 function StatusPill({ status }: { status: string }) {
@@ -71,11 +71,11 @@ export default async function AdminUsuariosPage({
       {/* Summary */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: ".75rem" }}>
         <p style={{ fontSize: ".82rem", color: "var(--text-muted)" }}>
-          {total === 0 ? "Nenhum usuario encontrado" : `${total} usuario${total === 1 ? "" : "s"} encontrado${total === 1 ? "" : "s"}`}
+          {total === 0 ? "Nenhum usuário encontrado" : `${total} ${total === 1 ? "usuário" : "usuários"} encontrado${total === 1 ? "" : "s"}`}
         </p>
         {totalPages > 1 && (
           <p style={{ fontSize: ".82rem", color: "var(--text-faint)" }}>
-            Pagina {page} de {totalPages}
+            Página {page} de {totalPages}
           </p>
         )}
       </div>
@@ -89,7 +89,7 @@ export default async function AdminUsuariosPage({
             </svg>
           </div>
           <div>
-            <p style={{ fontWeight: 700, color: "var(--text)", marginBottom: ".25rem" }}>Nenhum usuario</p>
+            <p style={{ fontWeight: 700, color: "var(--text)", marginBottom: ".25rem" }}>Nenhum usuário</p>
             <p style={{ fontSize: ".85rem", color: "var(--text-muted)" }}>Tente ajustar os filtros de busca.</p>
           </div>
         </div>
@@ -99,7 +99,7 @@ export default async function AdminUsuariosPage({
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 680 }}>
               <thead>
                 <tr style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
-                  {["Nome / Email", "Perfil", "Status", "Solicitacoes", "Cadastro", "Acoes"].map(h => (
+                  {["Nome / E-mail", "Perfil", "Status", "Solicitações", "Cadastro", "Ações"].map(h => (
                     <th key={h} style={{
                       padding: ".65rem 1rem", textAlign: "left",
                       fontSize: ".7rem", textTransform: "uppercase",
@@ -192,7 +192,7 @@ export default async function AdminUsuariosPage({
               className="btn btn-ghost"
               style={{ fontSize: ".82rem" }}
             >
-              Proxima →
+              Próxima →
             </Link>
           )}
         </div>

@@ -5,7 +5,7 @@ export default function ProfileLoading() {
     <PageLoading
       variant="content"
       title="Carregando perfil"
-      description="Buscando suas informacoes de conta."
+      description="Buscando suas informações de conta."
     />
   );
 }

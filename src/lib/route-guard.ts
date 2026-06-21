@@ -28,7 +28,7 @@ export async function autorizarRota(rolesPermitidas: Role[]) {
       return { session: toSessionLike(user) };
     } catch {
       return {
-        error: NextResponse.json({ error: "Token invalido" }, { status: 401 }),
+        error: NextResponse.json({ error: "Token inválido" }, { status: 401 }),
       };
     }
   }

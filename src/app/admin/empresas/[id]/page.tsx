@@ -13,7 +13,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
         {label}
       </p>
       <p style={{ fontSize: ".9rem", color: "var(--text)", fontWeight: 600, lineHeight: 1.5, wordBreak: "break-all" }}>
-        {value ?? <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>Nao informado</span>}
+        {value ?? <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>Não informado</span>}
       </p>
     </div>
   );
@@ -48,7 +48,7 @@ export default async function AdminEmpresaDetailPage({ params }: { params: { id:
 
   const statCards = [
     { label: "Total coletas",   value: company._count.coletas, color: "var(--blue)"  },
-    { label: "Concluidas",      value: coletasConcluidas,      color: "var(--green)" },
+    { label: "Concluídas",      value: coletasConcluidas,      color: "var(--green)" },
     { label: "Ativas",          value: coletasAtivas,          color: "var(--yellow)"},
     { label: "Canceladas",      value: coletasCanceladas,      color: "var(--red)"   },
   ];
@@ -117,7 +117,7 @@ export default async function AdminEmpresaDetailPage({ params }: { params: { id:
           <Field label="Cadastro em" value={new Date(company.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })} />
           {company.descricao && (
             <div style={{ gridColumn: "1 / -1" }}>
-              <Field label="Descricao" value={company.descricao} />
+              <Field label="Descrição" value={company.descricao} />
             </div>
           )}
         </div>
@@ -127,8 +127,8 @@ export default async function AdminEmpresaDetailPage({ params }: { params: { id:
       {company.coletas.length > 0 && (
         <div className="card" style={{ padding: 0, overflow: "hidden" }}>
           <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border)" }}>
-            <p className="section-label">Historico operacional</p>
-            <h2 style={{ fontSize: ".95rem", fontWeight: 700, color: "var(--text)" }}>Ultimas coletas</h2>
+            <p className="section-label">Histórico operacional</p>
+            <h2 style={{ fontSize: ".95rem", fontWeight: 700, color: "var(--text)" }}>Últimas coletas</h2>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 520 }}>

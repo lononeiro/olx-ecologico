@@ -435,7 +435,7 @@ export default function CriarSolicitacaoPage() {
                   <div>
                     <label className="mb-3 block text-sm font-bold uppercase tracking-[0.2em] text-slate-700 dark:text-zinc-300">Título *</label>
                     <div className="relative">
-                      <input type="text" name="titulo" value={formData.titulo} onChange={handleInputChange} maxLength={100} placeholder="Ex: Coleta de plastico do condominio" className="w-full rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-green-50 px-4 py-4 pr-16 text-lg text-slate-900 outline-none transition focus:border-green-600 focus:shadow-lg dark:border-zinc-700 dark:from-zinc-950 dark:to-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" />
+                      <input type="text" name="titulo" value={formData.titulo} onChange={handleInputChange} maxLength={100} placeholder="Ex: Coleta de plástico do condomínio" className="w-full rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-green-50 px-4 py-4 pr-16 text-lg text-slate-900 outline-none transition focus:border-green-600 focus:shadow-lg dark:border-zinc-700 dark:from-zinc-950 dark:to-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500" />
                       <span className="absolute right-4 top-4 text-sm text-slate-400 dark:text-zinc-500">{formData.titulo.length}/100</span>
                     </div>
                   </div>

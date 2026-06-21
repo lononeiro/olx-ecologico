@@ -33,12 +33,12 @@ export default async function TempLoginUsersPage({
       <section style={{ maxWidth: 1120, margin: "0 auto" }}>
         <div style={{ marginBottom: "1.25rem", display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
           <div>
-            <p className="section-label">Temporario</p>
+            <p className="section-label">Temporário</p>
             <h1 style={{ fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 800, color: "var(--text)" }}>
-              Usuarios para login
+              Usuários para login
             </h1>
             <p style={{ color: "var(--text-muted)", marginTop: ".35rem", fontSize: ".9rem" }}>
-              Lista temporaria para identificar contas existentes. Senhas e hashes nao sao exibidos.
+              Lista temporária para identificar contas existentes. Senhas e hashes não são exibidos.
             </p>
           </div>
           <Link href="/login" className="btn btn-primary">

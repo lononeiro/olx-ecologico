@@ -13,7 +13,7 @@ export async function GET(
   if (error) return error;
 
   const companyId = Number(params.companyId);
-  if (isNaN(companyId)) return NextResponse.json({ error: "companyId invalido" }, { status: 400 });
+  if (isNaN(companyId)) return NextResponse.json({ error: "companyId inválido" }, { status: 400 });
 
   const role = (session!.user as any).role;
   if (role === "empresa") {

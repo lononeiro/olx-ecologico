@@ -24,7 +24,7 @@ export async function GET(
 
   const id = Number(params.id);
   if (isNaN(id)) {
-    return NextResponse.json({ error: "ID invalido" }, { status: 400 });
+    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }
 
   const role = (session!.user as any).role;
@@ -48,14 +48,14 @@ export async function GET(
       });
 
       if (!company) {
-        return NextResponse.json({ error: "Empresa nao encontrada" }, { status: 404 });
+        return NextResponse.json({ error: "Empresa não encontrada" }, { status: 404 });
       }
 
       solicitacao = await buscarSolicitacaoEmpresaDTO(id, company.id);
     }
 
     if (!solicitacao) {
-      return NextResponse.json({ error: "Solicitacao nao encontrada" }, { status: 404 });
+      return NextResponse.json({ error: "Solicitação não encontrada" }, { status: 404 });
     }
 
     if (role === "usuario" || (role === "empresa" && solicitacao.coleta)) {
@@ -82,12 +82,12 @@ export async function PATCH(
   if (error) return error;
 
   const id = Number(params.id);
-  if (isNaN(id)) return NextResponse.json({ error: "ID invalido" }, { status: 400 });
+  if (isNaN(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
   try {
     const body = await req.json();
     const parsed = cancelarSchema.safeParse(body);
-    if (!parsed.success) return NextResponse.json({ error: "Acao invalida" }, { status: 400 });
+    if (!parsed.success) return NextResponse.json({ error: "Ação inválida" }, { status: 400 });
 
     const userId = getUserId(session!);
     const resultado = await cancelarSolicitacao(id, userId);
