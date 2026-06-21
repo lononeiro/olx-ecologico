@@ -14,13 +14,30 @@ type Notificacao = {
 };
 
 const LIMITE_LISTA = 30;
+const TOAST_DURACAO = 6000;
+const MAX_TOASTS = 3;
 
 export function NotificationBell() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notificacao[]>([]);
   const [naoLidas, setNaoLidas] = useState(0);
+  const [toasts, setToasts] = useState<Notificacao[]>([]);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  const removerToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const empilharToasts = useCallback((novas: Notificacao[]) => {
+    if (novas.length === 0) return;
+    setToasts((prev) => [...novas, ...prev].slice(0, MAX_TOASTS));
+    novas.forEach((n) => {
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== n.id));
+      }, TOAST_DURACAO);
+    });
+  }, []);
 
   // Carga inicial da lista (o stream só envia as novas a partir de agora).
   useEffect(() => {
@@ -57,6 +74,9 @@ export function NotificationBell() {
           setItems((prev) => {
             const existentes = new Set(prev.map((n) => n.id));
             const filtradas = novas.filter((n) => !existentes.has(n.id));
+            // Preview imersivo: o stream só entrega notificações realmente
+            // novas (id > lastId), então toda chegada merece um toast.
+            empilharToasts(filtradas.slice().reverse());
             return [...filtradas.reverse(), ...prev].slice(0, LIMITE_LISTA);
           });
         }
@@ -103,10 +123,57 @@ export function NotificationBell() {
     [router]
   );
 
+  const abrirToast = useCallback(
+    (n: Notificacao) => {
+      removerToast(n.id);
+      abrirNotificacao(n);
+    },
+    [removerToast, abrirNotificacao]
+  );
+
   const badge = naoLidas > 9 ? "9+" : String(naoLidas);
 
   return (
     <div className="notif-wrap" ref={wrapRef}>
+      {toasts.length > 0 && (
+        <div className="notif-toasts" role="status" aria-live="polite">
+          {toasts.map((n) => (
+            <div
+              key={n.id}
+              className={`notif-toast tipo-${n.tipo}`}
+              onClick={() => abrirToast(n)}
+              role={n.href ? "button" : undefined}
+              tabIndex={n.href ? 0 : undefined}
+              onKeyDown={(e) => {
+                if (n.href && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  abrirToast(n);
+                }
+              }}
+            >
+              <span className="notif-toast-icon" aria-hidden="true">
+                <TipoIcon tipo={n.tipo} />
+              </span>
+              <span className="notif-toast-body">
+                <span className="notif-toast-title">{n.titulo}</span>
+                <span className="notif-toast-desc">{n.descricao}</span>
+              </span>
+              <button
+                type="button"
+                className="notif-toast-close"
+                aria-label="Dispensar notificação"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removerToast(n.id);
+                }}
+              >
+                <CloseIcon />
+              </button>
+              <span className="notif-toast-bar" aria-hidden="true" />
+            </div>
+          ))}
+        </div>
+      )}
       <button
         type="button"
         className="app-notification-button"
@@ -183,4 +250,64 @@ function BellIcon() {
       <path d="M13.7 21a2 2 0 0 1-3.4 0" />
     </svg>
   );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+function TipoIcon({ tipo }: { tipo: string }) {
+  const props = {
+    width: 18,
+    height: 18,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+  switch (tipo) {
+    case "solicitacao_aprovada":
+    case "coleta_aceita":
+      return (
+        <svg {...props}>
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      );
+    case "solicitacao_rejeitada":
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M15 9l-6 6M9 9l6 6" />
+        </svg>
+      );
+    case "coleta_status":
+      return (
+        <svg {...props}>
+          <path d="M10 17h4V5H2v12h3" />
+          <path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1" />
+          <circle cx="7.5" cy="17.5" r="2.5" />
+          <circle cx="17.5" cy="17.5" r="2.5" />
+        </svg>
+      );
+    case "nova_mensagem":
+      return (
+        <svg {...props}>
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      );
+    case "avaliacao_recebida":
+      return (
+        <svg {...props} fill="currentColor" stroke="none">
+          <path d="M12 2l2.9 6.26 6.1.53-4.6 4.02 1.36 6.19L12 16.9 6.24 19l1.36-6.19-4.6-4.02 6.1-.53z" />
+        </svg>
+      );
+    default:
+      return <BellIcon />;
+  }
 }
