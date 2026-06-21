@@ -12,11 +12,11 @@ export const dynamic = "force-dynamic";
 export default async function EmpresaConversaSolicitacaoPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await getServerSession(authOptions);
   const userId = Number((session!.user as any).id);
-  const solicitacaoId = Number(params.id);
+  const solicitacaoId = Number((await params).id);
 
   if (!solicitacaoId || Number.isNaN(solicitacaoId)) notFound();
 

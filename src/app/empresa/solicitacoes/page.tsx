@@ -9,18 +9,19 @@ export const dynamic = "force-dynamic";
 export default async function EmpresaSolicitacoesPage({
   searchParams,
 }: {
-  searchParams: { materialId?: string; dataInicio?: string; dataFim?: string; q?: string };
+  searchParams: Promise<{ materialId?: string; dataInicio?: string; dataFim?: string; q?: string }>;
 }) {
-  const dataFimDate = searchParams.dataFim
-    ? new Date(searchParams.dataFim + "T23:59:59")
+  const sp = await searchParams;
+  const dataFimDate = sp.dataFim
+    ? new Date(sp.dataFim + "T23:59:59")
     : undefined;
 
   const [solicitacoes, materiais] = await Promise.all([
     listarSolicitacoesAprovadas({
-      materialId: searchParams.materialId ? Number(searchParams.materialId) : undefined,
-      dataInicio: searchParams.dataInicio ? new Date(searchParams.dataInicio) : undefined,
+      materialId: sp.materialId ? Number(sp.materialId) : undefined,
+      dataInicio: sp.dataInicio ? new Date(sp.dataInicio) : undefined,
       dataFim:    dataFimDate,
-      q:          searchParams.q,
+      q:          sp.q,
     }),
     prisma.materialTipo.findMany({ orderBy: { nome: "asc" } }),
   ]);
@@ -40,10 +41,10 @@ export default async function EmpresaSolicitacoesPage({
       </div>
 
       <FiltrosSolicitacoes
-        buscaAtual={searchParams.q}
-        materialIdAtual={searchParams.materialId}
-        dataInicioAtual={searchParams.dataInicio}
-        dataFimAtual={searchParams.dataFim}
+        buscaAtual={sp.q}
+        materialIdAtual={sp.materialId}
+        dataInicioAtual={sp.dataInicio}
+        dataFimAtual={sp.dataFim}
         materiais={materiais}
         mostrarStatus={false}
         mostrarBusca

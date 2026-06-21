@@ -42,11 +42,11 @@ const STATUS_COPY: Record<string, { title: string; description: string; tone: st
 export default async function EmpresaColetaDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await getServerSession(authOptions);
   const userId = Number((session!.user as any).id);
-  const coletaId = Number(params.id);
+  const coletaId = Number((await params).id);
 
   const [company, coleta] = await Promise.all([
     prisma.company.findUnique({ where: { userId }, select: { id: true } }),

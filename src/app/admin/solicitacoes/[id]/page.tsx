@@ -23,9 +23,9 @@ function getAdminStatusLabel(s: {
 export default async function AdminSolicitacaoDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const id = Number(params.id);
+  const id = Number((await params).id);
   const s = await buscarSolicitacaoAdminDetailDTO(id);
   if (!s) notFound();
 

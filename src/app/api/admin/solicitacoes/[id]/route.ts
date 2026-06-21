@@ -11,12 +11,12 @@ const schema = z.object({
 // PATCH /api/admin/solicitacoes/[id] — aprova ou rejeita solicitação
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { error } = await autorizarRota(["admin"]);
   if (error) return error;
 
-  const id = Number(params.id);
+  const id = Number((await params).id);
   if (isNaN(id)) {
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }

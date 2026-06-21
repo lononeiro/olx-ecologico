@@ -15,12 +15,12 @@ const mensagemPreAceiteSchema = z.object({
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { session, error } = await autorizarRota(["usuario", "empresa"]);
   if (error) return error;
 
-  const conversaId = Number(params.id);
+  const conversaId = Number((await params).id);
   if (!conversaId || Number.isNaN(conversaId)) {
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }
@@ -56,12 +56,12 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { session, error } = await autorizarRota(["usuario", "empresa"]);
   if (error) return error;
 
-  const conversaId = Number(params.id);
+  const conversaId = Number((await params).id);
   if (!conversaId || Number.isNaN(conversaId)) {
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }

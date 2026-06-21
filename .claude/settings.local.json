@@ -59,7 +59,10 @@
       "PowerShell(explorer.exe .)",
       "PowerShell(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\lucas.g\\\\tcc\\\\olx-ecologico\\\\_upd.ps1\")",
       "PowerShell(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\lucas.g\\\\tcc\\\\olx-ecologico\\\\_upd_attach.ps1\")",
-      "PowerShell(npx vitest run src/services/mensagem.service.test.ts src/services/coleta.service.test.ts src/services/solicitacao.service.test.ts 2>&1 | Select-Object -Last 40)"
+      "PowerShell(npx vitest run src/services/mensagem.service.test.ts src/services/coleta.service.test.ts src/services/solicitacao.service.test.ts 2>&1 | Select-Object -Last 40)",
+      "Bash(npm view *)",
+      "Bash(npm install *)",
+      "Bash(npx next *)"
     ]
   }
 }

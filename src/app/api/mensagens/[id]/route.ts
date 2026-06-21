@@ -11,12 +11,12 @@ export const dynamic = "force-dynamic";
 // da solicitação ou a empresa responsável pela coleta.
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { session, error } = await autorizarRota(["usuario", "empresa"]);
   if (error) return error;
 
-  const coletaId = Number(params.id);
+  const coletaId = Number((await params).id);
   if (isNaN(coletaId)) {
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }
@@ -53,12 +53,12 @@ export async function GET(
 // Só envia se o usuário pertencer à conversa.
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { session, error } = await autorizarRota(["usuario", "empresa"]);
   if (error) return error;
 
-  const coletaId = Number(params.id);
+  const coletaId = Number((await params).id);
   if (isNaN(coletaId)) {
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }

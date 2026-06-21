@@ -7,12 +7,12 @@ export const dynamic = "force-dynamic";
 // PATCH /api/notificacoes/[id] — marca uma notificação como lida
 export async function PATCH(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { session, error } = await autorizarRota(["usuario", "empresa", "admin"]);
   if (error) return error;
 
-  const id = Number(params.id);
+  const id = Number((await params).id);
   if (isNaN(id)) {
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }

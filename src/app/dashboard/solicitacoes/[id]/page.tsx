@@ -40,11 +40,11 @@ const STATUS_COPY: Record<string, { title: string; description: string; tone: st
 export default async function SolicitacaoDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const session = await getServerSession(authOptions);
   const userId = Number((session!.user as any).id);
-  const id = Number(params.id);
+  const id = Number((await params).id);
 
   const s = await prisma.solicitacaoColeta.findFirst({
     where: { id, userId },

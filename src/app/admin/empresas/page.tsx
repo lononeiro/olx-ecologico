@@ -26,10 +26,11 @@ function StatusPill({ status }: { status: string }) {
 export default async function AdminEmpresasPage({
   searchParams,
 }: {
-  searchParams: { page?: string; search?: string };
+  searchParams: Promise<{ page?: string; search?: string }>;
 }) {
-  const page   = Math.max(1, Number(searchParams.page ?? 1));
-  const search = searchParams.search ?? "";
+  const sp = await searchParams;
+  const page   = Math.max(1, Number(sp.page ?? 1));
+  const search = sp.search ?? "";
 
   const where = search ? {
     OR: [

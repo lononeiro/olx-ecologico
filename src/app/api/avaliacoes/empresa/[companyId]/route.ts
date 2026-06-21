@@ -7,12 +7,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { companyId: string } }
+  { params }: { params: Promise<{ companyId: string }> }
 ) {
   const { session, error } = await autorizarRota(["empresa", "admin"]);
   if (error) return error;
 
-  const companyId = Number(params.companyId);
+  const companyId = Number((await params).companyId);
   if (isNaN(companyId)) return NextResponse.json({ error: "companyId inválido" }, { status: 400 });
 
   const role = (session!.user as any).role;

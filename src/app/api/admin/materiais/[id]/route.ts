@@ -6,12 +6,12 @@ export const dynamic = "force-dynamic";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await autorizarRota(["admin"]);
   if (auth.error) return auth.error;
 
-  const id = Number(params.id);
+  const id = Number((await params).id);
   if (isNaN(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
   const { nome } = await req.json();
@@ -39,12 +39,12 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await autorizarRota(["admin"]);
   if (auth.error) return auth.error;
 
-  const id = Number(params.id);
+  const id = Number((await params).id);
   if (isNaN(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
   const material = await prisma.materialTipo.findUnique({

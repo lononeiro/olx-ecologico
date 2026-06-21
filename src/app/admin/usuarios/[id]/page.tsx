@@ -22,8 +22,8 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export default async function AdminUsuarioDetailPage({ params }: { params: { id: string } }) {
-  const id = Number(params.id);
+export default async function AdminUsuarioDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const id = Number((await params).id);
   const user = await prisma.user.findUnique({
     where: { id },
     include: {

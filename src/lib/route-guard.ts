@@ -11,7 +11,7 @@ type Role = "usuario" | "admin" | "empresa";
  * Retorna { session } em caso de sucesso ou { error } com NextResponse em caso de falha.
  */
 export async function autorizarRota(rolesPermitidas: Role[]) {
-  const authorizationHeader = headers().get("authorization");
+  const authorizationHeader = (await headers()).get("authorization");
   const bearerToken = authorizationHeader?.startsWith("Bearer ")
     ? authorizationHeader.slice("Bearer ".length).trim()
     : null;

@@ -7,12 +7,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { coletaId: string } }
+  { params }: { params: Promise<{ coletaId: string }> }
 ) {
   const { session, error } = await autorizarRota(["usuario"]);
   if (error) return error;
 
-  const coletaId = Number(params.coletaId);
+  const coletaId = Number((await params).coletaId);
   if (isNaN(coletaId)) return NextResponse.json({ error: "coletaId inválido" }, { status: 400 });
 
   const userId = getUserId(session!);

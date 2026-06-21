@@ -5,9 +5,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { cep: string } }
+  { params }: { params: Promise<{ cep: string }> }
 ) {
-  const cep = normalizeCep(params.cep);
+  const cep = normalizeCep((await params).cep);
 
   if (cep.length !== 8) {
     return NextResponse.json({ error: "CEP inválido." }, { status: 400 });

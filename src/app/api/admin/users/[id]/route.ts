@@ -7,11 +7,11 @@ const patchSchema = z.object({
   status: z.enum(["ativo", "inativo"]),
 });
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error } = await autorizarRota(["admin"]);
   if (error) return error;
 
-  const id = Number(params.id);
+  const id = Number((await params).id);
   const body = await req.json();
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
@@ -29,11 +29,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   return NextResponse.json(updated);
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error } = await autorizarRota(["admin"]);
   if (error) return error;
 
-  const id = Number(params.id);
+  const id = Number((await params).id);
   const user = await prisma.user.findUnique({
     where: { id },
     include: {

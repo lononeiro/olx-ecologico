@@ -9,9 +9,10 @@ const TEMP_SECRET = process.env.TEMP_LOGIN_USERS_SECRET ?? "olx-ecologico-login-
 export default async function TempLoginUsersPage({
   searchParams,
 }: {
-  searchParams: { secret?: string };
+  searchParams: Promise<{ secret?: string }>;
 }) {
-  if (searchParams.secret !== TEMP_SECRET) {
+  const { secret } = await searchParams;
+  if (secret !== TEMP_SECRET) {
     notFound();
   }
 

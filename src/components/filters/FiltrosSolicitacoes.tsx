@@ -35,7 +35,7 @@ export function FiltrosSolicitacoes({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const update = useCallback(
     (key: string, value: string) => {

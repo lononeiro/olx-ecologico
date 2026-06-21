@@ -11,14 +11,15 @@ const LIMIT = 20;
 export default async function AdminSolicitacoesPage({
   searchParams,
 }: {
-  searchParams: { page?: string; search?: string; status?: string; materialId?: string; dataInicio?: string; dataFim?: string };
+  searchParams: Promise<{ page?: string; search?: string; status?: string; materialId?: string; dataInicio?: string; dataFim?: string }>;
 }) {
-  const page         = Math.max(1, Number(searchParams.page   ?? 1));
-  const search       = searchParams.search ?? "";
-  const statusFilter = searchParams.status ?? "";
-  const materialId   = searchParams.materialId ?? "";
-  const dataInicio   = searchParams.dataInicio ?? "";
-  const dataFim      = searchParams.dataFim ?? "";
+  const sp = await searchParams;
+  const page         = Math.max(1, Number(sp.page   ?? 1));
+  const search       = sp.search ?? "";
+  const statusFilter = sp.status ?? "";
+  const materialId   = sp.materialId ?? "";
+  const dataInicio   = sp.dataInicio ?? "";
+  const dataFim      = sp.dataFim ?? "";
 
   const where = {
     AND: [

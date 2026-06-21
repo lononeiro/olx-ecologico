@@ -17,12 +17,12 @@ const cancelarSchema = z.object({ action: z.literal("cancelar") });
 // GET /api/solicitacoes/[id]
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { session, error } = await autorizarRota(["usuario", "admin", "empresa"]);
   if (error) return error;
 
-  const id = Number(params.id);
+  const id = Number((await params).id);
   if (isNaN(id)) {
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }
@@ -76,12 +76,12 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { session, error } = await autorizarRota(["usuario"]);
   if (error) return error;
 
-  const id = Number(params.id);
+  const id = Number((await params).id);
   if (isNaN(id)) return NextResponse.json({ error: "ID inválido" }, { status: 400 });
 
   try {

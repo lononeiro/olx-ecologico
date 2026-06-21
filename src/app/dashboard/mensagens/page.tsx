@@ -11,13 +11,14 @@ export const dynamic = "force-dynamic";
 export default async function DashboardMensagensPage({
   searchParams,
 }: {
-  searchParams: { c?: string; q?: string; filter?: string; page?: string };
+  searchParams: Promise<{ c?: string; q?: string; filter?: string; page?: string }>;
 }) {
+  const sp = await searchParams;
   const session = await getServerSession(authOptions);
   const userId = Number((session!.user as any).id);
   const conversations = await listarInboxMensagens(userId, "usuario");
   const selected =
-    conversations.find((item) => item.id === searchParams.c) ?? conversations[0] ?? null;
+    conversations.find((item) => item.id === sp.c) ?? conversations[0] ?? null;
   const selectedMessages = selected
     ? await buscarMensagensDaInbox(selected.id, userId, "usuario")
     : [];
@@ -29,9 +30,9 @@ export default async function DashboardMensagensPage({
       conversations={conversations}
       selected={selected}
       selectedMessages={selectedMessages ?? []}
-      search={searchParams.q ?? ""}
-      filter={searchParams.filter ?? "todas"}
-      page={Number(searchParams.page) || 1}
+      search={sp.q ?? ""}
+      filter={sp.filter ?? "todas"}
+      page={Number(sp.page) || 1}
     />
   );
 }

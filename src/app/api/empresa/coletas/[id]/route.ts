@@ -8,12 +8,12 @@ export const dynamic = 'force-dynamic';
 // GET /api/empresa/coletas/[id]
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { session, error } = await autorizarRota(["empresa", "usuario"]);
   if (error) return error;
 
-  const id = Number(params.id);
+  const id = Number((await params).id);
   const role = (session!.user as any).role;
   const userId = getUserId(session!);
 
@@ -43,12 +43,12 @@ export async function GET(
 // PATCH /api/empresa/coletas/[id] — atualiza status da coleta
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { session, error } = await autorizarRota(["empresa"]);
   if (error) return error;
 
-  const id = Number(params.id);
+  const id = Number((await params).id);
   if (isNaN(id)) {
     return NextResponse.json({ error: "ID inválido" }, { status: 400 });
   }

@@ -29,12 +29,13 @@ function StatusPill({ status }: { status: string }) {
 export default async function AdminUsuariosPage({
   searchParams,
 }: {
-  searchParams: { page?: string; search?: string; role?: string; status?: string };
+  searchParams: Promise<{ page?: string; search?: string; role?: string; status?: string }>;
 }) {
-  const page         = Math.max(1, Number(searchParams.page   ?? 1));
-  const search       = searchParams.search ?? "";
-  const roleFilter   = searchParams.role   ?? "";
-  const statusFilter = searchParams.status ?? "";
+  const sp = await searchParams;
+  const page         = Math.max(1, Number(sp.page   ?? 1));
+  const search       = sp.search ?? "";
+  const roleFilter   = sp.role   ?? "";
+  const statusFilter = sp.status ?? "";
 
   const where = {
     AND: [
