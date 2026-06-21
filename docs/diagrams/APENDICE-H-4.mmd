@@ -1,0 +1,26 @@
+flowchart LR
+    actor((Empresa))
+
+    subgraph boundary["«boundary»"]
+        telaColeta["Tela Detalhe da Coleta"]
+        apiColeta["PATCH /api/empresa/coletas/[id]"]
+    end
+
+    subgraph control["«control»"]
+        guard["autorizarRota(['empresa'])"]
+        valStatus["coletaStatusSchema"]
+        validaCod["Valida código de confirmação"]
+        svcStatus["atualizarStatusColeta()"]
+    end
+
+    subgraph entity["«entity»"]
+        eColeta[(Coleta)]
+    end
+
+    actor --> telaColeta
+    telaColeta --> apiColeta
+    apiColeta --> guard
+    guard --> valStatus
+    valStatus --> validaCod
+    validaCod --> svcStatus
+    svcStatus --> eColeta

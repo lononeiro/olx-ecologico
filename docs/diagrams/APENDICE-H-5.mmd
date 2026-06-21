@@ -1,0 +1,28 @@
+flowchart LR
+    actor((Cidadão / Empresa))
+
+    subgraph boundary["«boundary»"]
+        telaChat["Chat da Coleta"]
+        apiMsg["POST /api/mensagens/[id]"]
+    end
+
+    subgraph control["«control»"]
+        valMsg["mensagemCreateSchema"]
+        verifAcesso["verificarAcessoColeta()"]
+        svcEnviar["enviarMensagem()"]
+    end
+
+    subgraph entity["«entity»"]
+        eColeta[(Coleta)]
+        eMsg[(Mensagem)]
+        eUser[(User)]
+    end
+
+    actor --> telaChat
+    telaChat --> apiMsg
+    apiMsg --> valMsg
+    valMsg --> verifAcesso
+    verifAcesso --> eColeta
+    verifAcesso --> svcEnviar
+    svcEnviar --> eMsg
+    eMsg --> eUser

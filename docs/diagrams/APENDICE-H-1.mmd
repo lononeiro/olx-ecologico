@@ -1,0 +1,28 @@
+flowchart LR
+    actor((Cidadão))
+
+    subgraph boundary["«boundary»"]
+        telaNova["Tela Nova Solicitação"]
+        cloud["Cloudinary (upload)"]
+        apiSol["POST /api/solicitacoes"]
+    end
+
+    subgraph control["«control»"]
+        valSchema["solicitacaoCreateSchema"]
+        svcCriar["criarSolicitacao()"]
+    end
+
+    subgraph entity["«entity»"]
+        eSol[(SolicitacaoColeta)]
+        eImg[(SolicitacaoImagem)]
+        eMat[(MaterialTipo)]
+    end
+
+    actor --> telaNova
+    telaNova --> cloud
+    telaNova --> apiSol
+    apiSol --> valSchema
+    valSchema --> svcCriar
+    svcCriar --> eSol
+    svcCriar --> eImg
+    eSol --> eMat

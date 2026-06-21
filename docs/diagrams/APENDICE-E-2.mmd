@@ -1,0 +1,18 @@
+sequenceDiagram
+    actor Admin as Administrador
+    participant UI as Front-end (/admin)
+    participant API as PATCH /api/admin/solicitacoes/[id]
+    participant Svc as solicitacao.service
+    participant DB as Prisma / PostgreSQL
+
+    Admin->>UI: Abre solicitação pendente
+    Admin->>UI: Decide aprovar/rejeitar
+    UI->>API: PATCH { aprovado: true | false }
+    API->>API: autorizarRota(["admin"])
+    API->>API: schema.safeParse()
+    API->>Svc: atualizarStatusSolicitacao(id, aprovado)
+    Svc->>DB: update status = aprovada | rejeitada
+    DB-->>Svc: solicitação atualizada
+    Svc-->>API: solicitação
+    API-->>UI: 200 { solicitação }
+    UI-->>Admin: Status atualizado

@@ -1,0 +1,26 @@
+flowchart LR
+    actor((Usuário))
+
+    subgraph boundary["«boundary»"]
+        telaLogin["Tela de Login"]
+        apiAuth["NextAuth / POST /api/auth/mobile/login"]
+    end
+
+    subgraph control["«control»"]
+        valLogin["loginSchema"]
+        verifSenha["Compara hash (bcrypt)"]
+        emiteSessao["Emite sessão JWT / tokens"]
+    end
+
+    subgraph entity["«entity»"]
+        eUser[(User)]
+        eRole[(Role)]
+    end
+
+    actor --> telaLogin
+    telaLogin --> apiAuth
+    apiAuth --> valLogin
+    valLogin --> verifSenha
+    verifSenha --> eUser
+    eUser --> eRole
+    verifSenha --> emiteSessao

@@ -1,0 +1,80 @@
+classDiagram
+    class Role {
+        +int id
+        +string nome
+    }
+
+    class User {
+        +int id
+        +string nome
+        +string? endereco
+        +string? telefone
+        +string email
+        +string senhaHash
+        +string status
+        +int roleId
+        +datetime createdAt
+        +string? resetToken
+        +datetime? resetTokenExpiry
+    }
+
+    class Company {
+        +int id
+        +int userId
+        +string cnpj
+        +string? descricao
+        +datetime createdAt
+    }
+
+    class MaterialTipo {
+        +int id
+        +string nome
+    }
+
+    class SolicitacaoColeta {
+        +int id
+        +string titulo
+        +string descricao
+        +string quantidade
+        +string endereco
+        +string status
+        +bool aprovado
+        +int userId
+        +int materialId
+        +datetime createdAt
+    }
+
+    class SolicitacaoImagem {
+        +int id
+        +int solicitacaoId
+        +string url
+    }
+
+    class Coleta {
+        +int id
+        +int solicitacaoId
+        +int companyId
+        +string status
+        +string? codigoConfirmacao
+        +datetime dataAceite
+        +datetime? dataPrevisaoColeta
+        +datetime? dataConclusao
+    }
+
+    class Mensagem {
+        +int id
+        +int coletaId
+        +int remetenteId
+        +string mensagem
+        +datetime createdAt
+    }
+
+    Role "1" --> "0..*" User : possui
+    User "1" --> "0..1" Company : é
+    User "1" --> "0..*" SolicitacaoColeta : cria
+    User "1" --> "0..*" Mensagem : envia
+    MaterialTipo "1" --> "0..*" SolicitacaoColeta : classifica
+    SolicitacaoColeta "1" --> "0..*" SolicitacaoImagem : contém
+    SolicitacaoColeta "1" --> "0..1" Coleta : gera
+    Company "1" --> "0..*" Coleta : executa
+    Coleta "1" --> "0..*" Mensagem : agrupa

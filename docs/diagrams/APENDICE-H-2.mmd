@@ -1,0 +1,22 @@
+flowchart LR
+    actor((Administrador))
+
+    subgraph boundary["«boundary»"]
+        telaAdmin["Tela Admin Solicitações"]
+        apiAdmin["PATCH /api/admin/solicitacoes/[id]"]
+    end
+
+    subgraph control["«control»"]
+        guard["autorizarRota(['admin'])"]
+        svcStatus["atualizarStatusSolicitacao()"]
+    end
+
+    subgraph entity["«entity»"]
+        eSol[(SolicitacaoColeta)]
+    end
+
+    actor --> telaAdmin
+    telaAdmin --> apiAdmin
+    apiAdmin --> guard
+    guard --> svcStatus
+    svcStatus --> eSol

@@ -1,0 +1,25 @@
+sequenceDiagram
+    actor Empresa
+    participant UI as Front-end (/empresa)
+    participant API as POST /api/empresa/coletas
+    participant Svc as coleta.service
+    participant DB as Prisma / PostgreSQL
+
+    Empresa->>UI: Seleciona solicitação aprovada
+    UI->>API: POST { solicitacaoId, dataPrevisaoColeta? }
+    API->>API: autorizarRota(["empresa"])
+    API->>Svc: aceitarSolicitacao(solicitacaoId, companyId, previsao)
+    Svc->>DB: findUnique Coleta por solicitacaoId
+    alt Já aceita por outra empresa
+        DB-->>Svc: coleta existente
+        Svc-->>API: erro
+        API-->>UI: 400 "Solicitação já foi aceita"
+    else Disponível
+        DB-->>Svc: null
+        Svc->>Svc: gerarCodigoConfirmacao()
+        Svc->>DB: create Coleta (status=aceita)
+        DB-->>Svc: coleta criada
+        Svc-->>API: coleta
+        API-->>UI: 201 { coleta + código }
+        UI-->>Empresa: Coleta criada
+    end

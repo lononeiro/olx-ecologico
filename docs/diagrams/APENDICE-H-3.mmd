@@ -1,0 +1,28 @@
+flowchart LR
+    actor((Empresa))
+
+    subgraph boundary["«boundary»"]
+        telaSolic["Tela Solicitações Aprovadas"]
+        apiAceitar["POST /api/empresa/coletas"]
+    end
+
+    subgraph control["«control»"]
+        guard["autorizarRota(['empresa'])"]
+        svcAceitar["aceitarSolicitacao()"]
+        gerarCod["gerarCodigoConfirmacao()"]
+    end
+
+    subgraph entity["«entity»"]
+        eSol[(SolicitacaoColeta)]
+        eColeta[(Coleta)]
+        eCompany[(Company)]
+    end
+
+    actor --> telaSolic
+    telaSolic --> apiAceitar
+    apiAceitar --> guard
+    guard --> svcAceitar
+    svcAceitar --> gerarCod
+    svcAceitar --> eSol
+    svcAceitar --> eColeta
+    eColeta --> eCompany

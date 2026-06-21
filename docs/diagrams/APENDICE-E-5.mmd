@@ -1,0 +1,23 @@
+sequenceDiagram
+    actor Remetente as Cidadão / Empresa
+    participant UI as Chat da coleta
+    participant API as POST /api/mensagens/[id]
+    participant Svc as mensagem.service
+    participant DB as Prisma / PostgreSQL
+
+    Remetente->>UI: Digita e envia a mensagem
+    UI->>API: POST { coletaId, mensagem }
+    API->>Svc: enviarMensagem(coletaId, remetenteId, mensagem)
+    Svc->>DB: verificarAcessoColeta(coletaId, userId)
+    alt Sem permissão
+        DB-->>Svc: não autorizado
+        Svc-->>API: erro
+        API-->>UI: 403 "Sem permissão"
+    else Autorizado
+        DB-->>Svc: coleta
+        Svc->>DB: create Mensagem
+        DB-->>Svc: mensagem criada
+        Svc-->>API: mensagem
+        API-->>UI: 201 { mensagem }
+        UI-->>Remetente: Mensagem exibida na conversa
+    end

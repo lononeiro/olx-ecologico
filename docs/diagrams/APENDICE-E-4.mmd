@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor Empresa
+    actor Cidadao as Cidadão
+    participant UI as Front-end (/empresa/coletas/[id])
+    participant API as PATCH /api/empresa/coletas/[id]
+    participant Svc as coleta.service
+    participant DB as Prisma / PostgreSQL
+
+    Cidadao->>Empresa: Informa o código de confirmação
+    Empresa->>UI: Seleciona status "concluida" + código
+    UI->>API: PATCH { status: "concluida", codigoConfirmacao }
+    API->>API: autorizarRota(["empresa"])
+    API->>API: coletaStatusSchema.safeParse()
+    API->>DB: findFirst Coleta por (id, companyId)
+    alt Código ausente ou inválido
+        API-->>UI: 400 "Código inválido"
+    else Código correto
+        API->>Svc: atualizarStatusColeta(id, companyId, "concluida")
+        Svc->>DB: update status=concluida + dataConclusao
+        DB-->>Svc: coleta atualizada
+        Svc-->>API: coleta
+        API-->>UI: 200 { coleta }
+        UI-->>Empresa: Coleta concluída
+    end

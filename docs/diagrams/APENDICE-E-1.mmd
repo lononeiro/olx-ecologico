@@ -1,0 +1,25 @@
+sequenceDiagram
+    actor Cidadao as Cidadão
+    participant UI as Front-end (/dashboard)
+    participant CDN as Cloudinary
+    participant API as POST /api/solicitacoes
+    participant Svc as solicitacao.service
+    participant DB as Prisma / PostgreSQL
+
+    Cidadao->>UI: Preenche o formulário
+    Cidadao->>UI: Seleciona imagens (até 5)
+    UI->>CDN: Upload das imagens
+    CDN-->>UI: URLs das imagens
+    UI->>API: POST { titulo, descricao, materialId, imagens[] }
+    API->>API: autorizarRota(["usuario"])
+    API->>API: solicitacaoCreateSchema.safeParse()
+    alt Dados inválidos
+        API-->>UI: 400 { erros por campo }
+    else Dados válidos
+        API->>Svc: criarSolicitacao(userId, data)
+        Svc->>DB: create SolicitacaoColeta (status=pendente)
+        DB-->>Svc: solicitação criada
+        Svc-->>API: solicitação
+        API-->>UI: 201 { solicitação }
+        UI-->>Cidadao: Confirmação de envio
+    end
