@@ -1,0 +1,25 @@
+@startuml SEQ-12-chat-coleta
+title SEQ-12 - Conversar na Coleta (chat operacional)
+actor Remetente as "Cidadao ou Empresa"
+participant "POST /api/mensagens/[coletaId]" as EP
+participant "mensagem.service\nenviarMensagem" as SVC
+participant "verificarAcessoColeta" as ACC
+participant "notificacao.service" as N
+database PostgreSQL as DB
+
+Remetente -> EP : POST {mensagem}
+EP -> SVC : enviarMensagem(coletaId, remetenteId, texto)
+SVC -> ACC : verificarAcessoColeta(coletaId, userId)
+ACC -> DB : coleta + dono solicitacao + user empresa
+alt nao e dono nem empresa
+  ACC --> SVC : null
+  SVC --> EP : throw "sem permissao"
+  EP --> Remetente : 400
+else autorizado
+  SVC -> DB : create Mensagem
+  SVC -> N : notificarNovaMensagem(o outro participante)
+  N -> DB : create Notificacao
+  SVC --> EP : mensagem
+  EP --> Remetente : 201
+end
+@enduml

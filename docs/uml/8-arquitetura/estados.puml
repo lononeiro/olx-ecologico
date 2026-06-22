@@ -1,0 +1,33 @@
+@startuml estado-solicitacao
+' Estados - SolicitacaoColeta
+[*] --> pendente : criada
+pendente --> aprovada : admin aprova
+pendente --> rejeitada : admin rejeita
+pendente --> cancelada : cidadao cancela
+aprovada --> cancelada : cidadao cancela (sem coleta avancada)
+aprovada --> [*] : aceite gera Coleta
+rejeitada --> [*]
+cancelada --> [*]
+@enduml
+
+@startuml estado-coleta
+' Estados - Coleta
+[*] --> aceita : empresa aceita
+aceita --> a_caminho : empresa atualiza
+a_caminho --> em_coleta : empresa atualiza
+em_coleta --> concluida : empresa finaliza\n(grava dataConclusao)
+aceita --> cancelada : cancelamento permitido
+a_caminho --> cancelada : cancelamento permitido
+concluida --> [*]
+cancelada --> [*]
+note right of em_coleta : a partir daqui o cidadao\nnao pode mais cancelar
+@enduml
+
+@startuml estado-conversa
+' Estados - ConversaSolicitacao (chat pre-aceite)
+[*] --> aberta : empresa inicia negociacao
+aberta --> convertida : empresa vence o aceite
+aberta --> encerrada : outra empresa vence
+convertida --> [*]
+encerrada --> [*]
+@enduml

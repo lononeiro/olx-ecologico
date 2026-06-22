@@ -1,0 +1,119 @@
+@startuml classes-de-dados
+' Diagrama de Classes de Dados - ECOnecta (12 entidades, derivado de prisma/schema.prisma)
+skinparam classAttributeIconSize 0
+hide methods
+hide circle
+
+class Role {
+  +id : int
+  +nome : string
+}
+class User {
+  +id : int
+  +nome : string
+  +email : string {unique}
+  +senhaHash : string
+  +endereco : string [0..1]
+  +telefone : string [0..1]
+  +status : string = "ativo"
+  +roleId : int
+  +resetToken : string [0..1] {unique}
+  +resetTokenExpiry : datetime [0..1]
+  +createdAt : datetime
+}
+class Company {
+  +id : int
+  +userId : int {unique}
+  +cnpj : string {unique}
+  +descricao : string [0..1]
+  +createdAt : datetime
+}
+class MaterialTipo {
+  +id : int
+  +nome : string
+}
+class SolicitacaoColeta {
+  +id : int
+  +titulo : string
+  +descricao : string
+  +quantidade : string
+  +endereco : string
+  +status : string = "pendente"
+  +aprovado : bool = false
+  +userId : int
+  +materialId : int
+  +createdAt : datetime
+}
+class SolicitacaoImagem {
+  +id : int
+  +solicitacaoId : int
+  +url : string
+}
+class Coleta {
+  +id : int
+  +solicitacaoId : int {unique}
+  +companyId : int
+  +status : string = "aceita"
+  +codigoConfirmacao : string [0..1]
+  +dataAceite : datetime
+  +dataPrevisaoColeta : datetime [0..1]
+  +dataConclusao : datetime [0..1]
+}
+class Avaliacao {
+  +id : int
+  +coletaId : int {unique}
+  +autorId : int
+  +nota : int
+  +comentario : string [0..1]
+  +createdAt : datetime
+}
+class Mensagem {
+  +id : int
+  +coletaId : int
+  +remetenteId : int
+  +mensagem : string
+  +createdAt : datetime
+}
+class ConversaSolicitacao {
+  +id : int
+  +solicitacaoId : int
+  +companyId : int
+  +status : string = "aberta"
+  +createdAt : datetime
+  +updatedAt : datetime
+}
+class MensagemPreAceite {
+  +id : int
+  +conversaId : int
+  +remetenteId : int
+  +mensagem : string
+  +createdAt : datetime
+}
+class Notificacao {
+  +id : int
+  +userId : int
+  +tipo : string
+  +titulo : string
+  +descricao : string
+  +href : string [0..1]
+  +lida : bool = false
+  +createdAt : datetime
+}
+
+Role "1" --> "0..*" User : possui
+User "1" --> "0..1" Company : é
+User "1" --> "0..*" SolicitacaoColeta : cria
+MaterialTipo "1" --> "0..*" SolicitacaoColeta : classifica
+SolicitacaoColeta "1" *--> "0..*" SolicitacaoImagem : contém
+SolicitacaoColeta "1" --> "0..1" Coleta : gera
+Company "1" --> "0..*" Coleta : executa
+Coleta "1" --> "0..1" Avaliacao : recebe
+User "1" --> "0..*" Avaliacao : autor
+Coleta "1" *--> "0..*" Mensagem : agrupa
+User "1" --> "0..*" Mensagem : remetente
+SolicitacaoColeta "1" --> "0..*" ConversaSolicitacao : negocia
+Company "1" --> "0..*" ConversaSolicitacao : participa
+ConversaSolicitacao "1" *--> "0..*" MensagemPreAceite : agrupa
+User "1" --> "0..*" MensagemPreAceite : remetente
+User "1" --> "0..*" Notificacao : recebe
+@enduml

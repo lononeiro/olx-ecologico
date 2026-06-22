@@ -1,0 +1,32 @@
+@startuml SEQ-03-cadastro
+title SEQ-03 - Cadastro de Usuario / Empresa
+actor Visitante
+participant "Tela /register" as UI
+participant "POST /api/auth/register" as EP
+participant "registerSchema (Zod)" as Z
+database PostgreSQL as DB
+
+Visitante -> UI : preenche dados (tipo usuario|empresa)
+UI -> EP : POST {nome, email, senha, tipo, cnpj?, ...}
+EP -> Z : safeParse(body)
+alt invalido
+  Z --> EP : fieldErrors
+  EP --> UI : 400
+else valido
+  EP -> DB : findUnique(email)
+  alt email ja existe
+    EP --> UI : 409 "Email ja cadastrado"
+  else
+    EP -> DB : role.findFirst(nome = tipo)
+    EP -> EP : bcrypt.hash(senha, 12)
+    group Transacao
+      EP -> DB : create User
+      alt tipo == empresa
+        EP -> DB : valida CNPJ (obrigatorio/unico)
+        EP -> DB : create Company
+      end
+    end
+    EP --> UI : 201 {message, id}
+  end
+end
+@enduml

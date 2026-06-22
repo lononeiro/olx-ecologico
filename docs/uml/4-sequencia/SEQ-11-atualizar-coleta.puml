@@ -1,0 +1,24 @@
+@startuml SEQ-11-atualizar-coleta
+title SEQ-11 - Atualizar / Concluir Coleta
+actor Empresa
+participant "PATCH /api/empresa/coletas/[id]" as EP
+participant "coletaStatusSchema (Zod)" as Z
+participant "coleta.service\natualizarStatusColeta" as SVC
+participant "notificacao.service" as N
+database PostgreSQL as DB
+
+Empresa -> EP : PATCH {status, codigoConfirmacao?}
+EP -> Z : valida status (aceita|a_caminho|em_coleta|concluida|cancelada)
+EP -> SVC : atualizarStatusColeta(coletaId, companyId, status)
+SVC -> DB : findFirst coleta (id, companyId)
+alt nao encontrada / sem permissao
+  SVC --> EP : throw
+  EP --> Empresa : 400
+else
+  SVC -> DB : update status\n(+ dataConclusao = now se "concluida")
+  SVC -> N : notificarColetaStatus(dono)
+  N -> DB : create Notificacao
+  SVC --> EP : coleta
+  EP --> Empresa : 200
+end
+@enduml

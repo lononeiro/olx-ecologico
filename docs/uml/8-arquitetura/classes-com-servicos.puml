@@ -1,0 +1,128 @@
+@startuml classes-econecta
+' Diagrama de Classes - ECOnecta (modelos Prisma + servicos)
+skinparam classAttributeIconSize 0
+hide circle
+
+class Role {
+  +id: Int
+  +nome: String
+}
+class User {
+  +id: Int
+  +nome: String
+  +email: String <<unique>>
+  +senhaHash: String
+  +status: String = "ativo"
+  +roleId: Int
+  +resetToken: String?
+  +createdAt: DateTime
+}
+class Company {
+  +id: Int
+  +userId: Int <<unique>>
+  +cnpj: String <<unique>>
+  +descricao: String?
+}
+class MaterialTipo {
+  +id: Int
+  +nome: String
+}
+class SolicitacaoColeta {
+  +id: Int
+  +titulo: String
+  +descricao: String
+  +quantidade: String
+  +endereco: String
+  +status: String = "pendente"
+  +aprovado: Boolean = false
+  +userId: Int
+  +materialId: Int
+  +createdAt: DateTime
+}
+class SolicitacaoImagem {
+  +id: Int
+  +url: String
+}
+class Coleta {
+  +id: Int
+  +solicitacaoId: Int <<unique>>
+  +companyId: Int
+  +status: String = "aceita"
+  +codigoConfirmacao: String?
+  +dataAceite: DateTime
+  +dataPrevisaoColeta: DateTime?
+  +dataConclusao: DateTime?
+}
+class Avaliacao {
+  +id: Int
+  +coletaId: Int <<unique>>
+  +autorId: Int
+  +nota: Int
+  +comentario: String?
+}
+class Mensagem {
+  +id: Int
+  +coletaId: Int
+  +remetenteId: Int
+  +mensagem: String
+}
+class ConversaSolicitacao {
+  +id: Int
+  +solicitacaoId: Int
+  +companyId: Int
+  +status: String = "aberta"
+}
+class MensagemPreAceite {
+  +id: Int
+  +conversaId: Int
+  +remetenteId: Int
+  +mensagem: String
+}
+class Notificacao {
+  +id: Int
+  +userId: Int
+  +tipo: String
+  +titulo: String
+  +lida: Boolean = false
+}
+
+Role "1" -- "0..*" User
+User "1" -- "0..1" Company
+User "1" -- "0..*" SolicitacaoColeta
+MaterialTipo "1" -- "0..*" SolicitacaoColeta
+SolicitacaoColeta "1" *-- "0..*" SolicitacaoImagem
+SolicitacaoColeta "1" -- "0..1" Coleta
+Company "1" -- "0..*" Coleta
+Coleta "1" -- "0..1" Avaliacao
+User "1" -- "0..*" Avaliacao : autor
+Coleta "1" *-- "0..*" Mensagem
+User "1" -- "0..*" Mensagem : remetente
+SolicitacaoColeta "1" -- "0..*" ConversaSolicitacao
+Company "1" -- "0..*" ConversaSolicitacao
+ConversaSolicitacao "1" *-- "0..*" MensagemPreAceite
+User "1" -- "0..*" MensagemPreAceite : remetente
+User "1" -- "0..*" Notificacao
+
+package "Camada de Servico <<service>>" {
+  class SolicitacaoService
+  class ColetaService
+  class AvaliacaoService
+  class ConversaSolicitacaoService
+  class MensagemService
+  class NotificacaoService
+}
+package "Seguranca" {
+  class RouteGuard
+  class MobileAuth
+  class PrivacyMapper
+}
+
+SolicitacaoService ..> SolicitacaoColeta
+ColetaService ..> Coleta
+ColetaService ..> NotificacaoService
+AvaliacaoService ..> Avaliacao
+ConversaSolicitacaoService ..> ConversaSolicitacao
+MensagemService ..> Mensagem
+RouteGuard ..> MobileAuth
+SolicitacaoService ..> PrivacyMapper
+@enduml

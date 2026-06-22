@@ -1,0 +1,22 @@
+@startuml CP-07-atualizar-coleta
+title CP-07 - Atualizar / Concluir Coleta (robustez)
+left to right direction
+actor "Empresa" as ator
+boundary "Tela Detalhe da Coleta" as b1
+boundary "PATCH /api/empresa/coletas/[id]" as b2
+control "route-guard (empresa)" as c0
+control "coletaStatusSchema" as c1
+control "atualizarStatusColeta()" as c2
+control "notificarColetaStatus()" as c3
+entity "Coleta" as e1
+entity "Notificacao" as e2
+
+ator -- b1
+b1 -- b2
+b2 -- c0
+c0 -- c1
+c1 -- c2
+c2 -- e1
+c2 -- c3
+c3 -- e2
+@enduml

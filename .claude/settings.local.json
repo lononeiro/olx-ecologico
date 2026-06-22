@@ -62,7 +62,23 @@
       "PowerShell(npx vitest run src/services/mensagem.service.test.ts src/services/coleta.service.test.ts src/services/solicitacao.service.test.ts 2>&1 | Select-Object -Last 40)",
       "Bash(npm view *)",
       "Bash(npm install *)",
-      "Bash(npx next *)"
+      "Bash(npx next *)",
+      "Bash(java -version)",
+      "Bash(where plantuml *)",
+      "Bash(npx --version)",
+      "Bash(docker --version)",
+      "Bash(curl -L -sS -o docs/uml/plantuml.jar \"https://github.com/plantuml/plantuml/releases/download/v1.2023.13/plantuml-1.2023.13.jar\")",
+      "Bash(curl -L -sS --ssl-no-revoke -o docs/uml/plantuml.jar \"https://github.com/plantuml/plantuml/releases/download/v1.2023.13/plantuml-1.2023.13.jar\")",
+      "Bash(java -jar plantuml.jar -tpng -o render *.puml)",
+      "Bash(java -jar plantuml.jar -tsvg -o render *.puml)",
+      "Bash(echo \"=== EXIT $? ===\")",
+      "Bash(explorer .)",
+      "Bash(curl -L -sS --ssl-no-revoke -o plantuml.jar \"https://github.com/plantuml/plantuml/releases/download/v1.2023.13/plantuml-1.2023.13.jar\")",
+      "Bash(explorer \"docs\\\\uml\")",
+      "Bash(explorer \"docs\\\\uml\\\\imagens-png\")",
+      "Bash(pip install *)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(explorer \"docs\\\\uml\\\\word\")"
     ]
   }
 }

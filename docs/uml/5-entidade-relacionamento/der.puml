@@ -1,0 +1,121 @@
+@startuml er-econecta
+' Modelo de Entidades - ECOnecta (tabelas fisicas via @@map)
+hide circle
+skinparam linetype ortho
+
+entity "roles" as roles {
+  *id : serial <<PK>>
+  --
+  nome : text
+}
+entity "users" as users {
+  *id : serial <<PK>>
+  --
+  nome : text
+  email : text <<unique>>
+  senhaHash : text
+  endereco : text?
+  telefone : text?
+  status : text = 'ativo'
+  resetToken : text? <<unique>>
+  resetTokenExpiry : timestamp?
+  createdAt : timestamp
+  roleId : int <<FK>>
+}
+entity "companies" as companies {
+  *id : serial <<PK>>
+  --
+  userId : int <<FK, unique>>
+  cnpj : text <<unique>>
+  descricao : text?
+}
+entity "material_tipos" as mat {
+  *id : serial <<PK>>
+  --
+  nome : text
+}
+entity "solicitacao_coleta" as sol {
+  *id : serial <<PK>>
+  --
+  titulo : text
+  descricao : text
+  quantidade : text
+  endereco : text
+  status : text = 'pendente'
+  aprovado : bool = false
+  createdAt : timestamp
+  userId : int <<FK>>
+  materialId : int <<FK>>
+}
+entity "solicitacao_imagens" as img {
+  *id : serial <<PK>>
+  --
+  url : text
+  solicitacaoId : int <<FK>>
+}
+entity "coletas" as col {
+  *id : serial <<PK>>
+  --
+  solicitacaoId : int <<FK, unique>>
+  companyId : int <<FK>>
+  status : text = 'aceita'
+  codigoConfirmacao : text?
+  dataAceite : timestamp
+  dataPrevisaoColeta : timestamp?
+  dataConclusao : timestamp?
+}
+entity "avaliacoes" as av {
+  *id : serial <<PK>>
+  --
+  coletaId : int <<FK, unique>>
+  autorId : int <<FK>>
+  nota : int
+  comentario : text?
+}
+entity "mensagens" as msg {
+  *id : serial <<PK>>
+  --
+  coletaId : int <<FK>>
+  remetenteId : int <<FK>>
+  mensagem : text
+}
+entity "conversas_solicitacao" as conv {
+  *id : serial <<PK>>
+  --
+  solicitacaoId : int <<FK>>
+  companyId : int <<FK>>
+  status : text = 'aberta'
+}
+entity "mensagens_pre_aceite" as pre {
+  *id : serial <<PK>>
+  --
+  conversaId : int <<FK>>
+  remetenteId : int <<FK>>
+  mensagem : text
+}
+entity "notificacoes" as notif {
+  *id : serial <<PK>>
+  --
+  userId : int <<FK>>
+  tipo : text
+  titulo : text
+  lida : bool = false
+}
+
+roles ||--o{ users
+users ||--o| companies
+users ||--o{ sol
+mat ||--o{ sol
+sol ||--o{ img
+sol ||--o| col
+companies ||--o{ col
+col ||--o| av
+users ||--o{ av
+col ||--o{ msg
+users ||--o{ msg
+sol ||--o{ conv
+companies ||--o{ conv
+conv ||--o{ pre
+users ||--o{ pre
+users ||--o{ notif
+@enduml

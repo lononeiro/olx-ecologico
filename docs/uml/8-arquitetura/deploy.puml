@@ -1,0 +1,24 @@
+@startuml deploy-econecta
+' Diagrama de Deploy - ECOnecta  [DEPLOY INFERIDO]
+' Sem Dockerfile/vercel.* no repo; inferido pela stack (Next.js + Prisma + Postgres Neon + Cloudinary)
+node "Dispositivo do usuario" {
+  artifact "Navegador" as B
+  artifact "App Expo (iOS/Android)" as A
+}
+node "Vercel [inferido]" {
+  artifact "Next.js (SSR + Route Handlers + SSE)" as NX
+  artifact "Variaveis de ambiente\n(NEXTAUTH_SECRET, DATABASE_URL, ...)" as ENV
+}
+node "Postgres gerenciado\n(Neon) [inferido]" {
+  database "PostgreSQL" as DB
+}
+cloud "Cloudinary" as CL
+cloud "ViaCEP" as CEP
+
+B --> NX : HTTPS / SSE
+A --> NX : HTTPS (Bearer JWT)
+B --> CL : upload de imagens (HTTPS)
+NX --> DB : Prisma (TLS, sslmode=require)
+NX --> CEP : HTTPS
+NX ..> ENV
+@enduml

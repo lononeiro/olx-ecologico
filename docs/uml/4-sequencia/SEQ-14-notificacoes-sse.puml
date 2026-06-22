@@ -1,0 +1,22 @@
+@startuml SEQ-14-notificacoes-sse
+title SEQ-14 - Notificacoes em Tempo Real (Server-Sent Events)
+actor Cliente
+participant "NotificationBell\n(EventSource)" as UI
+participant "GET /api/notificacoes/stream" as EP
+participant "notificacao.service" as SVC
+database PostgreSQL as DB
+
+UI -> EP : EventSource (cookie de sessao)
+EP -> SVC : ultimaNotificacaoId(userId)
+EP --> UI : event: init {naoLidas, lastId}
+loop a cada 4s (ate maxDuration 60s)
+  EP -> SVC : buscarNotificacoesDesde(userId, lastId)
+  SVC -> DB : SELECT id > lastId
+  alt ha novas
+    SVC --> EP : novas
+    EP --> UI : event: notificacoes {novas, naoLidas}
+    UI -> UI : atualiza badge / lista
+  end
+end
+note over UI,EP : heartbeat a cada 25s; ao expirar (60s), o\nEventSource reconecta com Last-Event-ID
+@enduml

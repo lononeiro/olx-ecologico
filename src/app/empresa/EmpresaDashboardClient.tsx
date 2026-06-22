@@ -123,10 +123,6 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
           <p>Aqui esta o resumo de hoje - {today.toLocaleDateString("pt-BR")}</p>
         </div>
         <div className="empresa-page-actions">
-          <button type="button" className="empresa-bell" aria-label="notificações da empresa">
-            <IconBell />
-            {data.metrics.novasSolicitacoes > 0 ? <span>{data.metrics.novasSolicitacoes}</span> : null}
-          </button>
           <div className="empresa-avatar" aria-label={`Empresa ${data.empresaNome}`}>{initials}</div>
         </div>
       </section>
@@ -551,7 +547,6 @@ function EmptyRequests() {
   );
 }
 
-function IconBell() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>; }
 function IconInbox() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.5 5.5 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.5A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.5Z" /></svg>; }
 function IconTruck() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11v14" /><path d="M14 8h4l4 4v5h-8Z" /><circle cx="7" cy="17" r="2" /><circle cx="18" cy="17" r="2" /></svg>; }
 function IconCheckCircle() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-5" /></svg>; }

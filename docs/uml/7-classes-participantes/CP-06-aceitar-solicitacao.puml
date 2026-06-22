@@ -1,0 +1,26 @@
+@startuml CP-06-aceitar-solicitacao
+title CP-06 - Aceitar Solicitacao (robustez)
+left to right direction
+actor "Empresa" as ator
+boundary "Tela Solicitacoes Disponiveis" as b1
+boundary "POST /api/empresa/coletas" as b2
+control "route-guard (empresa)" as c0
+control "aceitarSolicitacao() [transacao]" as c1
+control "gerarCodigoConfirmacao()" as c2
+control "notificarColetaAceita()" as c3
+entity "SolicitacaoColeta" as e1
+entity "Coleta" as e2
+entity "ConversaSolicitacao" as e3
+entity "Notificacao" as e4
+
+ator -- b1
+b1 -- b2
+b2 -- c0
+c0 -- c1
+c1 -- c2
+c1 -- e1
+c1 -- e2
+c1 -- e3
+c1 -- c3
+c3 -- e4
+@enduml

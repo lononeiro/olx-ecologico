@@ -1,0 +1,20 @@
+@startuml SEQ-07-moderar-solicitacao
+title SEQ-07 - Moderar Solicitacao (aprovar / rejeitar)
+actor Administrador
+participant "PATCH /api/admin/solicitacoes/[id]" as EP
+participant "route-guard" as RG
+participant "solicitacao.service\natualizarStatusSolicitacao" as SVC
+participant "notificacao.service" as N
+database PostgreSQL as DB
+
+Administrador -> EP : PATCH {aprovado: true|false}
+EP -> RG : autorizarRota(["admin"])
+RG --> EP : session OK
+EP -> SVC : atualizarStatusSolicitacao(id, aprovado)
+SVC -> DB : update status = aprovada | rejeitada
+SVC -> N : notificarSolicitacaoAvaliada()
+N -> DB : create Notificacao (best-effort)
+SVC --> EP : solicitacao
+EP --> Administrador : 200
+note over N,DB : falha ao notificar e logada e\nengolida (nao quebra o fluxo)
+@enduml

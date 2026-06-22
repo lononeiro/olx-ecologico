@@ -1,0 +1,29 @@
+@startuml SEQ-10-aceitar-solicitacao
+title SEQ-10 - Aceitar Solicitacao (cria Coleta, transacao atomica)
+actor Empresa
+participant "POST /api/empresa/coletas" as EP
+participant "coleta.service\naceitarSolicitacao" as SVC
+participant "notificacao.service" as N
+database PostgreSQL as DB
+
+Empresa -> EP : POST {solicitacaoId, dataPrevisaoColeta?}
+EP -> EP : resolve company por userId
+EP -> SVC : aceitarSolicitacao(solId, companyId, previsao)
+group Transacao
+  SVC -> DB : findFirst solicitacao\n(aprovada, sem coleta)
+  alt indisponivel
+    DB --> SVC : null
+    SVC --> EP : throw "indisponivel"
+    EP --> Empresa : 400
+  else disponivel
+    SVC -> SVC : gera codigoConfirmacao (8 hex)
+    SVC -> DB : create Coleta (status aceita)
+    SVC -> DB : conversa da empresa -> convertida
+    SVC -> DB : conversas das outras -> encerrada
+  end
+end
+SVC -> N : notificarColetaAceita(dono da solicitacao)
+N -> DB : create Notificacao
+SVC --> EP : coleta
+EP --> Empresa : 201
+@enduml

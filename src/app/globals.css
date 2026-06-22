@@ -1918,37 +1918,6 @@ body {
   gap: 10px;
 }
 
-.empresa-bell {
-  position: relative;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-surface);
-  color: var(--color-gray-700);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.empresa-bell span {
-  position: absolute;
-  right: -3px;
-  top: -3px;
-  min-width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  background: #EF4444;
-  color: #fff;
-  font-size: 8px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
-}
-
 .empresa-avatar {
   width: 36px;
   height: 36px;

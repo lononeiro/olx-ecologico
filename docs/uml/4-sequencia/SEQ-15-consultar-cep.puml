@@ -1,0 +1,24 @@
+@startuml SEQ-15-consultar-cep
+title SEQ-15 - Consultar CEP (integracao externa ViaCEP)
+actor Cidadao
+participant "Form de endereco" as UI
+participant "GET /api/cep/[cep]" as EP
+participant "ViaCEP" as CEP
+
+Cidadao -> UI : digita CEP
+UI -> EP : GET /api/cep/01310100
+EP -> EP : normalizeCep (8 digitos?)
+alt CEP invalido
+  EP --> UI : 400 "CEP invalido"
+else
+  EP -> CEP : GET viacep.com.br/ws/{cep}/json
+  alt encontrado
+    CEP --> EP : {logradouro, bairro, localidade, uf}
+    EP --> UI : {rua, bairro, cidade, uf}
+    UI -> UI : preenche endereco automaticamente
+  else nao encontrado / indisponivel
+    CEP --> EP : erro / data.erro
+    EP --> UI : 404 / 502 / 500
+  end
+end
+@enduml

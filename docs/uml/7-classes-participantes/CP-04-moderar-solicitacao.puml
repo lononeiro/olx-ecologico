@@ -1,0 +1,20 @@
+@startuml CP-04-moderar-solicitacao
+title CP-04 - Moderar Solicitacao (robustez)
+left to right direction
+actor "Administrador" as ator
+boundary "Tela Admin Solicitacoes" as b1
+boundary "PATCH /api/admin/solicitacoes/[id]" as b2
+control "route-guard (admin)" as c0
+control "atualizarStatusSolicitacao()" as c1
+control "notificarSolicitacaoAvaliada()" as c2
+entity "SolicitacaoColeta" as e1
+entity "Notificacao" as e2
+
+ator -- b1
+b1 -- b2
+b2 -- c0
+c0 -- c1
+c1 -- e1
+c1 -- c2
+c2 -- e2
+@enduml

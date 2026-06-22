@@ -1,0 +1,24 @@
+@startuml SEQ-01-login-web
+title SEQ-01 - Autenticacao Web (NextAuth Credentials + JWT)
+actor Cidadao
+participant "Tela /login" as UI
+participant "NextAuth\n[...nextauth]" as NA
+participant "authenticateUserByCredentials\n(mobile-auth)" as AU
+database PostgreSQL as DB
+
+Cidadao -> UI : informa email/senha
+UI -> NA : signIn("credentials")
+NA -> AU : authorize(email, senha)
+AU -> DB : findUnique(email) include role
+DB --> AU : user
+AU -> AU : status == "ativo"?\nbcrypt.compare(senha, hash)
+alt credenciais validas
+  AU --> NA : {id, name, email, role}
+  NA -> DB : refresh do user (jwt callback)
+  NA --> UI : cookie de sessao JWT (role no token)
+  UI --> Cidadao : redireciona por role\n(/dashboard | /empresa | /admin)
+else invalidas
+  AU --> NA : null
+  NA --> UI : 401 erro de credenciais
+end
+@enduml

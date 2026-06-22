@@ -1,0 +1,31 @@
+@startuml SEQ-04-recuperar-senha
+title SEQ-04 - Recuperacao de Senha (forgot + reset)
+actor Visitante
+participant "/forgot-password" as FP
+participant "/reset-password" as RP
+database PostgreSQL as DB
+
+== Solicitar link ==
+Visitante -> FP : POST {email}
+FP -> DB : findUnique(email)
+alt usuario existe
+  FP -> FP : token = randomBytes(32)\nhash = sha256(token)\nexpiry = agora + 1h
+  FP -> DB : update {resetToken: hash, resetTokenExpiry}
+  FP --> Visitante : 200 {mensagem generica, resetLink}
+else nao existe
+  FP --> Visitante : 200 mensagem generica\n(anti-enumeracao)
+end
+
+== Redefinir senha ==
+Visitante -> RP : POST {token, email, novaSenha}
+RP -> RP : valida forca da senha
+RP -> DB : findUnique(email)
+RP -> RP : sha256(token) == resetToken ?\nexpiry valido ?
+alt token valido e nao expirado
+  RP -> RP : bcrypt.hash(novaSenha, 12)
+  RP -> DB : update senha + limpa token/expiry
+  RP --> Visitante : 200 "Senha atualizada"
+else invalido/expirado
+  RP --> Visitante : 400 erro
+end
+@enduml
