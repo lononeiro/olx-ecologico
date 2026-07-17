@@ -102,7 +102,7 @@ export default function MeScreen() {
     onError: (error) => {
       setFeedbackTone("error");
       setFeedback(
-        getReadableErrorMessage(error, "Nao foi possivel salvar o perfil.")
+        getReadableErrorMessage(error, "Não foi possível salvar o perfil.")
       );
     },
   });
@@ -121,7 +121,7 @@ export default function MeScreen() {
     const endereco = form.endereco.trim();
     if (!endereco) {
       setFeedbackTone("error");
-      setFeedback("Adicione um endereco antes de abrir a localizacao.");
+      setFeedback("Adicione um endereço antes de abrir a localização.");
       return;
     }
 
@@ -132,7 +132,7 @@ export default function MeScreen() {
     const supported = await Linking.canOpenURL(url);
     if (!supported) {
       setFeedbackTone("error");
-      setFeedback("Nao foi possivel abrir o aplicativo de mapas.");
+      setFeedback("Não foi possível abrir o aplicativo de mapas.");
       return;
     }
 
@@ -162,7 +162,7 @@ export default function MeScreen() {
             <Text style={styles.heroEyebrow}>MINHA CONTA</Text>
             <Text style={styles.heroName}>{user.name}</Text>
             <Text style={styles.heroSubtitle}>
-              Seus dados pessoais e informacoes de contato em um resumo claro para uso no app.
+              Seus dados pessoais e informações de contato em um resumo claro para uso no app.
             </Text>
           </View>
         </View>
@@ -181,7 +181,7 @@ export default function MeScreen() {
         <MessageBanner
           message={getReadableErrorMessage(
             profileQuery.error,
-            "Nao foi possivel carregar o perfil."
+            "Não foi possível carregar o perfil."
           )}
           tone="error"
         />
@@ -193,27 +193,27 @@ export default function MeScreen() {
             <SectionHeader
               eyebrow="RESUMO"
               title="Dados da conta"
-              description="Informacoes principais da sua conta e do seu tipo de acesso."
+              description="Informações principais da sua conta e do seu tipo de acesso."
             />
             <InfoRow label="Nome" value={profileQuery.data.nome} />
             <InfoRow label="Email" value={profileQuery.data.email} />
             <InfoRow label="Perfil" value={profileQuery.data.role.nome} />
             <InfoRow
               label="Telefone"
-              value={profileQuery.data.telefone ?? "Nao informado"}
+              value={profileQuery.data.telefone ?? "Não informado"}
             />
             <InfoRow
-              label="Endereco"
-              value={profileQuery.data.endereco ?? "Nao informado"}
+              label="Endereço"
+              value={profileQuery.data.endereco ?? "Não informado"}
             />
             <InfoRow label="Criado em" value={createdAtLabel} />
           </AppCard>
 
           <AppCard>
             <SectionHeader
-              eyebrow="EDICAO"
+              eyebrow="EDIÇÃO"
               title="Atualizar dados"
-              description="Nome, telefone e endereco seguem o mesmo contrato validado pelo backend."
+              description="Nome, telefone e endereço seguem o mesmo contrato validado pelo backend."
             />
 
             <AppField
@@ -235,13 +235,13 @@ export default function MeScreen() {
               placeholder="Telefone para contato"
             />
             <AppField
-              label="Endereco"
+              label="Endereço"
               value={form.endereco}
               onChangeText={(value) => {
                 if (feedback) setFeedback("");
                 setForm((current) => ({ ...current, endereco: value }));
               }}
-              placeholder="Endereco para coletas"
+              placeholder="Endereço para coletas"
               multiline
             />
 
@@ -264,13 +264,13 @@ export default function MeScreen() {
             <AppCard>
               <SectionHeader
                 eyebrow="EMPRESA"
-                title="Vinculo empresarial"
+                title="Vínculo empresarial"
                 description="Dados exibidos quando a sua conta possui empresa associada."
               />
               <InfoRow label="CNPJ" value={profileQuery.data.company.cnpj} />
               <InfoRow
-                label="Descricao"
-                value={profileQuery.data.company.descricao ?? "Nao informada"}
+                label="Descrição"
+                value={profileQuery.data.company.descricao ?? "Não informada"}
               />
               <InfoRow label="Cadastro da empresa" value={companyCreatedAtLabel} />
             </AppCard>
@@ -280,9 +280,9 @@ export default function MeScreen() {
 
       <AppCard tone="subtle">
         <SectionHeader
-          eyebrow="ACOES"
-          title="Conta e sessao"
-          description="Atualize os dados, recarregue o perfil ou encerre sua sessao no dispositivo."
+          eyebrow="AÇÕES"
+          title="Conta e sessão"
+          description="Atualize os dados, recarregue o perfil ou encerre sua sessão no dispositivo."
         />
         <AppButton
           label="Atualizar perfil"

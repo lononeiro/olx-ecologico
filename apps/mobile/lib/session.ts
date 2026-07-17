@@ -14,7 +14,7 @@ export async function withAutoRefresh<T>(
 ) {
   const token = await resolveAccessToken(accessToken, refreshSession);
   if (!token) {
-    throw new Error("Sua sessao expirou. Entre novamente.");
+    throw new Error("Sua sessão expirou. Entre novamente.");
   }
 
   try {
@@ -26,7 +26,7 @@ export async function withAutoRefresh<T>(
 
     const refreshedToken = await refreshSession();
     if (!refreshedToken) {
-      throw new Error("Sua sessao expirou. Entre novamente.");
+      throw new Error("Sua sessão expirou. Entre novamente.");
     }
 
     return request(refreshedToken);

@@ -67,7 +67,7 @@ export default function NewSolicitacaoScreen() {
       if (modoEndereco === "novo") {
         const missing = getMissingAddressFields(endereco);
         if (missing.length > 0) {
-          throw new Error(`Complete o endereco: ${missing.join(", ")}.`);
+          throw new Error(`Complete o endereço: ${missing.join(", ")}.`);
         }
       }
 
@@ -82,7 +82,7 @@ export default function NewSolicitacaoScreen() {
 
       const parsed = solicitacaoCreateSchema.safeParse(payload);
       if (!parsed.success) {
-        throw new Error(parsed.error.issues[0]?.message ?? "Revise os dados da solicitacao.");
+        throw new Error(parsed.error.issues[0]?.message ?? "Revise os dados da solicitação.");
       }
 
       return withAutoRefresh(accessToken, refreshSession, (token) =>
@@ -91,13 +91,13 @@ export default function NewSolicitacaoScreen() {
     },
     onSuccess: (data) => {
       setMensagemTone("success");
-      setMensagem("Solicitacao criada com sucesso.");
+      setMensagem("Solicitação criada com sucesso.");
       setTimeout(() => router.replace(`/solicitacoes/${data.id}` as any), 900);
     },
     onError: (error) => {
       setMensagemTone("error");
       setMensagem(
-        getReadableErrorMessage(error, "Nao foi possivel criar a solicitacao.")
+        getReadableErrorMessage(error, "Não foi possível criar a solicitação.")
       );
     },
   });
@@ -106,7 +106,7 @@ export default function NewSolicitacaoScreen() {
     const cep = normalizeCep(endereco.cep);
     if (cep.length !== 8) {
       setMensagemTone("error");
-      setMensagem("Informe um CEP com 8 digitos.");
+      setMensagem("Informe um CEP com 8 dígitos.");
       return;
     }
 
@@ -122,10 +122,10 @@ export default function NewSolicitacaoScreen() {
         complemento: current.complemento || result.complemento || "",
       }));
       setMensagemTone("success");
-      setMensagem("CEP encontrado. Revise os dados e informe o numero.");
+      setMensagem("CEP encontrado. Revise os dados e informe o número.");
     } catch (error) {
       setMensagemTone("error");
-      setMensagem(getReadableErrorMessage(error, "Nao foi possivel consultar o CEP."));
+      setMensagem(getReadableErrorMessage(error, "Não foi possível consultar o CEP."));
     }
   };
 
@@ -135,43 +135,43 @@ export default function NewSolicitacaoScreen() {
 
     if (imagens.includes(value)) {
       setMensagemTone("error");
-      setMensagem("Essa imagem ja foi adicionada.");
+      setMensagem("Essa imagem já foi adicionada.");
       return;
     }
 
     if (imagens.length >= 5) {
       setMensagemTone("error");
-      setMensagem("Voce pode adicionar no maximo 5 imagens.");
+      setMensagem("Você pode adicionar no máximo 5 imagens.");
       return;
     }
 
     setImagens((current) => [...current, value]);
     setImagemAtual("");
     setMensagemTone("success");
-    setMensagem("Imagem adicionada a solicitacao.");
+    setMensagem("Imagem adicionada à solicitação.");
   };
 
   return (
     <AppScreen>
       <AppCard>
         <SectionHeader
-          eyebrow="NOVA SOLICITACAO"
+          eyebrow="NOVA SOLICITAÇÃO"
           title="Criar coleta"
-          description="Informe material, descricao, endereco e envie sua solicitacao. Ela ja fica disponivel para as empresas coletoras."
+          description="Informe material, descrição, endereço e envie sua solicitação. Ela já fica disponível para as empresas coletoras."
         />
       </AppCard>
 
       {(materialsQuery.isLoading || profileQuery.isLoading) && (
-        <LoadingCard text="Carregando materiais e endereco..." />
+        <LoadingCard text="Carregando materiais e endereço..." />
       )}
       {!!mensagem && <MessageBanner message={mensagem} tone={mensagemTone} />}
 
       <AppCard>
         <AppField
-          label="Titulo"
+          label="Título"
           value={form.titulo}
           onChangeText={(value) => setForm((current) => ({ ...current, titulo: value }))}
-          placeholder="Ex: Coleta de plastico do condominio"
+          placeholder="Ex: Coleta de plástico do condomínio"
         />
         <AppField
           label="Material"
@@ -190,34 +190,34 @@ export default function NewSolicitacaoScreen() {
           placeholder="Ex: 10 sacos ou 50 kg"
         />
         <AppField
-          label="Descricao"
+          label="Descrição"
           value={form.descricao}
           onChangeText={(value) => setForm((current) => ({ ...current, descricao: value }))}
-          placeholder="Explique o estado do material e observacoes relevantes."
+          placeholder="Explique o estado do material e observações relevantes."
           multiline
         />
       </AppCard>
 
       <AppCard>
         <SectionHeader
-          eyebrow="ENDERECO"
+          eyebrow="ENDEREÇO"
           title="Local da coleta"
-          description="Voce pode usar o endereco do perfil ou informar outro local."
+          description="Você pode usar o endereço do perfil ou informar outro local."
         />
         <AppButton
-          label="Usar endereco do perfil"
+          label="Usar endereço do perfil"
           tone={modoEndereco === "perfil" ? "primary" : "secondary"}
           onPress={() => setModoEndereco("perfil")}
         />
         <AppButton
-          label="Informar outro endereco"
+          label="Informar outro endereço"
           tone={modoEndereco === "novo" ? "primary" : "secondary"}
           onPress={() => setModoEndereco("novo")}
         />
 
         {modoEndereco === "perfil" ? (
           <MessageBanner
-            message={profileQuery.data?.endereco ?? "Nenhum endereco cadastrado no perfil."}
+            message={profileQuery.data?.endereco ?? "Nenhum endereço cadastrado no perfil."}
             tone="success"
           />
         ) : (
@@ -239,7 +239,7 @@ export default function NewSolicitacaoScreen() {
               placeholder="Rua das Flores"
             />
             <AppField
-              label="Numero"
+              label="Número"
               value={endereco.numero}
               onChangeText={(value) =>
                 setEndereco((current) => ({ ...current, numero: value }))
@@ -252,7 +252,7 @@ export default function NewSolicitacaoScreen() {
               onChangeText={(value) =>
                 setEndereco((current) => ({ ...current, complemento: value }))
               }
-              placeholder="Apto, bloco, referencia"
+              placeholder="Apto, bloco, referência"
             />
             <AppField
               label="Bairro"
@@ -268,7 +268,7 @@ export default function NewSolicitacaoScreen() {
               onChangeText={(value) =>
                 setEndereco((current) => ({ ...current, cidade: value }))
               }
-              placeholder="Sao Paulo"
+              placeholder="São Paulo"
             />
             <AppField
               label="UF"
@@ -287,7 +287,7 @@ export default function NewSolicitacaoScreen() {
         <SectionHeader
           eyebrow="IMAGENS"
           title="Anexos opcionais"
-          description="O backend aceita ate 5 URLs de imagem. No mobile, os anexos sao informados por URL nesta versao."
+          description="O backend aceita até 5 URLs de imagem. No mobile, os anexos são informados por URL nesta versão."
         />
         <AppField
           label="URL da imagem"

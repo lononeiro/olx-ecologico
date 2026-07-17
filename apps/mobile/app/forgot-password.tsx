@@ -27,7 +27,7 @@ export default function ForgotPasswordScreen() {
     onError: (error) => {
       setTone("error");
       setMessage(
-        getReadableErrorMessage(error, "Nao foi possivel solicitar a recuperacao.")
+        getReadableErrorMessage(error, "Não foi possível solicitar a recuperação.")
       );
       setResetLink("");
     },
@@ -38,8 +38,8 @@ export default function ForgotPasswordScreen() {
       <AppCard>
         <SectionHeader
           eyebrow="RECUPERAR SENHA"
-          title="Solicitar redefinicao"
-          description="O backend segue a mesma semantica do web: sempre responde com mensagem generica quando necessario."
+          title="Solicitar redefinição"
+          description="O backend segue a mesma semântica do web: sempre responde com mensagem genérica quando necessário."
         />
       </AppCard>
 
@@ -56,12 +56,12 @@ export default function ForgotPasswordScreen() {
           keyboardType="email-address"
         />
         <AppButton
-          label={mutation.isPending ? "Enviando..." : "Solicitar recuperacao"}
+          label={mutation.isPending ? "Enviando..." : "Solicitar recuperação"}
           onPress={() => mutation.mutate()}
           disabled={mutation.isPending}
         />
         <AppButton
-          label="Ja tenho token para reset"
+          label="Já tenho token para reset"
           tone="secondary"
           onPress={() => router.push("/reset-password")}
         />

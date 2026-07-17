@@ -56,7 +56,7 @@ export default function RegisterScreen() {
       if (incluirEndereco && hasAddressDetails(endereco)) {
         const missing = getMissingAddressFields(endereco);
         if (missing.length > 0) {
-          throw new Error(`Complete o endereco: ${missing.join(", ")}.`);
+          throw new Error(`Complete o endereço: ${missing.join(", ")}.`);
         }
       }
 
@@ -78,14 +78,14 @@ export default function RegisterScreen() {
     },
     onSuccess: () => {
       setMensagemTone("success");
-      setMensagem("Conta criada com sucesso. Agora faca login.");
+      setMensagem("Conta criada com sucesso. Agora faça login.");
       setTimeout(() => {
         router.replace("/login");
       }, 1200);
     },
     onError: (error: any) => {
       setMensagemTone("error");
-      setMensagem(getReadableErrorMessage(error, "Nao foi possivel criar a conta."));
+      setMensagem(getReadableErrorMessage(error, "Não foi possível criar a conta."));
 
       if (error?.fieldErrors && typeof error.fieldErrors === "object") {
         const nextErrors: Record<string, string | undefined> = {};
@@ -104,14 +104,14 @@ export default function RegisterScreen() {
       const result = await checkEmailAvailability(form.email.trim());
       setEmailStatus(result.mensagem);
     } catch (error) {
-      setEmailStatus(getReadableErrorMessage(error, "Nao foi possivel validar o email."));
+      setEmailStatus(getReadableErrorMessage(error, "Não foi possível validar o email."));
     }
   };
 
   const handleLookupCep = async () => {
     const cep = normalizeCep(endereco.cep);
     if (cep.length !== 8) {
-      setCepStatus("Informe um CEP com 8 digitos.");
+      setCepStatus("Informe um CEP com 8 dígitos.");
       return;
     }
 
@@ -126,9 +126,9 @@ export default function RegisterScreen() {
         uf: (result.uf || current.uf).toUpperCase(),
         complemento: current.complemento || result.complemento || "",
       }));
-      setCepStatus("CEP encontrado. Revise os dados e informe o numero.");
+      setCepStatus("CEP encontrado. Revise os dados e informe o número.");
     } catch (error) {
-      setCepStatus(getReadableErrorMessage(error, "Nao foi possivel consultar o CEP."));
+      setCepStatus(getReadableErrorMessage(error, "Não foi possível consultar o CEP."));
     }
   };
 
@@ -180,11 +180,11 @@ export default function RegisterScreen() {
       <AppCard>
         <SectionHeader
           eyebrow="TIPO DE CONTA"
-          title={tipo === "usuario" ? "Cidadao" : "Empresa"}
-          description="As permissoes e os fluxos seguintes dependem do perfil escolhido."
+          title={tipo === "usuario" ? "Cidadão" : "Empresa"}
+          description="As permissões e os fluxos seguintes dependem do perfil escolhido."
         />
         <AppButton
-          label="Conta de cidadao"
+          label="Conta de cidadão"
           tone={tipo === "usuario" ? "primary" : "secondary"}
           onPress={() => setTipo("usuario")}
         />
@@ -203,12 +203,12 @@ export default function RegisterScreen() {
               placeholder="00.000.000/0001-00"
             />
             <AppField
-              label="Descricao"
+              label="Descrição"
               value={form.descricao}
               onChangeText={(value) =>
                 setForm((current) => ({ ...current, descricao: value }))
               }
-              placeholder="Voce pode detalhar a empresa agora ou depois."
+              placeholder="Você pode detalhar a empresa agora ou depois."
               multiline
             />
           </>
@@ -217,12 +217,12 @@ export default function RegisterScreen() {
 
       <AppCard>
         <SectionHeader
-          eyebrow="ENDERECO"
-          title="Adicionar agora e opcional"
-          description="Se preferir, o endereco pode ser completado depois no perfil."
+          eyebrow="ENDEREÇO"
+          title="Adicionar agora é opcional"
+          description="Se preferir, o endereço pode ser completado depois no perfil."
         />
         <AppButton
-          label={incluirEndereco ? "Remover endereco do cadastro" : "Adicionar endereco agora"}
+          label={incluirEndereco ? "Remover endereço do cadastro" : "Adicionar endereço agora"}
           tone="secondary"
           onPress={() => setIncluirEndereco((current) => !current)}
         />
@@ -250,7 +250,7 @@ export default function RegisterScreen() {
               placeholder="Ex: Rua das Flores"
             />
             <AppField
-              label="Numero"
+              label="Número"
               value={endereco.numero}
               onChangeText={(value) =>
                 setEndereco((current) => ({ ...current, numero: value }))
@@ -263,7 +263,7 @@ export default function RegisterScreen() {
               onChangeText={(value) =>
                 setEndereco((current) => ({ ...current, complemento: value }))
               }
-              placeholder="Apto, bloco, referencia"
+              placeholder="Apto, bloco, referência"
             />
             <AppField
               label="Bairro"
@@ -279,7 +279,7 @@ export default function RegisterScreen() {
               onChangeText={(value) =>
                 setEndereco((current) => ({ ...current, cidade: value }))
               }
-              placeholder="Ex: Sao Paulo"
+              placeholder="Ex: São Paulo"
             />
             <AppField
               label="UF"
@@ -299,7 +299,7 @@ export default function RegisterScreen() {
         onPress={() => registerMutation.mutate()}
         disabled={registerMutation.isPending}
       />
-      <AppButton label="Ja tenho conta" tone="secondary" onPress={() => router.push("/login")} />
+      <AppButton label="Já tenho conta" tone="secondary" onPress={() => router.push("/login")} />
     </AppScreen>
   );
 }

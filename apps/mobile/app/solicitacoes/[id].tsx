@@ -26,7 +26,7 @@ import { withAutoRefresh } from "@/lib/session";
 
 const STATUS_COPY: Record<string, string> = {
   aprovada: "Sua solicitacao esta disponivel e aguarda uma empresa aceitar a coleta.",
-  cancelada: "Voce cancelou esta solicitacao.",
+  cancelada: "Você cancelou esta solicitação.",
   removida: "Sua solicitacao foi removida pela administracao.",
 };
 
@@ -56,7 +56,7 @@ export default function SolicitacaoDetailScreen() {
   if (isLoading || !hasAccess || !user) {
     return (
       <AppScreen>
-        <LoadingCard text="Carregando solicitacao..." />
+        <LoadingCard text="Carregando solicitação..." />
       </AppScreen>
     );
   }
@@ -64,7 +64,7 @@ export default function SolicitacaoDetailScreen() {
   if (query.isLoading) {
     return (
       <AppScreen>
-        <LoadingCard text="Carregando solicitacao..." />
+        <LoadingCard text="Carregando solicitação..." />
       </AppScreen>
     );
   }

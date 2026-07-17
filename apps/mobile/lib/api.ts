@@ -251,7 +251,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}) {
     });
   } catch {
     throw new ApiError(
-      "Nao foi possivel conectar ao servidor. Verifique a URL da API e sua rede.",
+      "Não foi possível conectar ao servidor. Verifique a URL da API e sua rede.",
       0
     );
   }

@@ -33,14 +33,14 @@ export default function EmpresaHomeScreen() {
     enabled: hasAccess && !isLoading,
     queryFn: async () => {
       const token = await resolveAccessToken(accessToken, refreshSession);
-      if (!token) throw new Error("Sua sessao expirou. Entre novamente.");
+      if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
 
       try {
         return await getEmpresaSolicitacoesDisponiveis(token);
       } catch (error) {
         if (!(error instanceof ApiError) || error.status !== 401) throw error;
         const refreshed = await refreshSession();
-        if (!refreshed) throw new Error("Sua sessao expirou. Entre novamente.");
+        if (!refreshed) throw new Error("Sua sessão expirou. Entre novamente.");
         return getEmpresaSolicitacoesDisponiveis(refreshed);
       }
     },
@@ -51,14 +51,14 @@ export default function EmpresaHomeScreen() {
     enabled: hasAccess && !isLoading,
     queryFn: async () => {
       const token = await resolveAccessToken(accessToken, refreshSession);
-      if (!token) throw new Error("Sua sessao expirou. Entre novamente.");
+      if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
 
       try {
         return await getEmpresaColetas(token);
       } catch (error) {
         if (!(error instanceof ApiError) || error.status !== 401) throw error;
         const refreshed = await refreshSession();
-        if (!refreshed) throw new Error("Sua sessao expirou. Entre novamente.");
+        if (!refreshed) throw new Error("Sua sessão expirou. Entre novamente.");
         return getEmpresaColetas(refreshed);
       }
     },

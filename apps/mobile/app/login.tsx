@@ -41,7 +41,7 @@ export default function LoginScreen() {
     } catch (error) {
       setMessageTone("error");
       setMensagem(
-        getReadableErrorMessage(error, "Nao foi possivel entrar agora.")
+        getReadableErrorMessage(error, "Não foi possível entrar agora.")
       );
     } finally {
       setLoading(false);
@@ -56,12 +56,12 @@ export default function LoginScreen() {
           <SectionHeader
             eyebrow="ECONECTA MOBILE"
             title="Entre e acompanhe tudo no app"
-            description="Autenticacao mobile com sessao persistida, refresh automatico e acesso imediato ao fluxo do seu perfil."
+            description="Autenticação mobile com sessão persistida, refresh automático e acesso imediato ao fluxo do seu perfil."
           />
           <View style={styles.heroMetrics}>
             <View style={styles.metric}>
               <Text style={styles.metricValue}>Token</Text>
-              <Text style={styles.metricLabel}>sessao segura</Text>
+              <Text style={styles.metricLabel}>sessão segura</Text>
             </View>
             <View style={styles.metricDivider} />
             <View style={styles.metric}>
@@ -75,7 +75,7 @@ export default function LoginScreen() {
           <SectionHeader
             eyebrow="ACESSO"
             title="Entrar"
-            description="Use o mesmo email e a mesma senha ja cadastrados no sistema."
+            description="Use o mesmo email e a mesma senha já cadastrados no sistema."
           />
 
           {!!mensagem && <MessageBanner message={mensagem} tone={messageTone} />}
@@ -106,7 +106,7 @@ export default function LoginScreen() {
             secureToggle
             autoComplete="password"
             textContentType="password"
-            helper="Se voce ja tinha conta no web, a senha continua a mesma."
+            helper="Se você já tinha conta no web, a senha continua a mesma."
           />
 
           <View style={styles.ctaGroup}>

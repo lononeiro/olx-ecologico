@@ -34,7 +34,7 @@ export default function ResetPasswordScreen() {
     },
     onError: (error) => {
       setTone("error");
-      setMessage(getReadableErrorMessage(error, "Nao foi possivel resetar a senha."));
+      setMessage(getReadableErrorMessage(error, "Não foi possível resetar a senha."));
     },
   });
 
@@ -43,7 +43,7 @@ export default function ResetPasswordScreen() {
       <AppCard>
         <SectionHeader
           eyebrow="NOVA SENHA"
-          title="Finalizar redefinicao"
+          title="Finalizar redefinição"
           description="Use o token recebido e defina uma senha forte antes de voltar ao login."
         />
       </AppCard>

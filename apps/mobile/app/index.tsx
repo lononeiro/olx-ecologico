@@ -16,8 +16,8 @@ export default function IndexScreen() {
       <AppCard>
         <SectionHeader
           eyebrow="ECONECTA MOBILE"
-          title="Coletas e solicitacoes no celular"
-          description="O app concentra o dia a dia de cidadaos e empresas: solicitar, aceitar, acompanhar e conversar sobre coletas."
+          title="Coletas e solicitações no celular"
+          description="O app concentra o dia a dia de cidadãos e empresas: solicitar, aceitar, acompanhar e conversar sobre coletas."
         />
       </AppCard>
 
@@ -27,7 +27,7 @@ export default function IndexScreen() {
             Entrar ou criar conta
           </Text>
           <Text style={{ color: "#537156", lineHeight: 22 }}>
-            O app usa os mesmos endpoints e validacoes da plataforma web, mas com navegacao nativa.
+            O app usa os mesmos endpoints e validações da plataforma web, mas com navegação nativa.
           </Text>
         </View>
         <AppButton label="Entrar" onPress={() => router.push("/login")} />

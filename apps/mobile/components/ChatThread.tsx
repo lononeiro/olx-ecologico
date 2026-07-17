@@ -49,7 +49,7 @@ export function ChatThread({
       }
 
       if (onSend) return onSend(mensagem.trim());
-      if (!coletaId) throw new Error("Conversa nao configurada.");
+      if (!coletaId) throw new Error("Conversa não configurada.");
 
       return sendMensagem(accessToken, coletaId, mensagem.trim());
     },
@@ -59,7 +59,7 @@ export function ChatThread({
       void queryClient.invalidateQueries({ queryKey: queryKey ?? ["detail", resolvedThreadId] });
     },
     onError: (error) => {
-      setErro(getReadableErrorMessage(error, "Nao foi possivel enviar a mensagem."));
+      setErro(getReadableErrorMessage(error, "Não foi possível enviar a mensagem."));
     },
   });
 
