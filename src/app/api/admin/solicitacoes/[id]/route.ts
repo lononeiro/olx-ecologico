@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { autorizarRota } from "@/lib/route-guard";
-import { atualizarStatusSolicitacao } from "@/services/solicitacao.service";
-import { z } from "zod";
+import { removerSolicitacao } from "@/services/solicitacao.service";
 export const dynamic = 'force-dynamic';
 
-const schema = z.object({
-  aprovado: z.boolean(),
-});
-
-// PATCH /api/admin/solicitacoes/[id] — aprova ou rejeita solicitação
-export async function PATCH(
+// DELETE /api/admin/solicitacoes/[id] — remove uma solicitação publicada (moderação reativa)
+export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -22,17 +17,7 @@ export async function PATCH(
   }
 
   try {
-    const body = await req.json();
-    const parsed = schema.safeParse(body);
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.flatten().fieldErrors },
-        { status: 400 }
-      );
-    }
-
-    const solicitacao = await atualizarStatusSolicitacao(id, parsed.data.aprovado);
+    const solicitacao = await removerSolicitacao(id);
     return NextResponse.json(solicitacao);
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

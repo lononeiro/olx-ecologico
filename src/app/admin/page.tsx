@@ -1,4 +1,4 @@
-import { listarSolicitacoesPendentes } from "@/services/solicitacao.service";
+import { listarSolicitacoesRecentes } from "@/services/solicitacao.service";
 import { prisma } from "@/lib/prisma";
 import { SolicitacaoCardVisual } from "@/components/cards/SolicitacaoCardVisual";
 import Link from "next/link";
@@ -13,20 +13,18 @@ export default async function AdminDashboardPage() {
 
   const [
     totalUsuarios, totalEmpresas, totalSolicitacoes,
-    solicitacoesPendentes, solicitacoesAprovadas, solicitacoesRejeitadas,
+    solicitacoesRemovidas,
     coletasAceitas, coletasConcluidas, coletasCanceladas,
-    pendentes, materiaisAgg, empresasAgg, solicitacoesRecentes,
+    recentes, materiaisAgg, empresasAgg, solicitacoesRecentes,
   ] = await Promise.all([
     prisma.user.count({ where: { role: { nome: "usuario" } } }),
     prisma.company.count(),
     prisma.solicitacaoColeta.count(),
-    prisma.solicitacaoColeta.count({ where: { status: "pendente" } }),
-    prisma.solicitacaoColeta.count({ where: { status: "aprovada" } }),
-    prisma.solicitacaoColeta.count({ where: { status: "rejeitada" } }),
+    prisma.solicitacaoColeta.count({ where: { status: "removida" } }),
     prisma.coleta.count({ where: { status: "aceita" } }),
     prisma.coleta.count({ where: { status: "concluida" } }),
     prisma.coleta.count({ where: { status: "cancelada" } }),
-    listarSolicitacoesPendentes(),
+    listarSolicitacoesRecentes(),
     prisma.solicitacaoColeta.groupBy({
       by: ["materialId"],
       _count: { _all: true },
@@ -93,12 +91,11 @@ export default async function AdminDashboardPage() {
   const maxColeta = Math.max(...coletaStatusData.map(c => c.value), 1);
 
   const statCards = [
-    { value: totalUsuarios,         label: "Usuários cadastrados",  color: "var(--blue)",      icon: "👤" },
-    { value: totalEmpresas,         label: "Empresas parceiras",    color: "var(--purple)",    icon: "🏭" },
-    { value: totalSolicitacoes,     label: "Total de solicitações", color: "var(--text-muted)", icon: "📋" },
-    { value: solicitacoesPendentes, label: "Aguardando aprovação",  color: "var(--yellow)",    icon: "⏳" },
-    { value: coletasConcluidas,     label: "Coletas concluídas",    color: "var(--green)",     icon: "✅" },
-    { value: solicitacoesRejeitadas,label: "Solicitações rejeitadas",color: "var(--red)",      icon: "❌" },
+    { value: totalUsuarios,        label: "Usuários cadastrados",  color: "var(--blue)",      icon: "👤" },
+    { value: totalEmpresas,        label: "Empresas parceiras",    color: "var(--purple)",    icon: "🏭" },
+    { value: totalSolicitacoes,    label: "Total de solicitações", color: "var(--text-muted)", icon: "📋" },
+    { value: coletasConcluidas,    label: "Coletas concluídas",    color: "var(--green)",     icon: "✅" },
+    { value: solicitacoesRemovidas,label: "Removidas pela administração", color: "var(--red)", icon: "❌" },
   ];
 
   return (
@@ -268,28 +265,19 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* Pending list */}
+      {/* Recent list */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
         <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text)", display: "flex", alignItems: "center", gap: ".5rem" }}>
-          Pendentes de aprovação
-          {solicitacoesPendentes > 0 && (
-            <span style={{
-              background: "var(--yellow-light)", color: "var(--yellow)",
-              border: "1px solid rgba(196,122,6,.2)", borderRadius: 50,
-              fontSize: ".7rem", fontWeight: 700, padding: ".1rem .55rem",
-            }}>
-              {solicitacoesPendentes}
-            </span>
-          )}
+          Solicitações recentes
         </h2>
-        {pendentes.length > 0 && (
+        {recentes.length > 0 && (
           <Link href="/admin/solicitacoes" className="btn btn-ghost" style={{ fontSize: ".82rem" }}>
             Ver todas →
           </Link>
         )}
       </div>
 
-      {pendentes.length === 0 ? (
+      {recentes.length === 0 ? (
         <div className="card empty-state" style={{ background: "linear-gradient(135deg, var(--surface), var(--surface-3))" }}>
           <div className="empty-state-icon">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.5">
@@ -297,13 +285,13 @@ export default async function AdminDashboardPage() {
             </svg>
           </div>
           <div>
-            <p style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text)", marginBottom: ".3rem" }}>Nenhuma pendência</p>
-            <p style={{ fontSize: ".85rem", color: "var(--text-muted)" }}>Todas as solicitações foram processadas.</p>
+            <p style={{ fontWeight: 700, fontSize: "1rem", color: "var(--text)", marginBottom: ".3rem" }}>Nenhuma solicitação</p>
+            <p style={{ fontSize: ".85rem", color: "var(--text-muted)" }}>Ainda não há solicitações cadastradas.</p>
           </div>
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.1rem" }}>
-          {pendentes.slice(0, 6).map((s, i) => (
+          {recentes.slice(0, 6).map((s, i) => (
             <div key={s.id} className="anim-fade-up" style={{ animationDelay: `${i * 0.06}s` }}>
               <SolicitacaoCardVisual
                 id={s.id}

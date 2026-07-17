@@ -82,8 +82,8 @@ const styles = StyleSheet.create({
     color: colors.textSoft,
   },
   inputShell: {
-    minHeight: 58,
-    borderRadius: radius.md,
+    minHeight: 50,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.stroke,
     backgroundColor: colors.surface,

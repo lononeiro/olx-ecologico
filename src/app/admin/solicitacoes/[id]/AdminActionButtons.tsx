@@ -5,28 +5,22 @@ import { useRouter } from "next/navigation";
 
 export function AdminActionButtons({ solicitacaoId }: { solicitacaoId: number }) {
   const router = useRouter();
-  const [loading, setLoading] = useState<"aprovar" | "rejeitar" | null>(null);
+  const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState<{ ok: boolean; msg: string } | null>(null);
 
-  async function handleAction(aprovado: boolean) {
-    const acao = aprovado ? "aprovar" : "rejeitar";
-    if (!confirm(aprovado ? "Aprovar esta solicitação?" : "Rejeitar esta solicitação?")) return;
+  async function handleRemover() {
+    if (!confirm("Remover esta solicitação? Ela deixará de ficar visível para as empresas.")) return;
 
-    setLoading(acao);
+    setLoading(true);
 
     const res = await fetch(`/api/admin/solicitacoes/${solicitacaoId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ aprovado }),
+      method: "DELETE",
     });
 
-    setLoading(null);
+    setLoading(false);
 
     if (res.ok) {
-      setResultado({
-        ok: true,
-        msg: aprovado ? "Solicitação aprovada com sucesso." : "Solicitação rejeitada.",
-      });
+      setResultado({ ok: true, msg: "Solicitação removida com sucesso." });
       setTimeout(() => router.push("/admin/solicitacoes"), 1800);
     } else {
       const data = await res.json();
@@ -66,20 +60,12 @@ export function AdminActionButtons({ solicitacaoId }: { solicitacaoId: number })
   }
 
   return (
-    <div style={{ display: "flex", gap: ".75rem", flexWrap: "wrap" }}>
-      <button onClick={() => handleAction(true)} disabled={!!loading} className="btn btn-primary" style={{ flex: 1, justifyContent: "center" }}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M20 6 9 17l-5-5" />
-        </svg>
-        {loading === "aprovar" ? "Aprovando..." : "Aprovar solicitação"}
-      </button>
-      <button onClick={() => handleAction(false)} disabled={!!loading} className="btn btn-danger" style={{ flex: 1, justifyContent: "center" }}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="18" x2="6" y1="6" y2="18" />
-          <line x1="6" x2="18" y1="6" y2="18" />
-        </svg>
-        {loading === "rejeitar" ? "Rejeitando..." : "Rejeitar solicitação"}
-      </button>
-    </div>
+    <button onClick={handleRemover} disabled={loading} className="btn btn-danger" style={{ width: "100%", justifyContent: "center" }}>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <line x1="18" x2="6" y1="6" y2="18" />
+        <line x1="6" x2="18" y1="6" y2="18" />
+      </svg>
+      {loading ? "Removendo..." : "Remover solicitação"}
+    </button>
   );
 }

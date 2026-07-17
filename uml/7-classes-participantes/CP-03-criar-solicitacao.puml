@@ -1,0 +1,24 @@
+@startuml CP-03-criar-solicitacao
+title CP-03 - Criar Solicitacao (robustez)
+left to right direction
+actor "Cidadao" as ator
+boundary "Tela Nova Solicitacao" as b1
+boundary "Cloudinary (upload)" as b2
+boundary "POST /api/solicitacoes" as b3
+control "route-guard (usuario)" as c0
+control "solicitacaoCreateSchema" as c1
+control "criarSolicitacao()" as c2
+entity "SolicitacaoColeta" as e1
+entity "SolicitacaoImagem" as e2
+entity "MaterialTipo" as e3
+
+ator -- b1
+b1 -- b2
+b1 -- b3
+b3 -- c0
+c0 -- c1
+c1 -- c2
+c2 -- e1
+c2 -- e2
+e1 -- e3
+@enduml

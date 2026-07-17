@@ -45,9 +45,9 @@ function getCardVisualState(status: string, coletaStatus?: string | null): CardV
     };
   }
 
-  if (coletaStatus === "cancelada" || status === "rejeitada") {
+  if (coletaStatus === "cancelada" || status === "cancelada" || status === "rejeitada" || status === "removida") {
     return {
-      badgeLabel: coletaStatus === "cancelada" ? "Cancelada" : "Rejeitada",
+      badgeLabel: coletaStatus === "cancelada" || status === "cancelada" ? "Cancelada" : status === "removida" ? "Removida" : "Rejeitada",
       progressLabel: "Fluxo encerrado",
       progressValue: 100,
       badgeBackground: "rgba(184,50,40,.1)",

@@ -150,26 +150,26 @@ async function main() {
 
   // ── Solicitações e fluxos ──────────────────────────────────────────────────
 
-  // 1. Pendente (aguardando aprovação do admin)
+  // 1. Aprovada (nasce disponível para empresas)
   await upsertSolicitacao({
     titulo: "Caixas de papelão pós-mudança",
     descricao: "Tenho aproximadamente 30 caixas de papelão da minha mudança. Todas limpas e dobradas.",
     quantidade: "30 caixas",
     endereco: "Rua das Flores, 123 - São Paulo, SP",
-    status: "pendente",
-    aprovado: false,
+    status: "aprovada",
+    aprovado: true,
     userId: joao.id,
     materialId: mat("Papel").id,
   });
 
-  // 2. Pendente (segundo usuário)
+  // 2. Aprovada (segundo usuário)
   await upsertSolicitacao({
     titulo: "Garrafas PET e embalagens plásticas",
     descricao: "Acumulei várias garrafas PET e potes plásticos durante o mês. Estão ensacados.",
     quantidade: "2 sacos de 60L",
     endereco: "Av. Paulista, 900 - São Paulo, SP",
-    status: "pendente",
-    aprovado: false,
+    status: "aprovada",
+    aprovado: true,
     userId: maria.id,
     materialId: mat("Plástico").id,
   });
@@ -198,13 +198,13 @@ async function main() {
     materialId: mat("Vidro").id,
   });
 
-  // 5. Rejeitada
+  // 5. Removida pela administração (moderação reativa)
   await upsertSolicitacao({
     titulo: "Colchão velho",
     descricao: "Um colchão de casal usado que não quero mais.",
     quantidade: "1 unidade",
     endereco: "Rua das Flores, 123 - São Paulo, SP",
-    status: "rejeitada",
+    status: "removida",
     aprovado: false,
     userId: joao.id,
     materialId: mat("Madeira").id,
@@ -222,7 +222,7 @@ async function main() {
     materialId: mat("Têxtil").id,
   });
 
-  console.log("✅ Solicitações pendentes, aprovadas, rejeitada e cancelada criadas");
+  console.log("✅ Solicitações aprovadas, removida e cancelada criadas");
 
   // ── Coleta aceita (em andamento) ───────────────────────────────────────────
   const solAceita = await prisma.solicitacaoColeta.create({
@@ -455,7 +455,7 @@ async function main() {
   console.log("  Empresa:  ecoverde@empresa.com   / empresa123  (EcoVerde)");
   console.log("─────────────────────────────────────────────────────");
   console.log("Solicitações criadas por estado:");
-  console.log("  2x pendente | 2x aprovada (sem coleta) | 1x rejeitada | 1x cancelada");
+  console.log("  4x aprovada (2 sem coleta) | 1x removida pelo admin | 1x cancelada");
   console.log("Coletas:");
   console.log("  aceita | a_caminho | em_coleta | concluída+avaliada | concluída sem avaliação | cancelada");
   console.log("  + 4 coletas históricas com avaliações para ReciclaMax");

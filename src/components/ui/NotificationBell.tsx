@@ -280,6 +280,7 @@ function TipoIcon({ tipo }: { tipo: string }) {
         </svg>
       );
     case "solicitacao_rejeitada":
+    case "solicitacao_removida":
       return (
         <svg {...props}>
           <circle cx="12" cy="12" r="9" />

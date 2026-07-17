@@ -1,0 +1,27 @@
+@startuml SEQ-09-negociar-pre-aceite
+title SEQ-09 - Negociar (chat pre-aceite, por solicitacao)
+actor Empresa
+actor Cidadao
+participant "POST /api/conversas-solicitacao/[id]/mensagens" as EP
+participant "conversa-solicitacao.service" as SVC
+participant "notificacao.service" as N
+database PostgreSQL as DB
+
+Empresa -> EP : abre conversa (obterOuCriarConversaEmpresa)
+EP -> SVC : upsert ConversaSolicitacao (status aberta)
+SVC -> DB : create/update conversa
+EP -> SVC : enviarMensagemConversaSolicitacao(conversaId, remetente, texto)
+SVC -> SVC : normaliza msg (<= 1000)
+SVC -> DB : buscarConversaAutorizada(conversaId, userId)
+alt sem permissao / conversa nao aberta / ja aceita
+  SVC --> EP : throw
+  EP --> Empresa : 400
+else ok
+  SVC -> DB : create MensagemPreAceite
+  SVC -> N : notificarNovaMensagem(destinatario)
+  N -> DB : create Notificacao
+  SVC --> EP : mensagem
+  EP --> Empresa : 201
+  N --> Cidadao : (via SSE) nova mensagem
+end
+@enduml

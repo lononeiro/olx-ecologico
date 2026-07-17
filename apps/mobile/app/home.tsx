@@ -1,19 +1,23 @@
 import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Plus, ClipboardList, User as UserIcon, LogOut } from "lucide-react-native";
 import {
   AppButton,
   AppCard,
   AppScreen,
+  BottomNavigation,
   EmptyState,
   LoadingCard,
   MessageBanner,
+  MobileListItem,
   SectionHeader,
   StatRow,
 } from "@/components/AppUI";
 import { useProtectedRoute } from "@/lib/navigation";
 import { ApiError, getReadableErrorMessage, getSolicitacoes } from "@/lib/api";
 import { resolveAccessToken } from "@/lib/session";
+import { USUARIO_TABS } from "@/lib/tabs";
 
 export default function HomeScreen() {
   const { accessToken, hasAccess, isLoading, refreshSession, signOut, user } =
@@ -48,7 +52,9 @@ export default function HomeScreen() {
   const solicitacoes = solicitacoesQuery.data ?? [];
   const stats = {
     total: solicitacoes.length,
-    pendentes: solicitacoes.filter((item) => item.status === "pendente").length,
+    aguardandoEmpresa: solicitacoes.filter(
+      (item) => item.status === "aprovada" && !item.coleta
+    ).length,
     ativas: solicitacoes.filter(
       (item) =>
         item.coleta &&
@@ -61,21 +67,21 @@ export default function HomeScreen() {
   };
 
   return (
-    <AppScreen>
-      <AppCard>
-        <SectionHeader
-          eyebrow="MEU PAINEL"
-          title={`Ola, ${user.name.split(" ")[0]}`}
-          description="Use este painel para criar solicitacoes, acompanhar aprovacoes e conversar com a empresa quando houver coleta."
-        />
-      </AppCard>
+    <AppScreen
+      footer={<BottomNavigation items={USUARIO_TABS} activeKey="home" />}
+    >
+      <SectionHeader
+        eyebrow="MEU PAINEL"
+        title={`Olá, ${user.name.split(" ")[0]}`}
+        description="Acompanhe suas solicitações e coletas em andamento."
+      />
 
-      {solicitacoesQuery.isLoading && <LoadingCard text="Carregando solicitacoes..." />}
+      {solicitacoesQuery.isLoading && <LoadingCard text="Carregando solicitações..." />}
       {solicitacoesQuery.error && (
         <MessageBanner
           message={getReadableErrorMessage(
             solicitacoesQuery.error,
-            "Nao foi possivel carregar o painel."
+            "Não foi possível carregar o painel."
           )}
           tone="error"
         />
@@ -83,32 +89,34 @@ export default function HomeScreen() {
 
       <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
         <StatRow label="Total" value={stats.total} />
-        <StatRow label="Pendentes" value={stats.pendentes} />
+        <StatRow label="Aguardando empresa" value={stats.aguardandoEmpresa} />
         <StatRow label="Em andamento" value={stats.ativas} />
-        <StatRow label="Concluidas" value={stats.concluidas} />
+        <StatRow label="Concluídas" value={stats.concluidas} />
       </View>
 
       <AppCard>
-        <Text style={{ fontSize: 18, fontWeight: "700", color: "#122114" }}>
-          Acoes rapidas
-        </Text>
+        <SectionHeader title="Ações rápidas" />
         <AppButton
-          label="Nova solicitacao"
+          label="Nova solicitação"
+          icon={Plus}
           onPress={() => router.push("/solicitacoes/new")}
         />
         <AppButton
-          label="Minhas solicitacoes"
+          label="Minhas solicitações"
           tone="secondary"
+          icon={ClipboardList}
           onPress={() => router.push("/solicitacoes" as any)}
         />
         <AppButton
           label="Meu perfil"
           tone="secondary"
+          icon={UserIcon}
           onPress={() => router.push("/me")}
         />
         <AppButton
           label="Sair"
           tone="danger"
+          icon={LogOut}
           onPress={async () => {
             await signOut();
             router.replace("/login");
@@ -116,29 +124,28 @@ export default function HomeScreen() {
         />
       </AppCard>
 
-      {!solicitacoesQuery.isLoading && solicitacoes.length === 0 ? (
-        <EmptyState
-          title="Nenhuma solicitacao ainda"
-          description="Crie sua primeira solicitacao de coleta para iniciar o fluxo."
-        />
-      ) : (
-        solicitacoes.slice(0, 3).map((item) => (
-          <AppCard key={item.id}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: "#122114" }}>
-              {item.titulo}
-            </Text>
-            <Text style={{ color: "#537156" }}>{item.material.nome}</Text>
-            <Text style={{ color: "#537156", lineHeight: 22 }}>
-            {item.quantidade} - {new Date(item.createdAt).toLocaleDateString("pt-BR")}
-            </Text>
-            <AppButton
-              label="Ver detalhes"
-              tone="secondary"
+      <AppCard>
+        <SectionHeader eyebrow="RECENTES" title="Solicitações recentes" />
+        {!solicitacoesQuery.isLoading && solicitacoes.length === 0 ? (
+          <EmptyState
+            icon={ClipboardList}
+            title="Nenhuma solicitação ainda"
+            description="Crie sua primeira solicitação de coleta para iniciar o fluxo."
+          />
+        ) : (
+          solicitacoes.slice(0, 3).map((item) => (
+            <MobileListItem
+              key={item.id}
+              icon={ClipboardList}
+              tone="primary"
+              title={item.titulo}
+              subtitle={`${item.material.nome} · ${item.quantidade}`}
+              meta={new Date(item.createdAt).toLocaleDateString("pt-BR")}
               onPress={() => router.push(`/solicitacoes/${item.id}` as any)}
             />
-          </AppCard>
-        ))
-      )}
+          ))
+        )}
+      </AppCard>
     </AppScreen>
   );
 }

@@ -1,22 +1,23 @@
 import type { ReactNode } from "react";
-import {
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, layout } from "@/theme/tokens";
 
 export function Screen({
   children,
   scroll = true,
+  footer,
 }: {
   children: ReactNode;
   scroll?: boolean;
+  footer?: ReactNode;
 }) {
   const body = scroll ? (
     <ScrollView
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[
+        styles.scrollContent,
+        footer ? styles.scrollContentWithFooter : null,
+      ]}
       showsVerticalScrollIndicator={false}
     >
       {children}
@@ -26,12 +27,10 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
       <View style={styles.background}>
-        <View style={styles.orbPrimary} />
-        <View style={styles.orbSecondary} />
-        <View style={styles.orbTertiary} />
         {body}
+        {!!footer && <View style={styles.footer}>{footer}</View>}
       </View>
     </SafeAreaView>
   );
@@ -56,34 +55,15 @@ const styles = StyleSheet.create({
     gap: layout.sectionGap,
     paddingBottom: 28,
   },
-  orbPrimary: {
-    position: "absolute",
-    width: 180,
-    height: 180,
-    borderRadius: 999,
-    backgroundColor: "#d8e8d9",
-    opacity: 0.8,
-    top: -40,
-    right: -30,
+  scrollContentWithFooter: {
+    paddingBottom: 12,
   },
-  orbSecondary: {
-    position: "absolute",
-    width: 150,
-    height: 150,
-    borderRadius: 999,
-    backgroundColor: "#f5e8d7",
-    opacity: 0.45,
-    top: 150,
-    left: -70,
-  },
-  orbTertiary: {
-    position: "absolute",
-    width: 220,
-    height: 220,
-    borderRadius: 999,
-    backgroundColor: "#dbe6ee",
-    opacity: 0.32,
-    bottom: -60,
-    right: -80,
+  footer: {
+    padding: layout.screenPadding,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.stroke,
+    backgroundColor: colors.canvas,
+    gap: 10,
   },
 });

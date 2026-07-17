@@ -1,23 +1,40 @@
+import { useMemo, useState } from "react";
 import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { Text } from "react-native";
+import { MapPin, Plus, ClipboardList } from "lucide-react-native";
+import { Text, View } from "react-native";
 import {
   AppButton,
   AppCard,
   AppScreen,
+  BottomNavigation,
   EmptyState,
+  FilterChip,
+  FilterChipRow,
+  Icon,
   LoadingCard,
   MessageBanner,
   SectionHeader,
   StatusBadge,
+  appColors,
 } from "@/components/AppUI";
 import { getReadableErrorMessage, getSolicitacoes } from "@/lib/api";
 import { useProtectedRoute } from "@/lib/navigation";
 import { withAutoRefresh } from "@/lib/session";
+import { USUARIO_TABS } from "@/lib/tabs";
+
+const FILTERS = [
+  { key: "todas", label: "Todas" },
+  { key: "aprovada", label: "Ativas" },
+  { key: "com_coleta", label: "Com coleta" },
+  { key: "cancelada", label: "Canceladas" },
+  { key: "removida", label: "Removidas" },
+];
 
 export default function SolicitacoesListScreen() {
   const { accessToken, hasAccess, isLoading, refreshSession } =
     useProtectedRoute(["usuario"]);
+  const [filter, setFilter] = useState("todas");
 
   const query = useQuery({
     queryKey: ["solicitacoes", "list"],
@@ -26,40 +43,67 @@ export default function SolicitacoesListScreen() {
       withAutoRefresh(accessToken, refreshSession, (token) => getSolicitacoes(token)),
   });
 
-  return (
-    <AppScreen>
-      <AppCard>
-        <SectionHeader
-          eyebrow="MINHAS SOLICITACOES"
-          title="Historico completo"
-          description="Acompanhe aprovacoes, aceite de empresa, andamento da coleta e conversa vinculada."
-        />
-        <AppButton label="Nova solicitacao" onPress={() => router.push("/solicitacoes/new")} />
-      </AppCard>
+  const filtered = useMemo(() => {
+    const items = query.data ?? [];
+    if (filter === "todas") return items;
+    if (filter === "com_coleta") return items.filter((item) => !!item.coleta);
+    return items.filter((item) => item.status === filter);
+  }, [query.data, filter]);
 
-      {query.isLoading && <LoadingCard text="Carregando solicitacoes..." />}
+  return (
+    <AppScreen
+      footer={<BottomNavigation items={USUARIO_TABS} activeKey="solicitacoes" />}
+    >
+      <SectionHeader
+        eyebrow="MINHAS SOLICITAÇÕES"
+        title="Histórico completo"
+        description="Acompanhe aceite de empresa e andamento da coleta."
+      />
+      <AppButton label="Nova solicitação" icon={Plus} onPress={() => router.push("/solicitacoes/new")} />
+
+      <FilterChipRow>
+        {FILTERS.map((item) => (
+          <FilterChip
+            key={item.key}
+            label={item.label}
+            active={filter === item.key}
+            onPress={() => setFilter(item.key)}
+          />
+        ))}
+      </FilterChipRow>
+
+      {query.isLoading && <LoadingCard text="Carregando solicitações..." />}
       {query.error && (
         <MessageBanner
-          message={getReadableErrorMessage(query.error, "Nao foi possivel carregar as solicitacoes.")}
+          message={getReadableErrorMessage(query.error, "Não foi possível carregar as solicitações.")}
           tone="error"
         />
       )}
 
-      {!query.isLoading && (query.data?.length ?? 0) === 0 ? (
+      {!query.isLoading && filtered.length === 0 ? (
         <EmptyState
-          title="Nenhuma solicitacao criada"
-          description="Crie sua primeira solicitacao e acompanhe tudo por aqui."
+          icon={ClipboardList}
+          title="Nenhuma solicitação encontrada"
+          description="Crie sua primeira solicitação ou ajuste o filtro selecionado."
         />
       ) : null}
 
-      {query.data?.map((item) => (
+      {filtered.map((item) => (
         <AppCard key={item.id}>
           <SectionHeader title={item.titulo} description={item.material.nome} />
           <StatusBadge kind="solicitacao" value={item.status} />
-          <Text style={{ color: "#537156", lineHeight: 22 }}>
-            {item.quantidade} - {new Date(item.createdAt).toLocaleDateString("pt-BR")}
+          <Text style={{ color: appColors.textSoft, ...{ fontSize: 15, lineHeight: 22 } }}>
+            {item.quantidade}
           </Text>
-          <Text style={{ color: "#537156", lineHeight: 22 }}>{item.endereco}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Icon icon={MapPin} size={16} color={appColors.textFaint} />
+            <Text
+              style={{ color: appColors.textSoft, fontSize: 15, lineHeight: 22, flex: 1 }}
+              numberOfLines={1}
+            >
+              {item.endereco}
+            </Text>
+          </View>
           <AppButton
             label="Ver detalhes"
             tone="secondary"

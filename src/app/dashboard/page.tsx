@@ -15,13 +15,13 @@ export default async function DashboardPage() {
 
   const stats = {
     total: solicitacoes.length,
-    pendentes: solicitacoes.filter((s) => s.status === "pendente").length,
+    aguardandoEmpresa: solicitacoes.filter((s) => s.status === "aprovada" && !s.coleta).length,
     emAndamento: solicitacoes.filter(
       (s) => s.coleta && s.coleta.status !== "concluida" && s.coleta.status !== "cancelada"
     ).length,
     concluidas: solicitacoes.filter((s) => s.coleta?.status === "concluida").length,
   };
-  const textoSolicitacaoPendente = stats.pendentes === 1 ? "solicitação" : "solicitações";
+  const textoSolicitacaoAguardando = stats.aguardandoEmpresa === 1 ? "solicitação" : "solicitações";
 
   const hora = new Date().getHours();
   const saudacao = hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite";
@@ -38,7 +38,7 @@ export default async function DashboardPage() {
           <p style={{ fontSize: 13, color: "var(--color-gray-500)", marginTop: 4 }}>
             {stats.total === 0
               ? "Crie sua primeira solicitação de coleta."
-              : `Você tem ${stats.pendentes} ${textoSolicitacaoPendente} aguardando aprovação.`}
+              : `Você tem ${stats.aguardandoEmpresa} ${textoSolicitacaoAguardando} aguardando aceite de uma empresa.`}
           </p>
         </div>
         <Link href="/dashboard/solicitacoes/nova" className="btn btn-primary" aria-label="Criar nova solicitação">
@@ -49,7 +49,7 @@ export default async function DashboardPage() {
 
       <div className="kpi-grid" style={{ marginBottom: 20 }}>
         <MetricCard label="Solicitações" value={stats.total} description="Total de Solicitações" />
-        <MetricCard label="Pendentes" value={stats.pendentes} description="Aguardando aprovação" accent="amber" />
+        <MetricCard label="Disponíveis" value={stats.aguardandoEmpresa} description="Aguardando empresa" accent="amber" />
         <MetricCard label="Em andamento" value={stats.emAndamento} description="Coletas ativas" accent="blue" />
         <MetricCard label="Concluídas" value={stats.concluidas} description="Coletas finalizadas" />
       </div>

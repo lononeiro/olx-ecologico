@@ -1,0 +1,30 @@
+@startuml SEQ-02-login-mobile
+title SEQ-02 - Autenticacao Mobile (login + refresh, JWT HS256)
+actor "App Mobile" as M
+participant "/api/auth/mobile/login" as LOGIN
+participant "/api/auth/mobile/refresh" as REFRESH
+participant "mobile-auth" as AU
+database PostgreSQL as DB
+
+== Login ==
+M -> LOGIN : POST {email, senha}
+LOGIN -> AU : authenticateUserByCredentials
+AU -> DB : findUnique(email)+role
+DB --> AU : user (status ativo? bcrypt ok?)
+AU -> AU : createMobileAuthTokens()\naccess 15min + refresh 30d
+AU --> LOGIN : {accessToken, refreshToken, user}
+LOGIN --> M : 200 MobileAuthResponse
+M -> M : expo-secure-store guarda tokens
+
+== Renovacao (access expirado) ==
+M -> REFRESH : POST {refreshToken}
+REFRESH -> AU : verifyMobileToken(refresh)
+AU --> REFRESH : payload (id)
+REFRESH -> DB : findUnique(id)+role
+alt usuario ativo e nao-admin
+  REFRESH -> AU : createMobileAuthTokens()
+  REFRESH --> M : 200 novos tokens
+else admin / inativo
+  REFRESH --> M : 401/403
+end
+@enduml

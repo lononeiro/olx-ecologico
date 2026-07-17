@@ -1,0 +1,30 @@
+@startuml SEQ-05-criar-solicitacao
+title SEQ-05 - Criar Solicitacao (com upload de imagens)
+actor Cidadao
+participant "Form nova solicitacao" as UI
+participant "Cloudinary" as CL
+participant "POST /api/solicitacoes" as EP
+participant "route-guard" as RG
+participant "solicitacaoCreateSchema (Zod)" as Z
+participant "solicitacao.service\ncriarSolicitacao" as SVC
+database PostgreSQL as DB
+
+Cidadao -> UI : seleciona imagens (<= 5)
+UI -> CL : upload (unsigned preset)
+CL --> UI : URLs seguras
+UI -> EP : POST {titulo, descricao, quantidade,\nendereco, materialId, imagens[]}
+EP -> RG : autorizarRota(["usuario"])
+RG --> EP : session OK
+EP -> Z : safeParse(body)
+alt invalido
+  Z --> EP : erros por campo
+  EP --> UI : 400 {error, resumo}
+else valido
+  EP -> SVC : criarSolicitacao(userId, data)
+  SVC -> SVC : normaliza/deduplica imagens (max 5)
+  SVC -> DB : create Solicitacao (pendente, aprovado=false)\n+ imagens (nested create)
+  DB --> SVC : solicitacao
+  SVC --> EP : solicitacao
+  EP --> UI : 201
+end
+@enduml

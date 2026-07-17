@@ -78,7 +78,18 @@
       "Bash(explorer \"docs\\\\uml\\\\imagens-png\")",
       "Bash(pip install *)",
       "Bash(awk '{print $5, $9}')",
-      "Bash(explorer \"docs\\\\uml\\\\word\")"
+      "Bash(explorer \"docs\\\\uml\\\\word\")",
+      "Bash(ls -la \"../../docs/diagrams\")",
+      "Bash(ls -la \"../../docs/uml\")",
+      "Bash(PYTHONIOENCODING=utf-8 PYTHONUTF8=1 python \"C:/Users/lucas.g/AppData/Local/Temp/claude/C--Users-lucas-g-tcc-olx-ecologico/deba6b82-e25e-4fbe-859a-4590403b83f4/scratchpad/fill_g.py\")",
+      "Bash(PYTHONUTF8=1 python \"C:/Users/lucas.g/AppData/Local/Temp/claude/C--Users-lucas-g-tcc-olx-ecologico/deba6b82-e25e-4fbe-859a-4590403b83f4/scratchpad/fill_g.py\")",
+      "Bash(which soffice *)",
+      "Bash(ls \"/c/Program Files/LibreOffice/program/soffice.exe\")",
+      "Bash(ls \"/c/Program Files \\(x86\\)/LibreOffice/program/soffice.exe\")",
+      "Bash(PYTHONUTF8=1 python -)",
+      "PowerShell(git *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} -> %{redirect_url}\\\\n\" -X POST https://olx-ecologico.vercel.app/api/auth/mobile/login -H \"Content-Type: application/json\" -d '{\"email\":\"x\",\"senha\":\"y\"}')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} -> %{redirect_url}\\\\n\" -X POST \"https://olx-ecologico.vercel.app//api/auth/mobile/login\" -H \"Content-Type: application/json\" -d '{\"email\":\"x\",\"senha\":\"y\"}')"
     ]
   }
 }

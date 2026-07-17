@@ -53,20 +53,20 @@ export default async function AdminSolicitacoesPage({
     }),
     prisma.solicitacaoColeta.count({ where }),
     Promise.all([
-      prisma.solicitacaoColeta.count({ where: { status: "pendente"  } }),
       prisma.solicitacaoColeta.count({ where: { status: "aprovada"  } }),
-      prisma.solicitacaoColeta.count({ where: { status: "rejeitada" } }),
+      prisma.solicitacaoColeta.count({ where: { status: "cancelada" } }),
+      prisma.solicitacaoColeta.count({ where: { status: "removida"  } }),
     ]),
   ]);
 
-  const [totalPendentes, totalAprovadas, totalRejeitadas] = counts;
+  const [totalAtivas, totalCanceladas, totalRemovidas] = counts;
   const totalPages = Math.ceil(total / LIMIT);
 
   const quickFilters = [
-    { label: "Todas",     value: "",          count: null },
-    { label: "Pendentes", value: "pendente",  count: totalPendentes  },
-    { label: "Aprovadas", value: "aprovada",  count: totalAprovadas  },
-    { label: "Rejeitadas",value: "rejeitada", count: totalRejeitadas },
+    { label: "Todas",      value: "",          count: null },
+    { label: "Ativas",     value: "aprovada",  count: totalAtivas      },
+    { label: "Canceladas", value: "cancelada", count: totalCanceladas  },
+    { label: "Removidas",  value: "removida",  count: totalRemovidas   },
   ];
 
   return (

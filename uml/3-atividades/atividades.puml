@@ -1,0 +1,75 @@
+@startuml atividade-macro
+' Atividade - Fluxo macro: solicitacao -> coleta -> avaliacao
+start
+:Cidadao cria solicitacao (pendente);
+:Admin analisa;
+if (Aprovada?) then (sim)
+  :status = aprovada\ndisponivel no marketplace;
+  :Empresas negociam (chat pre-aceite);
+  if (Empresa aceita?) then (sim)
+    :cria Coleta (aceita)\ncodigo de confirmacao;
+    :conversa vencedora -> convertida\noutras -> encerrada;
+    :Empresa atualiza status;
+    while (status != concluida?) is (avanca)
+      :a_caminho -> em_coleta;
+    endwhile (concluida)
+    :grava dataConclusao;
+    if (Cidadao avalia?) then (sim)
+      :cria Avaliacao (1-5 estrelas);
+      :notifica empresa;
+    else (nao)
+      :aguardando avaliacao;
+    endif
+  else (nao)
+    :permanece disponivel;
+  endif
+else (nao)
+  :status = rejeitada;
+  :notifica cidadao;
+endif
+stop
+@enduml
+
+@startuml atividade-auth
+' Atividade - Autenticacao web
+start
+:Usuario informa credenciais;
+:Busca usuario por email;
+if (Existe e status ativo?) then (sim)
+  if (bcrypt.compare ok?) then (sim)
+    :Gera sessao JWT (role no token);
+    if (role) then (admin)
+      :redireciona /admin;
+    elseif (empresa)
+      :redireciona /empresa;
+    else (usuario)
+      :redireciona /dashboard;
+    endif
+  else (nao)
+    :Erro credenciais;
+  endif
+else (nao)
+  :Erro credenciais;
+endif
+stop
+@enduml
+
+@startuml atividade-cancelar
+' Atividade - Cancelamento de solicitacao
+start
+:Cidadao solicita cancelamento;
+:Carrega solicitacao + coleta;
+if (rejeitada ou cancelada?) then (sim)
+  :Erro: estado nao permite;
+  stop
+endif
+if (coleta em em_coleta/concluida?) then (sim)
+  :Erro: coleta avancada;
+  stop
+endif
+if (coleta em aceita/a_caminho?) then (sim)
+  :Coleta -> cancelada;
+endif
+:Solicitacao -> cancelada;
+stop
+@enduml

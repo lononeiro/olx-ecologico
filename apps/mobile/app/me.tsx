@@ -3,11 +3,13 @@ import { router } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Linking, StyleSheet, Text, View } from "react-native";
 import { profileUpdateSchema } from "@shared";
+import { MapPin, RefreshCw, LogOut } from "lucide-react-native";
 import {
   AppButton,
   AppCard,
   AppField,
   AppScreen,
+  BottomNavigation,
   InfoRow,
   LoadingCard,
   MessageBanner,
@@ -23,6 +25,7 @@ import {
 } from "@/lib/api";
 import { withAutoRefresh } from "@/lib/session";
 import { colors, spacing, typography } from "@/theme/tokens";
+import { USUARIO_TABS, EMPRESA_TABS } from "@/lib/tabs";
 
 type ProfileFormState = {
   nome: string;
@@ -146,8 +149,10 @@ export default function MeScreen() {
 
   if (!user) return null;
 
+  const tabs = user.role === "empresa" ? EMPRESA_TABS : USUARIO_TABS;
+
   return (
-    <AppScreen>
+    <AppScreen footer={<BottomNavigation items={tabs} activeKey="me" />}>
       <AppCard>
         <View style={styles.heroTop}>
           <View style={styles.identityBadge}>
@@ -163,7 +168,7 @@ export default function MeScreen() {
         </View>
 
         <View style={styles.metaRow}>
-          <StatusBadge kind="solicitacao" value={profileQuery.data?.status ?? "pendente"} />
+          <StatusBadge kind="solicitacao" value={profileQuery.data?.status ?? "aprovada"} />
           <View style={styles.metaChip}>
             <Text style={styles.metaChipText}>{user.role}</Text>
           </View>
@@ -242,13 +247,14 @@ export default function MeScreen() {
 
             <View style={styles.actions}>
               <AppButton
-                label={saveProfileMutation.isPending ? "Salvando..." : "Salvar alteracoes"}
+                label={saveProfileMutation.isPending ? "Salvando..." : "Salvar alterações"}
                 onPress={() => saveProfileMutation.mutate()}
                 disabled={saveProfileMutation.isPending}
               />
               <AppButton
                 label="Abrir no mapa"
                 tone="secondary"
+                icon={MapPin}
                 onPress={openInMaps}
               />
             </View>
@@ -281,6 +287,7 @@ export default function MeScreen() {
         <AppButton
           label="Atualizar perfil"
           tone="secondary"
+          icon={RefreshCw}
           onPress={() => {
             setFeedback("");
             void profileQuery.refetch();
@@ -289,6 +296,7 @@ export default function MeScreen() {
         <AppButton
           label="Sair"
           tone="danger"
+          icon={LogOut}
           onPress={async () => {
             await signOut();
             router.replace("/login");

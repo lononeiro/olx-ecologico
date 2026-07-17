@@ -1,0 +1,37 @@
+@startuml pacotes-econecta
+' Diagrama de Pacotes / Organizacao do codigo - ECOnecta
+skinparam packageStyle folder
+
+package "src" {
+  package "app" {
+    package "(auth)"
+    package "admin"
+    package "dashboard"
+    package "empresa"
+    package "me"
+    package "api"
+  }
+  package "components" {
+    package "cards"
+    package "forms"
+    package "ui"
+    package "messages"
+    package "filters"
+  }
+  package "services"
+  package "lib"
+  package "types"
+}
+package "packages/shared"
+package "prisma"
+package "apps/mobile"
+
+app ..> services
+services ..> lib
+app ..> components
+app ..> lib
+lib ..> prisma
+services ..> "packages/shared"
+lib ..> "packages/shared"
+"apps/mobile" ..> "packages/shared"
+@enduml

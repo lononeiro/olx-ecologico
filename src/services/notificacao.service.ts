@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 export type NotificacaoTipo =
   | "solicitacao_aprovada"
   | "solicitacao_rejeitada"
+  | "solicitacao_removida"
   | "coleta_aceita"
   | "coleta_status"
   | "nova_mensagem"
@@ -99,19 +100,16 @@ export async function marcarTodasComoLidas(userId: number) {
 // Helpers por evento — centralizam título/descrição/href de cada notificação.
 // ---------------------------------------------------------------------------
 
-export function notificarSolicitacaoAvaliada(params: {
+export function notificarSolicitacaoRemovida(params: {
   userId: number;
   solicitacaoId: number;
   titulo: string;
-  aprovado: boolean;
 }) {
   return criarNotificacao({
     userId: params.userId,
-    tipo: params.aprovado ? "solicitacao_aprovada" : "solicitacao_rejeitada",
-    titulo: params.aprovado ? "Solicitação aprovada" : "Solicitação rejeitada",
-    descricao: params.aprovado
-      ? `Sua solicitação "${params.titulo}" foi aprovada e já está disponível para as empresas coletoras.`
-      : `Sua solicitação "${params.titulo}" foi rejeitada pela administração.`,
+    tipo: "solicitacao_removida",
+    titulo: "Solicitação removida",
+    descricao: `Sua solicitação "${params.titulo}" foi removida pela administração.`,
     href: `/dashboard/solicitacoes/${params.solicitacaoId}`,
   });
 }

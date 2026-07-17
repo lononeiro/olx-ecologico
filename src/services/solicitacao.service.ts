@@ -6,10 +6,9 @@ import {
   toEmpresaSolicitacaoDisponivelDTO,
 } from "@/lib/privacy";
 import type { Prisma } from "@prisma/client";
-import { notificarSolicitacaoAvaliada } from "@/services/notificacao.service";
+import { notificarSolicitacaoRemovida } from "@/services/notificacao.service";
 
 const MAX_SOLICITACAO_IMAGENS = 5;
-const PRAZO_ANALISE_HORAS = 24;
 
 export type FiltrosSolicitacao = {
   status?: string;
@@ -18,18 +17,6 @@ export type FiltrosSolicitacao = {
   dataFim?: Date;
   q?: string;
 };
-
-export function getAdminSolicitacaoScope(now = new Date()) {
-  const limite = new Date(now.getTime() - PRAZO_ANALISE_HORAS * 60 * 60 * 1000);
-
-  return {
-    OR: [
-      { status: "rejeitada" },
-      { status: "aprovada", aprovado: true, coleta: null },
-      { status: "pendente", aprovado: false, createdAt: { lte: limite } },
-    ],
-  };
-}
 
 /**
  * Cria uma nova solicitação de coleta para o usuário autenticado.
@@ -66,8 +53,8 @@ export async function criarSolicitacao(
     data: {
       ...rest,
       userId,
-      status: "pendente",
-      aprovado: false,
+      status: "aprovada",
+      aprovado: true,
       imagens: imagens.length
         ? { create: imagens.map((url) => ({ url })) }
         : undefined,
@@ -200,24 +187,27 @@ export async function buscarSolicitacaoPorId(id: number, userId?: number) {
 }
 
 /**
- * Lista todas as solicitacoes pendentes de aprovacao (acesso Admin).
+ * Lista solicitações recém-criadas para o painel de gestão do Admin.
  */
-export async function listarSolicitacoesPendentes() {
+export async function listarSolicitacoesRecentes(limit = 10) {
   const solicitacoes = await prisma.solicitacaoColeta.findMany({
-    where: { status: "pendente", aprovado: false },
+    where: { status: "aprovada" },
     include: {
       material: true,
       imagens: true,
     },
     orderBy: { createdAt: "desc" },
+    take: limit,
   });
 
   return solicitacoes.map(toAdminSolicitacaoListDTO);
 }
 
+/**
+ * Lista todas as solicitacoes para gestão (acesso Admin).
+ */
 export async function listarSolicitacoesAdmin() {
   const solicitacoes = await prisma.solicitacaoColeta.findMany({
-    where: getAdminSolicitacaoScope(),
     include: {
       material: true,
       imagens: true,
@@ -236,25 +226,22 @@ export async function listarSolicitacoesAdmin() {
 }
 
 /**
- * Aprova ou rejeita uma solicitacao (acesso Admin).
+ * Remove (moderação reativa) uma solicitacao do ar (acesso Admin).
+ * A solicitação já nasce aprovada; isso é usada quando o admin identifica abuso.
  */
-export async function atualizarStatusSolicitacao(
-  id: number,
-  aprovado: boolean
-) {
+export async function removerSolicitacao(id: number) {
   const solicitacao = await prisma.solicitacaoColeta.update({
     where: { id },
     data: {
-      aprovado,
-      status: aprovado ? "aprovada" : "rejeitada",
+      aprovado: false,
+      status: "removida",
     },
   });
 
-  await notificarSolicitacaoAvaliada({
+  await notificarSolicitacaoRemovida({
     userId: solicitacao.userId,
     solicitacaoId: solicitacao.id,
     titulo: solicitacao.titulo,
-    aprovado,
   });
 
   return solicitacao;
@@ -305,7 +292,7 @@ export async function cancelarSolicitacao(solicitacaoId: number, userId: number)
     });
 
     if (!solicitacao) throw new Error("Solicitação não encontrada ou sem permissão.");
-    if (solicitacao.status === "rejeitada" || solicitacao.status === "cancelada") {
+    if (["rejeitada", "cancelada", "removida"].includes(solicitacao.status)) {
       throw new Error("Solicitação não pode ser cancelada neste estado.");
     }
     if (

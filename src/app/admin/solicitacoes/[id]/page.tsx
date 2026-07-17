@@ -11,12 +11,10 @@ function getAdminStatusLabel(s: {
   createdAt: Date;
   coleta: { id: number } | null;
 }) {
-  if (s.status === "rejeitada") return "Rejeitada";
+  if (s.status === "removida") return "Removida";
+  if (s.status === "cancelada") return "Cancelada pelo usuário";
   if (s.status === "aprovada" && !s.coleta) return "Não aceita";
-
-  const expired = Date.now() - new Date(s.createdAt).getTime() > 24 * 60 * 60 * 1000;
-  if (s.status === "pendente" && !s.aprovado && expired) return "Fora do prazo";
-  if (s.status === "pendente") return "Pendente";
+  if (s.status === "aprovada") return "Em acompanhamento";
   return "Em acompanhamento";
 }
 
@@ -29,7 +27,7 @@ export default async function AdminSolicitacaoDetailPage({
   const s = await buscarSolicitacaoAdminDetailDTO(id);
   if (!s) notFound();
 
-  const canModerate = s.status === "pendente" && !s.aprovado;
+  const canModerate = s.status !== "removida" && s.status !== "cancelada";
   const statusLabel = getAdminStatusLabel(s);
 
   return (
@@ -119,18 +117,18 @@ export default async function AdminSolicitacaoDetailPage({
 
       <div className="card bg-gray-50 dark:bg-zinc-900">
         <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-zinc-200">
-          Decisão administrativa
+          Gestão administrativa
         </h2>
         {canModerate ? (
           <>
             <p className="mb-4 text-sm text-gray-500 dark:text-zinc-400">
-              Ao aprovar, a solicitação fica visível para empresas parceiras. Ao rejeitar, ela sai do fluxo ativo.
+              Solicitações ficam disponíveis para empresas parceiras assim que criadas pelo usuário. Remova esta solicitação apenas em caso de abuso ou conteúdo inadequado.
             </p>
             <AdminActionButtons solicitacaoId={s.id} />
           </>
         ) : (
           <p className="text-sm text-gray-500 dark:text-zinc-400">
-            Esta solicitação está em acompanhamento e não possui mais ação de aprovação pendente.
+            Esta solicitação já foi removida/cancelada e não possui mais ação administrativa disponível.
           </p>
         )}
       </div>

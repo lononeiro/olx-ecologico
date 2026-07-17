@@ -1,17 +1,28 @@
 import { useLocalSearchParams, router } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import {
+  ArrowLeft,
+  Mail,
+  MapPin,
+  Package,
+  Phone,
+  User as UserIcon,
+  type LucideIcon,
+} from "lucide-react-native";
 import { Text, View } from "react-native";
 import {
   AppButton,
   AppCard,
   AppField,
   AppScreen,
+  Icon,
   InfoRow,
   LoadingCard,
   MessageBanner,
   SectionHeader,
   StatusBadge,
+  appColors,
 } from "@/components/AppUI";
 import { ChatThread } from "@/components/ChatThread";
 import {
@@ -72,7 +83,7 @@ export default function EmpresaColetaDetailScreen() {
     onError: (error) => {
       setFeedbackTone("error");
       setFeedback(
-        getReadableErrorMessage(error, "Nao foi possivel atualizar o status.")
+        getReadableErrorMessage(error, "Não foi possível atualizar o status.")
       );
     },
   });
@@ -90,7 +101,7 @@ export default function EmpresaColetaDetailScreen() {
       <AppScreen>
         {query.error ? (
           <MessageBanner
-            message={getReadableErrorMessage(query.error, "Nao foi possivel carregar a coleta.")}
+            message={getReadableErrorMessage(query.error, "Não foi possível carregar a coleta.")}
             tone="error"
           />
         ) : (
@@ -104,39 +115,75 @@ export default function EmpresaColetaDetailScreen() {
   const opcoes = NEXT_STATUS[coleta.status] ?? [];
 
   return (
-    <AppScreen>
+    <AppScreen
+      footer={
+        <AppButton
+          label="Voltar para coletas"
+          tone="secondary"
+          icon={ArrowLeft}
+          onPress={() => router.push("/empresa/coletas" as any)}
+        />
+      }
+    >
       <AppCard>
         <SectionHeader
           eyebrow={`COLETA #${coleta.id}`}
           title={coleta.solicitacao.titulo}
-          description="Painel operacional da empresa com dados do solicitante, status e conversa."
+          description="Painel operacional com dados do solicitante, status e conversa."
         />
         <StatusBadge kind="coleta" value={coleta.status} />
       </AppCard>
 
       {!!feedback && <MessageBanner message={feedback} tone={feedbackTone} />}
 
-      <InfoRow label="Material" value={coleta.solicitacao.material.nome} />
-      <InfoRow label="Quantidade" value={coleta.solicitacao.quantidade} />
-      <InfoRow label="Endereco da coleta" value={coleta.solicitacao.endereco} />
-      <InfoRow label="Solicitante" value={coleta.solicitacao.user?.nome ?? "-"} />
-      <InfoRow label="Email" value={coleta.solicitacao.user?.email ?? "-"} />
-      {coleta.solicitacao.user?.telefone ? (
-        <InfoRow label="Telefone" value={coleta.solicitacao.user.telefone} />
-      ) : null}
-      {coleta.solicitacao.user?.endereco ? (
-        <InfoRow label="Endereco do perfil" value={coleta.solicitacao.user.endereco} />
-      ) : null}
-      {!!coleta.codigoConfirmacao && (
-        <InfoRow label="Codigo de confirmacao" value={coleta.codigoConfirmacao} />
-      )}
+      <AppCard>
+        <SectionHeader eyebrow="MATERIAIS" title="Informações da coleta" />
+        <InfoRow
+          label="Material"
+          value={
+            <IconText icon={Package} text={coleta.solicitacao.material.nome} />
+          }
+        />
+        <InfoRow label="Quantidade" value={coleta.solicitacao.quantidade} />
+      </AppCard>
+
+      <AppCard>
+        <SectionHeader eyebrow="ENDEREÇO" title="Local da coleta" />
+        <InfoRow
+          label="Endereço"
+          value={<IconText icon={MapPin} text={coleta.solicitacao.endereco} />}
+        />
+      </AppCard>
+
+      <AppCard>
+        <SectionHeader eyebrow="SOLICITANTE" title="Dados de contato" />
+        <InfoRow
+          label="Solicitante"
+          value={
+            <IconText icon={UserIcon} text={coleta.solicitacao.user?.nome ?? "-"} />
+          }
+        />
+        <InfoRow
+          label="Email"
+          value={<IconText icon={Mail} text={coleta.solicitacao.user?.email ?? "-"} />}
+        />
+        {coleta.solicitacao.user?.telefone ? (
+          <InfoRow
+            label="Telefone"
+            value={<IconText icon={Phone} text={coleta.solicitacao.user.telefone} />}
+          />
+        ) : null}
+        {!!coleta.codigoConfirmacao && (
+          <InfoRow label="Código de confirmação" value={coleta.codigoConfirmacao} />
+        )}
+      </AppCard>
 
       {opcoes.length > 0 && (
         <AppCard>
           <SectionHeader
-            eyebrow="STATUS"
+            eyebrow="TIMELINE"
             title="Atualizar andamento"
-            description="Escolha o proximo passo da coleta aprovada."
+            description="Escolha o próximo passo da coleta aprovada."
           />
           <View style={{ gap: 10 }}>
             {opcoes.map((status) => (
@@ -159,17 +206,17 @@ export default function EmpresaColetaDetailScreen() {
           </View>
           {novoStatus === "concluida" && (
             <AppField
-              label="Codigo de confirmacao"
+              label="Código de confirmação"
               value={codigoConfirmacao}
               onChangeText={setCodigoConfirmacao}
-              placeholder="Informe o codigo do solicitante"
+              placeholder="Informe o código do solicitante"
               autoCapitalize="characters"
             />
           )}
-          <Text style={{ color: "#537156", lineHeight: 22 }}>
+          <Text style={{ color: appColors.textSoft, fontSize: 15, lineHeight: 22 }}>
             {novoStatus
-              ? `Proximo passo selecionado: ${STATUS_ACTION_LABELS[novoStatus] ?? novoStatus}.`
-              : "Selecione o proximo passo para habilitar a atualizacao."}
+              ? `Próximo passo selecionado: ${STATUS_ACTION_LABELS[novoStatus] ?? novoStatus}.`
+              : "Selecione o próximo passo para habilitar a atualização."}
           </Text>
           <AppButton
             label={statusMutation.isPending ? "Atualizando..." : "Atualizar status"}
@@ -189,16 +236,24 @@ export default function EmpresaColetaDetailScreen() {
           accessToken={accessToken}
           currentUserId={user.id}
           messages={coleta.mensagens ?? []}
+          title="Conversa com o solicitante"
           emptyText="Nenhuma mensagem ainda. Converse com o solicitante por aqui."
           placeholder="Escreva para o solicitante"
         />
       ) : null}
-
-      <AppButton
-        label="Voltar para coletas"
-        tone="secondary"
-        onPress={() => router.push("/empresa/coletas" as any)}
-      />
     </AppScreen>
+  );
+}
+
+function IconText({ icon, text }: { icon: LucideIcon; text: string }) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
+      <Icon icon={icon} size={16} color={appColors.textFaint} />
+      <Text
+        style={{ color: appColors.text, fontSize: 15, lineHeight: 22, fontWeight: "600", flex: 1 }}
+      >
+        {text}
+      </Text>
+    </View>
   );
 }

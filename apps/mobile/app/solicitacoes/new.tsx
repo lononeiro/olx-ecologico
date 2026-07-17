@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { router } from "expo-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { solicitacaoCreateSchema } from "@shared";
+import { Plus, ImagePlus, Search, Trash2, ArrowLeft } from "lucide-react-native";
 import {
   AppButton,
   AppCard,
@@ -156,7 +157,7 @@ export default function NewSolicitacaoScreen() {
         <SectionHeader
           eyebrow="NOVA SOLICITACAO"
           title="Criar coleta"
-          description="Informe material, descricao, endereco e envie sua solicitacao para analise administrativa."
+          description="Informe material, descricao, endereco e envie sua solicitacao. Ela ja fica disponivel para as empresas coletoras."
         />
       </AppCard>
 
@@ -230,7 +231,7 @@ export default function NewSolicitacaoScreen() {
               placeholder="00000-000"
               keyboardType="numeric"
             />
-            <AppButton label="Buscar CEP" tone="secondary" onPress={buscarCep} />
+            <AppButton label="Buscar CEP" tone="secondary" icon={Search} onPress={buscarCep} />
             <AppField
               label="Rua / Avenida"
               value={endereco.rua}
@@ -295,13 +296,14 @@ export default function NewSolicitacaoScreen() {
           placeholder="https://..."
           autoCapitalize="none"
         />
-        <AppButton label="Adicionar imagem" tone="secondary" onPress={addImagem} />
+        <AppButton label="Adicionar imagem" tone="secondary" icon={ImagePlus} onPress={addImagem} />
         {imagens.map((item, index) => (
           <AppCard key={`${item}-${index}`}>
             <SectionHeader title={`Imagem ${index + 1}`} description={item} />
             <AppButton
               label="Remover imagem"
               tone="danger"
+              icon={Trash2}
               onPress={() =>
                 setImagens((current) => current.filter((_, currentIndex) => currentIndex !== index))
               }
@@ -311,9 +313,16 @@ export default function NewSolicitacaoScreen() {
       </AppCard>
 
       <AppButton
-        label={createMutation.isPending ? "Criando solicitacao..." : "Criar solicitacao"}
+        label={createMutation.isPending ? "Criando solicitação..." : "Criar solicitação"}
+        icon={Plus}
         onPress={() => createMutation.mutate()}
         disabled={createMutation.isPending}
+      />
+      <AppButton
+        label="Cancelar"
+        tone="secondary"
+        icon={ArrowLeft}
+        onPress={() => router.back()}
       />
     </AppScreen>
   );

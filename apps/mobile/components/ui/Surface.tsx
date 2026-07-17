@@ -39,14 +39,14 @@ const styles = StyleSheet.create({
   },
   success: {
     backgroundColor: colors.successBg,
-    borderColor: "#cae0d0",
+    borderColor: "#cfe4d5",
   },
   danger: {
     backgroundColor: colors.dangerBg,
-    borderColor: "#f0cccc",
+    borderColor: "#f0d0d0",
   },
   info: {
     backgroundColor: colors.infoBg,
-    borderColor: "#d2dcf4",
+    borderColor: "#d5def5",
   },
 });

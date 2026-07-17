@@ -67,8 +67,8 @@ model SolicitacaoColeta {
   descricao  String
   quantidade String
   endereco   String
-  status     String   @default("pendente")
-  aprovado   Boolean  @default(false)
+  status     String   @default("aprovada")
+  aprovado   Boolean  @default(true)
   userId     Int
   materialId Int
   createdAt  DateTime @default(now())

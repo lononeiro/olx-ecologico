@@ -1,14 +1,18 @@
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, MapPin, Package, type LucideIcon } from "lucide-react-native";
+import { Text, View } from "react-native";
 import {
   AppButton,
   AppCard,
   AppScreen,
+  Icon,
   InfoRow,
   LoadingCard,
   MessageBanner,
   SectionHeader,
   StatusBadge,
+  appColors,
 } from "@/components/AppUI";
 import { ChatThread } from "@/components/ChatThread";
 import {
@@ -52,16 +56,28 @@ export default function EmpresaSolicitacaoConversaScreen() {
 
   if (query.error || !query.data) {
     return (
-      <AppScreen>
+      <AppScreen
+        footer={
+          <AppButton
+            label="Voltar"
+            tone="secondary"
+            icon={ArrowLeft}
+            onPress={() => router.push("/empresa/solicitacoes" as any)}
+          />
+        }
+      >
         <MessageBanner
-          message={getReadableErrorMessage(query.error, "Nao foi possivel abrir a conversa.")}
+          message={getReadableErrorMessage(query.error, "Não foi possível abrir a conversa.")}
           tone="error"
         />
-        <AppButton
-          label="Voltar"
-          tone="secondary"
-          onPress={() => router.push("/empresa/solicitacoes" as any)}
-        />
+      </AppScreen>
+    );
+  }
+
+  if (!accessToken) {
+    return (
+      <AppScreen>
+        <LoadingCard text="Carregando conversa..." />
       </AppScreen>
     );
   }
@@ -70,23 +86,39 @@ export default function EmpresaSolicitacaoConversaScreen() {
   const solicitacao = conversa.solicitacao;
 
   return (
-    <AppScreen>
+    <AppScreen
+      footer={
+        <AppButton
+          label="Voltar para solicitações"
+          tone="secondary"
+          icon={ArrowLeft}
+          onPress={() => router.push("/empresa/solicitacoes" as any)}
+        />
+      }
+    >
       <AppCard>
         <SectionHeader
-          eyebrow="CONVERSA PRE-ACEITE"
-          title={solicitacao?.titulo ?? `Solicitacao #${conversa.solicitacaoId}`}
-          description="Tire duvidas com o solicitante antes de aceitar a coleta."
+          eyebrow="CONVERSA PRÉ-ACEITE"
+          title={solicitacao?.titulo ?? `Solicitação #${conversa.solicitacaoId}`}
+          description="Tire dúvidas com o solicitante antes de aceitar a coleta."
         />
         {solicitacao?.status && <StatusBadge kind="solicitacao" value={solicitacao.status} />}
       </AppCard>
 
       {solicitacao ? (
-        <>
-          <InfoRow label="Material" value={solicitacao.material.nome} />
+        <AppCard>
+          <SectionHeader eyebrow="MATERIAIS" title="Detalhes da solicitação" />
+          <InfoRow
+            label="Material"
+            value={<IconText icon={Package} text={solicitacao.material.nome} />}
+          />
           <InfoRow label="Quantidade" value={solicitacao.quantidade} />
-          <InfoRow label="Regiao aproximada" value={solicitacao.endereco} />
-          <InfoRow label="Descricao" value={solicitacao.descricao} />
-        </>
+          <InfoRow
+            label="Região aproximada"
+            value={<IconText icon={MapPin} text={solicitacao.endereco} />}
+          />
+          <InfoRow label="Descrição" value={solicitacao.descricao} />
+        </AppCard>
       ) : null}
 
       <ChatThread
@@ -103,12 +135,19 @@ export default function EmpresaSolicitacaoConversaScreen() {
         emptyText="Nenhuma pergunta enviada ainda."
         placeholder="Pergunte sobre volume, acesso ao local ou estado do material"
       />
-
-      <AppButton
-        label="Voltar para solicitacoes"
-        tone="secondary"
-        onPress={() => router.push("/empresa/solicitacoes" as any)}
-      />
     </AppScreen>
+  );
+}
+
+function IconText({ icon, text }: { icon: LucideIcon; text: string }) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
+      <Icon icon={icon} size={16} color={appColors.textFaint} />
+      <Text
+        style={{ color: appColors.text, fontSize: 15, lineHeight: 22, fontWeight: "600", flex: 1 }}
+      >
+        {text}
+      </Text>
+    </View>
   );
 }

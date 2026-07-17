@@ -19,15 +19,14 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 import {
-  atualizarStatusSolicitacao,
   buscarSolicitacaoEmpresaDTO,
   buscarSolicitacaoPorId,
   criarSolicitacao,
-  getAdminSolicitacaoScope,
   listarSolicitacoesAdmin,
   listarSolicitacoesAprovadas,
   listarSolicitacoesDoUsuario,
-  listarSolicitacoesPendentes,
+  listarSolicitacoesRecentes,
+  removerSolicitacao,
 } from "@/services/solicitacao.service";
 
 describe("solicitacao.service", () => {
@@ -61,8 +60,8 @@ describe("solicitacao.service", () => {
           endereco: "Rua A, 100",
           materialId: 2,
           userId: 7,
-          status: "pendente",
-          aprovado: false,
+          status: "aprovada",
+          aprovado: true,
           imagens: {
             create: [
               { url: "https://img.com/a.jpg" },
@@ -93,8 +92,8 @@ describe("solicitacao.service", () => {
           endereco: "Rua B, 20",
           materialId: 4,
           userId: 5,
-          status: "pendente",
-          aprovado: false,
+          status: "aprovada",
+          aprovado: true,
           imagens: undefined,
         },
         include: { material: true, imagens: true },
@@ -148,23 +147,23 @@ describe("solicitacao.service", () => {
     );
   });
 
-  it("lista solicitações pendentes de aprovação", async () => {
+  it("lista solicitações recentes para o painel do admin", async () => {
     prismaMock.solicitacaoColeta.findMany.mockResolvedValueOnce([]);
-    await listarSolicitacoesPendentes();
+    await listarSolicitacoesRecentes();
 
     expect(prismaMock.solicitacaoColeta.findMany).toHaveBeenCalledWith({
-      where: { status: "pendente", aprovado: false },
+      where: { status: "aprovada" },
       include: {
         material: true,
         imagens: true,
       },
       orderBy: { createdAt: "desc" },
+      take: 10,
     });
   });
 
-  it("lista a fila operacional da admin", async () => {
+  it("lista todas as solicitações para gestão da admin", async () => {
     prismaMock.solicitacaoColeta.findMany.mockResolvedValueOnce([]);
-    const now = new Date("2026-04-08T12:00:00.000Z");
     await listarSolicitacoesAdmin();
 
     expect(prismaMock.solicitacaoColeta.findMany).toHaveBeenCalledWith(
@@ -184,34 +183,22 @@ describe("solicitacao.service", () => {
       })
     );
     expect(JSON.stringify(prismaMock.solicitacaoColeta.findMany.mock.calls.at(-1)?.[0])).not.toContain("mensagens");
-
-    expect(getAdminSolicitacaoScope(now)).toEqual({
-      OR: [
-        { status: "rejeitada" },
-        { status: "aprovada", aprovado: true, coleta: null },
-        {
-          status: "pendente",
-          aprovado: false,
-          createdAt: { lte: new Date("2026-04-07T12:00:00.000Z") },
-        },
-      ],
-    });
   });
 
-  it("atualiza o status de aprovação corretamente", async () => {
+  it("remove a solicitação e notifica o dono", async () => {
     prismaMock.solicitacaoColeta.update.mockResolvedValueOnce({
       id: 4,
       userId: 1,
       titulo: "Coleta de teste",
     });
 
-    await atualizarStatusSolicitacao(4, true);
+    await removerSolicitacao(4);
 
     expect(prismaMock.solicitacaoColeta.update).toHaveBeenCalledWith({
       where: { id: 4 },
       data: {
-        aprovado: true,
-        status: "aprovada",
+        aprovado: false,
+        status: "removida",
       },
     });
     expect(prismaMock.notificacao.create).toHaveBeenCalledTimes(1);

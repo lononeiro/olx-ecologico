@@ -1,0 +1,27 @@
+@startuml SEQ-06-listar-solicitacoes
+title SEQ-06 - Listar Solicitacoes (ramificacao por perfil)
+actor "Cidadao / Empresa / Admin" as Usuario
+participant "GET /api/solicitacoes" as EP
+participant "route-guard" as RG
+participant "solicitacao.service" as SVC
+participant "privacy mapper" as PR
+database PostgreSQL as DB
+
+Usuario -> EP : GET /api/solicitacoes
+EP -> RG : autorizarRota(["usuario","admin","empresa"])
+RG --> EP : session (role)
+alt role == usuario
+  EP -> SVC : listarSolicitacoesDoUsuario(userId)
+  SVC -> DB : where userId (todas as proprias)
+else role == admin
+  EP -> SVC : listarSolicitacoesAdmin()
+  SVC -> DB : escopo de moderacao\n(rejeitadas / aprovadas-sem-coleta / pendentes > 24h)
+  SVC -> PR : mascara contato (regiao)
+else role == empresa
+  EP -> SVC : listarSolicitacoesAprovadas()
+  SVC -> DB : where aprovado, status=aprovada, coleta=null
+  SVC -> PR : endereco -> regiao aproximada
+end
+SVC --> EP : lista (DTO)
+EP --> Usuario : 200
+@enduml

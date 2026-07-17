@@ -38,9 +38,9 @@ export function StatusPill({
       : STATUS_COLETA_LABEL[value] ?? value;
 
   const palette =
-    value === "pendente" || value === "a_caminho"
+    value === "a_caminho"
       ? { bg: colors.warningBg, text: colors.warningText }
-      : value === "rejeitada" || value === "cancelada"
+      : value === "rejeitada" || value === "cancelada" || value === "removida"
         ? { bg: colors.dangerBg, text: colors.dangerText }
         : value === "em_coleta"
           ? { bg: colors.infoBg, text: colors.infoText }
@@ -96,7 +96,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   stat: {
-    minWidth: 148,
+    flexBasis: "47%",
+    flexGrow: 1,
     backgroundColor: colors.surfaceStrong,
     borderWidth: 1,
     borderColor: colors.stroke,

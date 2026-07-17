@@ -15,16 +15,15 @@ export async function GET() {
 
   const [
     totalUsuarios, totalEmpresas, totalSolicitacoes,
-    solicitacoesPendentes, solicitacoesAprovadas, solicitacoesRejeitadas,
+    solicitacoesAtivas, solicitacoesRemovidas,
     coletasAceitas, coletasConcluidas, coletasCanceladas,
     materiaisAgg, empresasAgg, solicitacoesRecentes,
   ] = await Promise.all([
     prisma.user.count({ where: { role: { nome: "usuario" } } }),
     prisma.company.count(),
     prisma.solicitacaoColeta.count(),
-    prisma.solicitacaoColeta.count({ where: { status: "pendente" } }),
     prisma.solicitacaoColeta.count({ where: { status: "aprovada" } }),
-    prisma.solicitacaoColeta.count({ where: { status: "rejeitada" } }),
+    prisma.solicitacaoColeta.count({ where: { status: "removida" } }),
     prisma.coleta.count({ where: { status: "aceita" } }),
     prisma.coleta.count({ where: { status: "concluida" } }),
     prisma.coleta.count({ where: { status: "cancelada" } }),
@@ -85,7 +84,7 @@ export async function GET() {
   return NextResponse.json({
     stats: {
       totalUsuarios, totalEmpresas, totalSolicitacoes,
-      solicitacoesPendentes, solicitacoesAprovadas, solicitacoesRejeitadas,
+      solicitacoesAtivas, solicitacoesRemovidas,
       coletasAceitas, coletasConcluidas, coletasCanceladas,
     },
     materiaisTop,

@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   title: {
     ...typography.title,
     color: colors.text,
-    letterSpacing: -0.8,
+    letterSpacing: -0.4,
   },
   description: {
     ...typography.body,

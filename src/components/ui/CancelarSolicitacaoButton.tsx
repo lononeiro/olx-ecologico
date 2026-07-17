@@ -18,6 +18,7 @@ export function CancelarSolicitacaoButton({ solicitacaoId, statusSolicitacao, st
 
   const naoPermitido =
     statusSolicitacao === "rejeitada" ||
+    statusSolicitacao === "removida" ||
     statusSolicitacao === "cancelada" ||
     statusColeta === "em_coleta" ||
     statusColeta === "concluida" ||

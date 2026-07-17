@@ -1,0 +1,43 @@
+@startuml componentes-econecta
+' Diagrama de Componentes - ECOnecta
+skinparam componentStyle rectangle
+
+package "Clientes" {
+  [Web (Next.js SSR/CSR)] as WEB
+  [App Mobile (Expo)] as MOB
+}
+
+package "Next.js App (monolito)" {
+  [Middleware\n(auth + CORS)] as MW
+  [Route Handlers /api/**] as API
+  [Camada de Servicos] as SVC
+  [route-guard / mobile-auth] as SEC
+  [privacy mapper] as PRIV
+  [Prisma Client] as ORM
+  [SSE Stream] as SSE
+}
+
+package "packages/shared" {
+  [Zod schemas + status + contracts] as SHARED
+}
+
+database "PostgreSQL" as DB
+cloud "Cloudinary" as CL
+cloud "ViaCEP" as CEP
+
+WEB --> MW
+WEB ..> CL : upload direto
+MOB --> API : Bearer token
+MW --> API
+API --> SEC
+API --> SVC
+SVC --> PRIV
+SVC --> ORM
+ORM --> DB
+API --> CEP
+WEB --> SSE
+SSE --> ORM
+API ..> SHARED
+SVC ..> SHARED
+MOB ..> SHARED
+@enduml

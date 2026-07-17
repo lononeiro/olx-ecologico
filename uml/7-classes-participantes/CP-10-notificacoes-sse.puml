@@ -1,0 +1,21 @@
+@startuml CP-10-notificacoes-sse
+title CP-10 - Receber Notificacoes em Tempo Real (robustez) [NOVO]
+left to right direction
+actor "Usuario" as ator
+boundary "NotificationBell (EventSource)" as b1
+boundary "GET /api/notificacoes/stream" as b2
+control "route-guard" as c0
+control "ultimaNotificacaoId()" as c1
+control "buscarNotificacoesDesde() [poll 4s]" as c2
+control "contarNaoLidas()" as c3
+entity "Notificacao" as e1
+
+ator -- b1
+b1 -- b2
+b2 -- c0
+c0 -- c1
+c1 -- c2
+c2 -- e1
+c2 -- c3
+c3 -- e1
+@enduml

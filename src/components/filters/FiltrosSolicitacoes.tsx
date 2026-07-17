@@ -16,10 +16,9 @@ interface FiltrosSolicitacoesProps {
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos os status" },
-  { value: "pendente", label: "Pendente" },
-  { value: "aprovada", label: "Aprovada" },
-  { value: "rejeitada", label: "Rejeitada" },
+  { value: "aprovada", label: "Ativa" },
   { value: "cancelada", label: "Cancelada" },
+  { value: "removida", label: "Removida" },
 ];
 
 export function FiltrosSolicitacoes({

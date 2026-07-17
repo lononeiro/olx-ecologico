@@ -1,5 +1,7 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
+import { Icon, type LucideIcon } from "@/components/ui/Icon";
+import { Inbox } from "lucide-react-native";
 
 export function Banner({
   message,
@@ -43,13 +45,17 @@ export function LoadingState({ text }: { text: string }) {
 export function EmptyState({
   title,
   description,
+  icon = Inbox,
 }: {
   title: string;
   description: string;
+  icon?: LucideIcon;
 }) {
   return (
     <View style={styles.stateCard}>
-      <View style={styles.emptyGlyph} />
+      <View style={styles.emptyGlyph}>
+        <Icon icon={icon} size={22} color={colors.primary} strokeWidth={1.75} />
+      </View>
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptyDescription}>{description}</Text>
     </View>
@@ -65,15 +71,15 @@ const styles = StyleSheet.create({
   },
   success: {
     backgroundColor: colors.successBg,
-    borderColor: "#cadecf",
+    borderColor: "#cfe4d5",
   },
   error: {
     backgroundColor: colors.dangerBg,
-    borderColor: "#ebc1c1",
+    borderColor: "#f0d0d0",
   },
   info: {
     backgroundColor: colors.infoBg,
-    borderColor: "#cfdbf5",
+    borderColor: "#d5def5",
   },
   bannerText: {
     ...typography.bodyStrong,
@@ -102,10 +108,12 @@ const styles = StyleSheet.create({
     color: colors.textSoft,
   },
   emptyGlyph: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: radius.pill,
     backgroundColor: colors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyTitle: {
     ...typography.sectionTitle,

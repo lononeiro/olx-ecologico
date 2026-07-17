@@ -1,0 +1,25 @@
+@startuml SEQ-13-avaliar-coleta
+title SEQ-13 - Avaliar Coleta Concluida
+actor Cidadao
+participant "POST /api/avaliacoes" as EP
+participant "avaliacaoCreateSchema (Zod)" as Z
+participant "avaliacao.service\ncriarAvaliacao" as SVC
+participant "notificacao.service" as N
+database PostgreSQL as DB
+
+Cidadao -> EP : POST {coletaId, nota (1-5), comentario?}
+EP -> Z : valida nota e comentario (<= 500)
+EP -> SVC : criarAvaliacao(coletaId, autorId, nota, comentario)
+SVC -> DB : findUnique coleta (+ solicitacao, company)
+SVC -> SVC : autorId == dono?\nstatus == concluida?\nsem avaliacao previa?
+alt regra violada
+  SVC --> EP : throw
+  EP --> Cidadao : 400
+else ok
+  SVC -> DB : create Avaliacao
+  SVC -> N : notificarAvaliacaoRecebida(empresa)
+  N -> DB : create Notificacao
+  SVC --> EP : avaliacao
+  EP --> Cidadao : 201
+end
+@enduml
