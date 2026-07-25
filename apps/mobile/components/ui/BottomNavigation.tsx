@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, radius, spacing, typography } from "@/theme/tokens";
+import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 import { Icon, type LucideIcon } from "@/components/ui/Icon";
 
 export type TabItem = {
@@ -31,16 +31,18 @@ export function BottomNavigation({
             onPress={() => {
               if (!focused) router.replace(item.route as any);
             }}
-            style={styles.tab}
+            style={({ pressed }) => [styles.tab, pressed && styles.tabPressed]}
             accessibilityRole="button"
             accessibilityState={focused ? { selected: true } : {}}
           >
-            <Icon
-              icon={item.icon}
-              size={22}
-              strokeWidth={focused ? 2 : 1.75}
-              color={focused ? colors.primary : colors.textFaint}
-            />
+            <View style={[styles.iconPill, focused && styles.iconPillActive]}>
+              <Icon
+                icon={item.icon}
+                size={22}
+                strokeWidth={focused ? 2.2 : 1.75}
+                color={focused ? colors.primary : colors.textFaint}
+              />
+            </View>
             <Text style={[styles.label, focused && styles.labelActive]}>
               {item.label}
             </Text>
@@ -57,8 +59,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceStrong,
     borderTopWidth: 1,
     borderTopColor: colors.stroke,
-    paddingTop: 10,
+    paddingTop: 8,
     paddingHorizontal: spacing.sm,
+    ...shadows.nav,
   },
   tab: {
     flex: 1,
@@ -68,6 +71,20 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: radius.sm,
   },
+  tabPressed: {
+    opacity: 0.6,
+  },
+  iconPill: {
+    minWidth: 56,
+    height: 32,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "transparent",
+  },
+  iconPillActive: {
+    backgroundColor: colors.primarySoft,
+  },
   label: {
     ...typography.meta,
     fontSize: 11,
@@ -76,5 +93,6 @@ const styles = StyleSheet.create({
   },
   labelActive: {
     color: colors.primary,
+    fontWeight: "700",
   },
 });

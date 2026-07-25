@@ -73,8 +73,8 @@ const styles = StyleSheet.create({
   },
   primary: {
     backgroundColor: colors.primary,
-    borderColor: colors.primaryStrong,
-    ...shadows.float,
+    borderColor: colors.primary,
+    ...shadows.button,
   },
   secondary: {
     backgroundColor: colors.surfaceStrong,

@@ -31,6 +31,13 @@ yarn-error.log*
 pnpm-debug.log*
 *.log
 
+# ── Testes ────────────────────────────────────────────────────────────────────
+coverage/
+playwright-report/
+test-results/
+/blob-report/
+.playwright/
+
 # ── Cache ─────────────────────────────────────────────────────────────────────
 .npm
 .eslintcache

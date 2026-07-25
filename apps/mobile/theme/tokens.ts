@@ -6,13 +6,15 @@ export const colors = {
   surfaceTint: "#F3F7F2",
   stroke: "#E8ECE9",
   strokeStrong: "#D7DED9",
-  text: "#202124",
+  text: "#1A1A1A",
   textSoft: "#6B7280",
-  textFaint: "#8A9088",
-  primary: "#2E7D5B",
-  primaryStrong: "#25684B",
+  textFaint: "#9CA3AF",
+  primary: "#2D6A4F",
+  primaryStrong: "#1B4332",
+  primaryMid: "#40916C",
   primarySoft: "#E3EFE8",
-  accent: "#2E7D5B",
+  primaryTint: "#F0FFF4",
+  accent: "#2D6A4F",
   successBg: "#E5F3EA",
   successText: "#227A4C",
   warningBg: "#FDF3DC",
@@ -121,6 +123,22 @@ export const shadows = {
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },
     elevation: 4,
+  },
+  // Sombra colorida e discreta para o botão primário (feel de app).
+  button: {
+    shadowColor: "#1B4332",
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  // Sombra projetada para cima, para a barra de navegação flutuar.
+  nav: {
+    shadowColor: "rgba(27, 67, 50, 0.14)",
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 12,
   },
 };
 

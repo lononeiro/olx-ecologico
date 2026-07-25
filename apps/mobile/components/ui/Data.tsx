@@ -4,7 +4,7 @@ import {
   STATUS_COLETA_LABEL,
   STATUS_SOLICITACAO_LABEL,
 } from "@shared";
-import { colors, radius, spacing, typography } from "@/theme/tokens";
+import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
 export function DataRow({
   label,
@@ -62,8 +62,11 @@ export function StatCard({
 }) {
   return (
     <View style={styles.stat}>
-      <Text style={styles.label}>{label.toUpperCase()}</Text>
       <Text style={styles.statValue}>{value}</Text>
+      <View style={styles.statLabelRow}>
+        <View style={styles.statDot} />
+        <Text style={styles.statLabel}>{label.toUpperCase()}</Text>
+      </View>
     </View>
   );
 }
@@ -102,11 +105,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.stroke,
     borderRadius: radius.md,
-    padding: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
     gap: spacing.xs,
+    ...shadows.card,
   },
   statValue: {
     ...typography.stat,
-    color: colors.text,
+    color: colors.primaryStrong,
+  },
+  statLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  statDot: {
+    width: 6,
+    height: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primaryMid,
+  },
+  statLabel: {
+    ...typography.eyebrow,
+    color: colors.textFaint,
+    flex: 1,
   },
 });

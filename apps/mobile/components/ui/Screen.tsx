@@ -1,29 +1,36 @@
 import type { ReactNode } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, layout } from "@/theme/tokens";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { colors, layout, radius } from "@/theme/tokens";
 
 export function Screen({
   children,
   scroll = true,
+  center = false,
   footer,
 }: {
   children: ReactNode;
   scroll?: boolean;
+  center?: boolean;
   footer?: ReactNode;
 }) {
+  const insets = useSafeAreaInsets();
   const body = scroll ? (
     <ScrollView
       contentContainerStyle={[
         styles.scrollContent,
         footer ? styles.scrollContentWithFooter : null,
+        center ? styles.centerContent : null,
       ]}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
     >
       {children}
     </ScrollView>
   ) : (
-    <View style={styles.content}>{children}</View>
+    <View style={[styles.content, center ? styles.centerContent : null]}>
+      {children}
+    </View>
   );
 
   return (
@@ -31,6 +38,14 @@ export function Screen({
       <View style={styles.background}>
         {body}
         {!!footer && <View style={styles.footer}>{footer}</View>}
+        {!footer && (
+          <View
+            style={[styles.systemBar, { height: Math.max(insets.bottom, 16) }]}
+            pointerEvents="none"
+          >
+            <View style={styles.systemBarHandle} />
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -58,6 +73,10 @@ const styles = StyleSheet.create({
   scrollContentWithFooter: {
     paddingBottom: 12,
   },
+  centerContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
   footer: {
     padding: layout.screenPadding,
     paddingTop: 12,
@@ -65,5 +84,19 @@ const styles = StyleSheet.create({
     borderTopColor: colors.stroke,
     backgroundColor: colors.canvas,
     gap: 10,
+  },
+  // Footer que cobre a área dos botões do sistema, presente em todas as telas.
+  systemBar: {
+    borderTopWidth: 1,
+    borderTopColor: colors.stroke,
+    backgroundColor: colors.surfaceStrong,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  systemBarHandle: {
+    width: 120,
+    height: 5,
+    borderRadius: radius.pill,
+    backgroundColor: colors.stroke,
   },
 });

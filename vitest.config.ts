@@ -7,6 +7,8 @@ export default defineConfig({
     globals: true,
     clearMocks: true,
     restoreMocks: true,
+    // Os testes E2E do Playwright ficam em `e2e/` e não devem rodar no Vitest.
+    exclude: ["**/node_modules/**", "**/dist/**", "e2e/**", "apps/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

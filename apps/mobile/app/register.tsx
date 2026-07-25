@@ -1,15 +1,24 @@
 import { useMemo, useState } from "react";
 import { router } from "expo-router";
 import { useMutation } from "@tanstack/react-query";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  User as UserIcon,
+} from "lucide-react-native";
 import type { RegisterInput } from "@shared";
 import {
   AppButton,
   AppCard,
   AppField,
   AppScreen,
+  Icon,
   MessageBanner,
   SectionHeader,
 } from "@/components/AppUI";
+import type { LucideIcon } from "@/components/ui/Icon";
 import {
   buildAddressString,
   EMPTY_ADDRESS_FIELDS,
@@ -19,16 +28,18 @@ import {
   normalizeCep,
 } from "@/lib/address";
 import {
-  checkEmailAvailability,
   getReadableErrorMessage,
   lookupCep,
   registerMobile,
 } from "@/lib/api";
 import { STRONG_PASSWORD_HINTS, getStrongPasswordIssues } from "@/lib/password";
+import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 type Tipo = "usuario" | "empresa";
+type Step = "choose" | "form";
 
 export default function RegisterScreen() {
+  const [step, setStep] = useState<Step>("choose");
   const [tipo, setTipo] = useState<Tipo>("usuario");
   const [form, setForm] = useState({
     nome: "",
@@ -41,7 +52,6 @@ export default function RegisterScreen() {
   const [incluirEndereco, setIncluirEndereco] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const [mensagemTone, setMensagemTone] = useState<"success" | "error">("error");
-  const [emailStatus, setEmailStatus] = useState("");
   const [cepStatus, setCepStatus] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | undefined>>({});
 
@@ -97,15 +107,11 @@ export default function RegisterScreen() {
     },
   });
 
-  const handleCheckEmail = async () => {
-    if (!form.email.trim()) return;
-
-    try {
-      const result = await checkEmailAvailability(form.email.trim());
-      setEmailStatus(result.mensagem);
-    } catch (error) {
-      setEmailStatus(getReadableErrorMessage(error, "Não foi possível validar o email."));
-    }
+  const handleChoose = (next: Tipo) => {
+    setTipo(next);
+    setMensagem("");
+    setFieldErrors({});
+    setStep("form");
   };
 
   const handleLookupCep = async () => {
@@ -132,75 +138,111 @@ export default function RegisterScreen() {
     }
   };
 
+  // ── Passo 1: escolha do tipo de conta ──────────────────────────────
+  if (step === "choose") {
+    return (
+      <AppScreen scroll={false}>
+        <View style={styles.choosePage}>
+          <SectionHeader
+            eyebrow="CRIAR CONTA"
+            title="Como você vai usar o ECOnecta?"
+            description="Escolha o tipo de conta para começar. Você só verá os campos do seu perfil."
+            align="center"
+          />
+
+          <ChoiceCard
+            icon={UserIcon}
+            title="Sou cidadão"
+            description="Solicito coletas de recicláveis e acompanho o andamento."
+            onPress={() => handleChoose("usuario")}
+          />
+          <ChoiceCard
+            icon={Building2}
+            title="Sou empresa"
+            description="Realizo coletas, gerencio solicitações e converso com clientes."
+            onPress={() => handleChoose("empresa")}
+          />
+
+          <AppButton label="Já tenho conta" tone="ghost" onPress={() => router.push("/login")} />
+        </View>
+      </AppScreen>
+    );
+  }
+
+  // ── Passo 2: formulário do tipo escolhido ──────────────────────────
+  const isEmpresa = tipo === "empresa";
+
   return (
     <AppScreen>
-      <AppCard>
-        <SectionHeader
-          eyebrow="CADASTRO"
-          title="Criar conta"
-          description="O cadastro inicial segue o fluxo do web: dados principais agora, complementos depois no perfil."
-        />
-      </AppCard>
+      <Pressable
+        style={styles.backRow}
+        onPress={() => {
+          setMensagem("");
+          setStep("choose");
+        }}
+        hitSlop={8}
+      >
+        <Icon icon={ChevronLeft} size={18} color={colors.primary} />
+        <Text style={styles.backText}>Trocar tipo de conta</Text>
+      </Pressable>
+
+      <View style={styles.typeBadge}>
+        <View style={styles.typeBadgeIcon}>
+          <Icon
+            icon={isEmpresa ? Building2 : UserIcon}
+            size={18}
+            color={colors.primary}
+          />
+        </View>
+        <Text style={styles.typeBadgeText}>
+          {isEmpresa ? "Conta de empresa" : "Conta de cidadão"}
+        </Text>
+      </View>
 
       {!!mensagem && <MessageBanner message={mensagem} tone={mensagemTone} />}
 
       <AppCard>
+        <SectionHeader
+          eyebrow="DADOS PRINCIPAIS"
+          title={isEmpresa ? "Sua empresa" : "Seus dados"}
+        />
         <AppField
-          label={tipo === "empresa" ? "Nome da empresa" : "Nome completo"}
+          label={isEmpresa ? "Nome da empresa" : "Nome completo"}
           value={form.nome}
           onChangeText={(value) => setForm((current) => ({ ...current, nome: value }))}
-          placeholder={tipo === "empresa" ? "Nome da sua empresa" : "Seu nome completo"}
+          placeholder={isEmpresa ? "Nome da sua empresa" : "Seu nome completo"}
           error={fieldErrors.nome}
         />
         <AppField
           label="Email"
           value={form.email}
-          onChangeText={(value) => {
-            setEmailStatus("");
-            setForm((current) => ({ ...current, email: value }));
-          }}
+          onChangeText={(value) =>
+            setForm((current) => ({ ...current, email: value }))
+          }
           placeholder="seu@email.com"
           autoCapitalize="none"
           keyboardType="email-address"
           error={fieldErrors.email}
         />
-        {!!emailStatus && <MessageBanner message={emailStatus} tone="success" />}
-        <AppButton label="Verificar email" tone="secondary" onPress={handleCheckEmail} />
         <AppField
           label="Senha"
           value={form.senha}
           onChangeText={(value) => setForm((current) => ({ ...current, senha: value }))}
           placeholder="Crie uma senha forte"
           secureTextEntry
+          secureToggle
           error={fieldErrors.senha ?? (form.senha ? passwordIssues[0] : undefined)}
           helper={STRONG_PASSWORD_HINTS.join(" | ")}
         />
-      </AppCard>
 
-      <AppCard>
-        <SectionHeader
-          eyebrow="TIPO DE CONTA"
-          title={tipo === "usuario" ? "Cidadão" : "Empresa"}
-          description="As permissões e os fluxos seguintes dependem do perfil escolhido."
-        />
-        <AppButton
-          label="Conta de cidadão"
-          tone={tipo === "usuario" ? "primary" : "secondary"}
-          onPress={() => setTipo("usuario")}
-        />
-        <AppButton
-          label="Conta de empresa"
-          tone={tipo === "empresa" ? "primary" : "secondary"}
-          onPress={() => setTipo("empresa")}
-        />
-
-        {tipo === "empresa" && (
+        {isEmpresa && (
           <>
             <AppField
               label="CNPJ"
               value={form.cnpj}
               onChangeText={(value) => setForm((current) => ({ ...current, cnpj: value }))}
               placeholder="00.000.000/0001-00"
+              keyboardType="numeric"
             />
             <AppField
               label="Descrição"
@@ -208,7 +250,7 @@ export default function RegisterScreen() {
               onChangeText={(value) =>
                 setForm((current) => ({ ...current, descricao: value }))
               }
-              placeholder="Você pode detalhar a empresa agora ou depois."
+              placeholder="Conte um pouco sobre a empresa (opcional)."
               multiline
             />
           </>
@@ -218,11 +260,11 @@ export default function RegisterScreen() {
       <AppCard>
         <SectionHeader
           eyebrow="ENDEREÇO"
-          title="Adicionar agora é opcional"
-          description="Se preferir, o endereço pode ser completado depois no perfil."
+          title="Opcional"
+          description="Você pode completar o endereço agora ou depois, no seu perfil."
         />
         <AppButton
-          label={incluirEndereco ? "Remover endereço do cadastro" : "Adicionar endereço agora"}
+          label={incluirEndereco ? "Remover endereço" : "Adicionar endereço agora"}
           tone="secondary"
           onPress={() => setIncluirEndereco((current) => !current)}
         />
@@ -256,6 +298,7 @@ export default function RegisterScreen() {
                 setEndereco((current) => ({ ...current, numero: value }))
               }
               placeholder="123"
+              keyboardType="numeric"
             />
             <AppField
               label="Complemento"
@@ -299,7 +342,115 @@ export default function RegisterScreen() {
         onPress={() => registerMutation.mutate()}
         disabled={registerMutation.isPending}
       />
-      <AppButton label="Já tenho conta" tone="secondary" onPress={() => router.push("/login")} />
+      <AppButton label="Já tenho conta" tone="ghost" onPress={() => router.push("/login")} />
     </AppScreen>
   );
 }
+
+function ChoiceCard({
+  icon,
+  title,
+  description,
+  onPress,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.choice, pressed && styles.choicePressed]}
+    >
+      <View style={styles.choiceIcon}>
+        <Icon icon={icon} size={26} color={colors.primary} strokeWidth={2} />
+      </View>
+      <View style={styles.choiceText}>
+        <Text style={styles.choiceTitle}>{title}</Text>
+        <Text style={styles.choiceDescription}>{description}</Text>
+      </View>
+      <Icon icon={ChevronRight} size={20} color={colors.textFaint} />
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  choosePage: {
+    flex: 1,
+    justifyContent: "center",
+    gap: spacing.md,
+    maxWidth: 460,
+    width: "100%",
+    alignSelf: "center",
+  },
+  choice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.surfaceStrong,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.stroke,
+    padding: spacing.lg,
+  },
+  choicePressed: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
+  },
+  choiceIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.md,
+    backgroundColor: colors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  choiceText: {
+    flex: 1,
+    gap: 3,
+  },
+  choiceTitle: {
+    ...typography.sectionTitle,
+    color: colors.text,
+  },
+  choiceDescription: {
+    ...typography.meta,
+    fontWeight: "500",
+    color: colors.textSoft,
+  },
+  backRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+  },
+  backText: {
+    ...typography.bodyStrong,
+    color: colors.primary,
+  },
+  typeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    alignSelf: "flex-start",
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    paddingLeft: 6,
+    paddingRight: spacing.md,
+    paddingVertical: 6,
+  },
+  typeBadgeIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  typeBadgeText: {
+    ...typography.meta,
+    fontWeight: "700",
+    color: colors.primaryStrong,
+  },
+});

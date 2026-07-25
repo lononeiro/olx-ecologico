@@ -1,19 +1,26 @@
 import { useState } from "react";
 import { router } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { Recycle } from "lucide-react-native";
 import { loginSchema } from "@shared";
 import {
   AppButton,
-  AppCard,
   AppField,
   AppScreen,
+  Icon,
   MessageBanner,
-  SectionHeader,
 } from "@/components/AppUI";
 import { useAuth } from "@/contexts/AuthContext";
 import { getReadableErrorMessage } from "@/lib/api";
 import { getHomeRouteForRole } from "@/lib/navigation";
-import { colors, spacing, typography } from "@/theme/tokens";
+import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -50,135 +57,167 @@ export default function LoginScreen() {
 
   return (
     <AppScreen scroll={false}>
-      <View style={styles.page}>
-        <View style={styles.heroCard}>
-          <View style={styles.heroBadge} />
-          <SectionHeader
-            eyebrow="ECONECTA MOBILE"
-            title="Entre e acompanhe tudo no app"
-            description="Autenticação mobile com sessão persistida, refresh automático e acesso imediato ao fluxo do seu perfil."
-          />
-          <View style={styles.heroMetrics}>
-            <View style={styles.metric}>
-              <Text style={styles.metricValue}>Token</Text>
-              <Text style={styles.metricLabel}>sessão segura</Text>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={styles.page}>
+          <View style={styles.brand}>
+            <View style={styles.logoBadge}>
+              <Icon icon={Recycle} size={30} color={colors.white} strokeWidth={2} />
             </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metric}>
-              <Text style={styles.metricValue}>Perfil</Text>
-              <Text style={styles.metricLabel}>fluxo por role</Text>
-            </View>
+            <Text style={styles.brandName}>ECOnecta</Text>
           </View>
-        </View>
 
-        <AppCard>
-          <SectionHeader
-            eyebrow="ACESSO"
-            title="Entrar"
-            description="Use o mesmo email e a mesma senha já cadastrados no sistema."
-          />
+          <View style={styles.heading}>
+            <Text style={styles.title}>Entrar</Text>
+            <Text style={styles.subtitle}>
+              Ainda não tem conta?{" "}
+              <Text style={styles.link} onPress={() => router.push("/register")}>
+                Criar agora
+              </Text>
+            </Text>
+          </View>
 
           {!!mensagem && <MessageBanner message={mensagem} tone={messageTone} />}
 
-          <AppField
-            label="Email"
-            value={email}
-            onChangeText={(value) => {
-              if (mensagem) setMensagem("");
-              setEmail(value);
-            }}
-            placeholder="seu@email.com"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
-            textContentType="emailAddress"
-          />
+          <View style={styles.form}>
+            <AppField
+              label="Email"
+              value={email}
+              onChangeText={(value) => {
+                if (mensagem) setMensagem("");
+                setEmail(value);
+              }}
+              placeholder="seu@email.com"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+              textContentType="emailAddress"
+            />
 
-          <AppField
-            label="Senha"
-            value={senha}
-            onChangeText={(value) => {
-              if (mensagem) setMensagem("");
-              setSenha(value);
-            }}
-            placeholder="Digite sua senha"
-            secureTextEntry
-            secureToggle
-            autoComplete="password"
-            textContentType="password"
-            helper="Se você já tinha conta no web, a senha continua a mesma."
-          />
-
-          <View style={styles.ctaGroup}>
-            <AppButton
-              label={loading ? "Entrando..." : "Entrar"}
-              onPress={validar}
-              disabled={loading}
-            />
-            <AppButton
-              label="Criar conta"
-              tone="secondary"
-              onPress={() => router.push("/register")}
-            />
-            <AppButton
-              label="Recuperar senha"
-              tone="ghost"
-              onPress={() => router.push("/forgot-password")}
-            />
+            <View>
+              <AppField
+                label="Senha"
+                value={senha}
+                onChangeText={(value) => {
+                  if (mensagem) setMensagem("");
+                  setSenha(value);
+                }}
+                placeholder="Digite sua senha"
+                secureTextEntry
+                secureToggle
+                autoComplete="password"
+                textContentType="password"
+              />
+              <Pressable
+                style={styles.forgotWrap}
+                onPress={() => router.push("/forgot-password")}
+                hitSlop={8}
+              >
+                <Text style={styles.forgot}>Esqueci minha senha</Text>
+              </Pressable>
+            </View>
           </View>
-        </AppCard>
-      </View>
+
+          <AppButton
+            label={loading ? "Entrando..." : "Entrar"}
+            onPress={validar}
+            disabled={loading}
+          />
+
+          <View style={styles.divider}>
+            <View style={styles.line} />
+            <Text style={styles.dividerText}>ou</Text>
+            <View style={styles.line} />
+          </View>
+
+          <AppButton
+            label="Criar uma conta grátis"
+            tone="secondary"
+            onPress={() => router.push("/register")}
+          />
+        </View>
+      </KeyboardAvoidingView>
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   page: {
     flex: 1,
     justifyContent: "center",
     gap: spacing.lg,
+    maxWidth: 420,
+    width: "100%",
+    alignSelf: "center",
   },
-  heroCard: {
+  brand: {
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  logoBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.lg,
     backgroundColor: colors.primary,
-    borderRadius: 30,
-    padding: spacing.xl,
-    gap: spacing.lg,
-    shadowColor: colors.black,
-    shadowOpacity: 0.18,
-    shadowRadius: 28,
-    shadowOffset: { width: 0, height: 14 },
-    elevation: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    ...shadows.button,
   },
-  heroBadge: {
-    width: 58,
-    height: 58,
-    borderRadius: 22,
-    backgroundColor: "#3a8b61",
+  brandName: {
+    ...typography.eyebrow,
+    color: colors.primary,
+    letterSpacing: 2,
   },
-  heroMetrics: {
+  heading: {
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  title: {
+    ...typography.title,
+    fontSize: 30,
+    lineHeight: 36,
+    color: colors.text,
+    letterSpacing: -0.6,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textSoft,
+    textAlign: "center",
+  },
+  link: {
+    color: colors.primary,
+    fontFamily: typography.bodyStrong.fontFamily,
+    fontWeight: "600",
+  },
+  form: {
+    gap: spacing.md,
+  },
+  forgotWrap: {
+    alignSelf: "flex-end",
+    marginTop: spacing.xs,
+  },
+  forgot: {
+    ...typography.meta,
+    color: colors.textSoft,
+  },
+  divider: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    paddingTop: spacing.xs,
+    marginVertical: spacing.xs,
   },
-  metric: {
+  line: {
     flex: 1,
-    gap: 4,
+    height: 1,
+    backgroundColor: colors.stroke,
   },
-  metricValue: {
-    ...typography.bodyStrong,
-    color: colors.white,
-  },
-  metricLabel: {
+  dividerText: {
     ...typography.meta,
-    color: "#b8d2be",
-  },
-  metricDivider: {
-    width: 1,
-    alignSelf: "stretch",
-    backgroundColor: "rgba(255,255,255,0.16)",
-  },
-  ctaGroup: {
-    gap: spacing.sm,
+    color: colors.textFaint,
   },
 });
