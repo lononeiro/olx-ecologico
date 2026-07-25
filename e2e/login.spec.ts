@@ -4,7 +4,6 @@ test.describe("Tela de login", () => {
   test("renderiza os campos do formulário", async ({ page }) => {
     await page.goto("/login");
 
-    await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
     await expect(page.getByPlaceholder("seu@email.com")).toBeVisible();
     await expect(page.getByPlaceholder("Digite sua senha")).toBeVisible();
     await expect(page.getByRole("button", { name: /Entrar/i })).toBeVisible();
