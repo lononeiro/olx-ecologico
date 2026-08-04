@@ -17,6 +17,7 @@ import {
 import { ChatThread } from "@/components/ChatThread";
 import {
   getEmpresaConversaSolicitacao,
+  getMensagensConversaSolicitacao,
   getReadableErrorMessage,
   sendMensagemConversaSolicitacao,
 } from "@/lib/api";
@@ -127,6 +128,11 @@ export default function EmpresaSolicitacaoConversaScreen() {
         currentUserId={user.id}
         messages={conversa.mensagens}
         queryKey={["empresa", "solicitacoes", solicitacaoId, "conversa"]}
+        onFetch={(sinceId) =>
+          withAutoRefresh(accessToken, refreshSession, (token) =>
+            getMensagensConversaSolicitacao(token, conversa.id, sinceId)
+          )
+        }
         onSend={(mensagem) =>
           withAutoRefresh(accessToken, refreshSession, (token) =>
             sendMensagemConversaSolicitacao(token, conversa.id, mensagem)

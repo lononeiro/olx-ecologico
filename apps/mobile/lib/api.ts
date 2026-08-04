@@ -421,6 +421,33 @@ export function sendMensagem(
   });
 }
 
+export function getMensagensColeta(
+  accessToken: string,
+  coletaId: number,
+  sinceId?: number
+) {
+  const query = sinceId ? `?sinceId=${sinceId}` : "";
+  return apiFetch<MessageItem[]>(`/api/mensagens/${coletaId}${query}`, {
+    method: "GET",
+    accessToken,
+  });
+}
+
+export function getMensagensConversaSolicitacao(
+  accessToken: string,
+  conversaId: number,
+  sinceId?: number
+) {
+  const query = sinceId ? `?sinceId=${sinceId}` : "";
+  return apiFetch<MessageItem[]>(
+    `/api/conversas-solicitacao/${conversaId}/mensagens${query}`,
+    {
+      method: "GET",
+      accessToken,
+    }
+  );
+}
+
 export function getEmpresaConversaSolicitacao(accessToken: string, solicitacaoId: number) {
   return apiFetch<PreAcceptConversation>(
     `/api/empresa/solicitacoes/${solicitacaoId}/conversa`,

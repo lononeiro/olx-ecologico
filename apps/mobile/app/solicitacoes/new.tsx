@@ -12,6 +12,8 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  CheckCheck,
+  ListChecks,
   ChevronDown,
   Newspaper,
   CupSoda,
@@ -49,9 +51,10 @@ import {
   getReadableErrorMessage,
   lookupCep,
 } from "@/lib/api";
+import type { SolicitacaoItem } from "@/lib/api";
 import { useProtectedRoute } from "@/lib/navigation";
 import { withAutoRefresh } from "@/lib/session";
-import { colors, radius, spacing, typography } from "@/theme/tokens";
+import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
 const STEP_TITLES = ["Informações", "Detalhes", "Endereço"];
 const TOTAL_STEPS = STEP_TITLES.length;
@@ -73,6 +76,7 @@ export default function NewSolicitacaoScreen() {
   const [imagemAtual, setImagemAtual] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [mensagemTone, setMensagemTone] = useState<"success" | "error">("error");
+  const [criada, setCriada] = useState<SolicitacaoItem | null>(null);
 
   const materialsQuery = useQuery({
     queryKey: ["materiais"],
@@ -122,9 +126,8 @@ export default function NewSolicitacaoScreen() {
       );
     },
     onSuccess: (data) => {
-      setMensagemTone("success");
-      setMensagem("Solicitação criada com sucesso.");
-      setTimeout(() => router.replace(`/solicitacoes/${data.id}` as any), 900);
+      setMensagem("");
+      setCriada(data);
     },
     onError: (error) => {
       setMensagemTone("error");
@@ -245,6 +248,10 @@ export default function NewSolicitacaoScreen() {
     setMensagemTone("success");
     setMensagem("Imagem adicionada à solicitação.");
   };
+
+  if (criada) {
+    return <SuccessScreen solicitacao={criada} />;
+  }
 
   return (
     <AppScreen center>
@@ -589,6 +596,46 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function formatRequestNumber(solicitacao: SolicitacaoItem): string {
+  const ano = new Date(solicitacao.createdAt).getFullYear() || new Date().getFullYear();
+  return `#SOL-${ano}-${String(solicitacao.id).padStart(6, "0")}`;
+}
+
+function SuccessScreen({ solicitacao }: { solicitacao: SolicitacaoItem }) {
+  return (
+    <AppScreen center>
+      <View style={styles.success}>
+        <View style={styles.successBadge}>
+          <Icon icon={CheckCheck} size={44} color={colors.white} strokeWidth={2.4} />
+        </View>
+        <Text style={styles.successTitle}>Solicitação criada com sucesso!</Text>
+        <Text style={styles.successText}>
+          Sua solicitação foi registrada e já pode ser vista por empresas de coleta parceiras.
+        </Text>
+
+        <View style={styles.successNumberCard}>
+          <Text style={styles.successNumberLabel}>NÚMERO DA SOLICITAÇÃO</Text>
+          <Text style={styles.successNumberValue}>{formatRequestNumber(solicitacao)}</Text>
+        </View>
+
+        <View style={styles.successActions}>
+          <AppButton
+            label="Ver solicitação"
+            icon={ArrowRight}
+            onPress={() => router.replace(`/solicitacoes/${solicitacao.id}` as any)}
+          />
+          <AppButton
+            label="Ver minhas solicitações"
+            tone="secondary"
+            icon={ListChecks}
+            onPress={() => router.replace("/solicitacoes")}
+          />
+        </View>
+      </View>
+    </AppScreen>
+  );
+}
+
 const styles = StyleSheet.create({
   stepper: {
     gap: spacing.xs,
@@ -728,5 +775,56 @@ const styles = StyleSheet.create({
     color: colors.text,
     flex: 1,
     textAlign: "right",
+  },
+  success: {
+    alignItems: "center",
+    gap: spacing.md,
+    paddingHorizontal: spacing.sm,
+  },
+  successBadge: {
+    width: 96,
+    height: 96,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.xs,
+    ...shadows.button,
+  },
+  successTitle: {
+    ...typography.title,
+    color: colors.text,
+    textAlign: "center",
+    letterSpacing: -0.4,
+  },
+  successText: {
+    ...typography.body,
+    color: colors.textSoft,
+    textAlign: "center",
+  },
+  successNumberCard: {
+    alignSelf: "stretch",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.stroke,
+    backgroundColor: colors.surfaceTint,
+  },
+  successNumberLabel: {
+    ...typography.eyebrow,
+    color: colors.textSoft,
+  },
+  successNumberValue: {
+    ...typography.sectionTitle,
+    color: colors.primary,
+    letterSpacing: 0.4,
+  },
+  successActions: {
+    alignSelf: "stretch",
+    gap: spacing.sm,
+    marginTop: spacing.md,
   },
 });

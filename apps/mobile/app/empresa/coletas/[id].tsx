@@ -27,6 +27,7 @@ import {
 import { ChatThread } from "@/components/ChatThread";
 import {
   getColetaById,
+  getMensagensColeta,
   getReadableErrorMessage,
   updateColetaStatus,
 } from "@/lib/api";
@@ -239,6 +240,12 @@ export default function EmpresaColetaDetailScreen() {
           title="Conversa com o solicitante"
           emptyText="Nenhuma mensagem ainda. Converse com o solicitante por aqui."
           placeholder="Escreva para o solicitante"
+          queryKey={["detail", id]}
+          onFetch={(sinceId) =>
+            withAutoRefresh(accessToken, refreshSession, (token) =>
+              getMensagensColeta(token, coleta.id, sinceId)
+            )
+          }
         />
       ) : null}
     </AppScreen>

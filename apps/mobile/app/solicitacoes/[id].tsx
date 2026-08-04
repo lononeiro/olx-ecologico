@@ -17,6 +17,8 @@ import {
 import { ChatThread } from "@/components/ChatThread";
 import {
   getConversasSolicitacao,
+  getMensagensColeta,
+  getMensagensConversaSolicitacao,
   getReadableErrorMessage,
   getSolicitacaoById,
   sendMensagemConversaSolicitacao,
@@ -177,6 +179,12 @@ export default function SolicitacaoDetailScreen() {
               messages={item.coleta.mensagens}
               title="Conversa com a empresa"
               placeholder="Escreva para a empresa"
+              queryKey={["detail", id]}
+              onFetch={(sinceId) =>
+                withAutoRefresh(accessToken, refreshSession, (token) =>
+                  getMensagensColeta(token, item.coleta!.id, sinceId)
+                )
+              }
             />
           ) : null}
         </>
@@ -221,6 +229,11 @@ export default function SolicitacaoDetailScreen() {
                     title={conversa.company.user.nome}
                     description={`Status da conversa: ${conversa.status}`}
                     queryKey={["solicitacoes", id, "conversas"]}
+                    onFetch={(sinceId) =>
+                      withAutoRefresh(accessToken, refreshSession, (token) =>
+                        getMensagensConversaSolicitacao(token, conversa.id, sinceId)
+                      )
+                    }
                     onSend={(mensagem) =>
                       withAutoRefresh(accessToken, refreshSession, (token) =>
                         sendMensagemConversaSolicitacao(token, conversa.id, mensagem)
