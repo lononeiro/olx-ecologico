@@ -1,14 +1,14 @@
 import { useMemo, useState } from "react";
 import { router } from "expo-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { solicitacaoCreateSchema } from "@shared";
 import type { MaterialOption } from "@shared";
 import {
   Plus,
   ImagePlus,
   Search,
-  Trash2,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -25,6 +25,7 @@ import {
   TreePine,
   Package,
   Recycle,
+  X,
 } from "lucide-react-native";
 import {
   AppButton,
@@ -52,6 +53,7 @@ import {
   lookupCep,
 } from "@/lib/api";
 import type { SolicitacaoItem } from "@/lib/api";
+import { CloudinaryUploadError, uploadImageToCloudinary } from "@/lib/cloudinary";
 import { useProtectedRoute } from "@/lib/navigation";
 import { withAutoRefresh } from "@/lib/session";
 import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
@@ -73,7 +75,7 @@ export default function NewSolicitacaoScreen() {
   const [modoEndereco, setModoEndereco] = useState<"perfil" | "novo">("perfil");
   const [endereco, setEndereco] = useState(EMPTY_ADDRESS_FIELDS);
   const [imagens, setImagens] = useState<string[]>([]);
-  const [imagemAtual, setImagemAtual] = useState("");
+  const [uploadingImagens, setUploadingImagens] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const [mensagemTone, setMensagemTone] = useState<"success" | "error">("error");
   const [criada, setCriada] = useState<SolicitacaoItem | null>(null);
@@ -229,24 +231,71 @@ export default function NewSolicitacaoScreen() {
     }
   };
 
-  const addImagem = () => {
-    const value = imagemAtual.trim();
-    if (!value) return;
-
-    if (imagens.includes(value)) {
-      fail("Essa imagem já foi adicionada.");
-      return;
-    }
-
-    if (imagens.length >= MAX_IMAGES) {
+  const escolherImagensDaGaleria = async () => {
+    const remainingSlots = MAX_IMAGES - imagens.length;
+    if (remainingSlots <= 0) {
       fail(`Você pode adicionar no máximo ${MAX_IMAGES} imagens.`);
       return;
     }
 
-    setImagens((current) => [...current, value]);
-    setImagemAtual("");
-    setMensagemTone("success");
-    setMensagem("Imagem adicionada à solicitação.");
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      fail("Permita o acesso às fotos para anexar imagens à solicitação.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      selectionLimit: remainingSlots,
+      quality: 0.7,
+    });
+
+    if (result.canceled || result.assets.length === 0) return;
+
+    setMensagem("");
+    setUploadingImagens(true);
+
+    const enviadas: string[] = [];
+    let falhas = 0;
+
+    for (const asset of result.assets) {
+      try {
+        const url = await uploadImageToCloudinary(asset.uri);
+        enviadas.push(url);
+      } catch (error) {
+        falhas += 1;
+        if (error instanceof CloudinaryUploadError && falhas === 1) {
+          fail(error.message);
+        }
+      }
+    }
+
+    if (enviadas.length > 0) {
+      setImagens((current) => [...current, ...enviadas].slice(0, MAX_IMAGES));
+    }
+
+    if (falhas === 0 && enviadas.length > 0) {
+      setMensagemTone("success");
+      setMensagem(
+        enviadas.length === 1
+          ? "Imagem enviada com sucesso."
+          : `${enviadas.length} imagens enviadas com sucesso.`
+      );
+    } else if (falhas > 0) {
+      setMensagemTone("error");
+      setMensagem(
+        enviadas.length > 0
+          ? `${enviadas.length} imagem(ns) enviada(s). ${falhas} falharam.`
+          : "Não foi possível enviar as imagens selecionadas."
+      );
+    }
+
+    setUploadingImagens(false);
+  };
+
+  const removerImagem = (index: number) => {
+    setImagens((current) => current.filter((_, currentIndex) => currentIndex !== index));
   };
 
   if (criada) {
@@ -294,7 +343,7 @@ export default function NewSolicitacaoScreen() {
           <SectionHeader
             eyebrow="DETALHES E IMAGENS"
             title="Descrição do material"
-            description="Adicione detalhes e, se quiser, até 5 imagens por URL."
+            description="Adicione detalhes e, se quiser, até 5 fotos do material."
           />
           <AppField
             label="Quantidade"
@@ -315,36 +364,41 @@ export default function NewSolicitacaoScreen() {
             <Text style={styles.fieldLabel}>
               IMAGENS ({imagens.length}/{MAX_IMAGES})
             </Text>
-            <AppField
-              label="URL da imagem"
-              value={imagemAtual}
-              onChangeText={setImagemAtual}
-              placeholder="https://..."
-              autoCapitalize="none"
-            />
+
+            {imagens.length > 0 && (
+              <View style={styles.imageGrid}>
+                {imagens.map((url, index) => (
+                  <View key={`${url}-${index}`} style={styles.imageThumbWrap}>
+                    <Image source={{ uri: url }} style={styles.imageThumb} />
+                    <Pressable
+                      onPress={() => removerImagem(index)}
+                      hitSlop={8}
+                      style={({ pressed }) => [
+                        styles.imageRemoveButton,
+                        pressed && styles.imageRemoveButtonPressed,
+                      ]}
+                      accessibilityLabel="Remover imagem"
+                    >
+                      <Icon icon={X} size={13} color={colors.white} strokeWidth={2.5} />
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            )}
+
             <AppButton
-              label="Adicionar imagem"
+              label={uploadingImagens ? "Enviando fotos..." : "Escolher da galeria"}
               tone="secondary"
               icon={ImagePlus}
-              onPress={addImagem}
+              onPress={escolherImagensDaGaleria}
+              disabled={uploadingImagens || imagens.length >= MAX_IMAGES}
             />
-            {imagens.map((item, index) => (
-              <View key={`${item}-${index}`} style={styles.imageRow}>
-                <Text style={styles.imageText} numberOfLines={1}>
-                  {index + 1}. {item}
-                </Text>
-                <AppButton
-                  label="Remover"
-                  tone="danger"
-                  icon={Trash2}
-                  onPress={() =>
-                    setImagens((current) =>
-                      current.filter((_, currentIndex) => currentIndex !== index)
-                    )
-                  }
-                />
+            {uploadingImagens && (
+              <View style={styles.uploadingRow}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={styles.uploadingText}>Enviando imagens selecionadas...</Text>
               </View>
-            ))}
+            )}
           </View>
         </AppCard>
       )}
@@ -738,15 +792,45 @@ const styles = StyleSheet.create({
     color: colors.text,
     flex: 1,
   },
-  imageRow: {
+  imageGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
-    padding: spacing.md,
+  },
+  imageThumbWrap: {
+    width: 76,
+    height: 76,
+  },
+  imageThumb: {
+    width: 76,
+    height: 76,
     borderRadius: radius.sm,
+    backgroundColor: colors.surfaceTint,
     borderWidth: 1,
     borderColor: colors.stroke,
-    backgroundColor: colors.surfaceTint,
   },
-  imageText: {
+  imageRemoveButton: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    width: 22,
+    height: 22,
+    borderRadius: radius.pill,
+    backgroundColor: colors.dangerText,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: colors.canvas,
+  },
+  imageRemoveButtonPressed: {
+    opacity: 0.8,
+  },
+  uploadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  uploadingText: {
     ...typography.meta,
     color: colors.textSoft,
   },

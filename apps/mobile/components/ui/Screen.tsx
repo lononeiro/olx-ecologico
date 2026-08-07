@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, layout, radius } from "@/theme/tokens";
 
@@ -35,7 +35,11 @@ export function Screen({
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
-      <View style={styles.background}>
+      <KeyboardAvoidingView
+        style={styles.background}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -insets.bottom}
+      >
         {body}
         {!!footer && <View style={styles.footer}>{footer}</View>}
         {!footer && (
@@ -46,7 +50,7 @@ export function Screen({
             <View style={styles.systemBarHandle} />
           </View>
         )}
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

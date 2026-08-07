@@ -45,6 +45,7 @@
     "db:push": "prisma db push",
     "db:seed": "ts-node -P tsconfig.seed.json prisma/seed.ts",
     "db:seed:graficos": "ts-node -P tsconfig.seed.json prisma/seed-graficos.ts",
+    "db:seed:demo": "ts-node -P tsconfig.seed.json prisma/seed-demo.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"
   },
