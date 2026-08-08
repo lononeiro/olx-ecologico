@@ -9,6 +9,7 @@ import { ColetaStatusTracker } from "@/components/ui/ColetaStatusTracker";
 import { SolicitacaoBadge } from "@/components/ui/StatusBadge";
 import { CancelarSolicitacaoButton } from "@/components/ui/CancelarSolicitacaoButton";
 import { authOptions } from "@/lib/auth";
+import { formatarData, formatarDataHora } from "@/lib/datas";
 import { prisma } from "@/lib/prisma";
 import { listarConversasDaSolicitacaoUsuario } from "@/services/conversa-solicitacao.service";
 
@@ -224,7 +225,7 @@ export default async function SolicitacaoDetailPage({
                 <DocumentField label="Quantidade" value={s.quantidade} />
                 <DocumentField
                   label="Criada em"
-                  value={new Date(s.createdAt).toLocaleString("pt-BR")}
+                  value={formatarDataHora(s.createdAt)}
                 />
                 <DocumentField label="Status" value={statusCopy.title} />
                 <DocumentField label="Endereço" value={s.endereco} full />
@@ -240,7 +241,7 @@ export default async function SolicitacaoDetailPage({
                     />
                     <DocumentField
                       label="Data do aceite"
-                      value={new Date(s.coleta.dataAceite).toLocaleDateString("pt-BR")}
+                      value={formatarData(s.coleta.dataAceite)}
                     />
                     {s.coleta.codigoConfirmacao && (
                       <div style={{
@@ -279,7 +280,7 @@ export default async function SolicitacaoDetailPage({
                     {s.coleta.dataConclusao && (
                       <DocumentField
                         label="Data da conclusão"
-                        value={new Date(s.coleta.dataConclusao).toLocaleDateString("pt-BR")}
+                        value={formatarData(s.coleta.dataConclusao)}
                       />
                     )}
                   </>

@@ -17,11 +17,22 @@ import {
   type CepLookupResult,
 } from "@/lib/address";
 import { STRONG_PASSWORD_HINTS, getStrongPasswordIssues } from "@/lib/password";
+import { sanitizeCNPJ } from "@/lib/cnpj";
 
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-display" });
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-body" });
 
 type Tipo = "usuario" | "empresa";
+
+/** Máscara progressiva 00.000.000/0001-00 enquanto o usuário digita. */
+function maskCNPJ(value: string): string {
+  return sanitizeCNPJ(value)
+    .slice(0, 14)
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -140,6 +151,20 @@ export default function RegisterPage() {
     void buscarCep();
   }, [endereco.cep, incluirEndereco, cepLoading]);
 
+  // Ordem em que os campos aparecem na tela — usada para centralizar no
+  // primeiro que ficou pendente/invalido após uma tentativa de envio.
+  const FIELD_ORDER = ["nome", "email", "senha", "cnpj"] as const;
+
+  function centralizarNoErro(anchorId: string) {
+    requestAnimationFrame(() => {
+      const el = document.getElementById(anchorId);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      const control = el.querySelector<HTMLElement>("input, textarea");
+      control?.focus({ preventScroll: true });
+    });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErro("");
@@ -149,6 +174,7 @@ export default function RegisterPage() {
       const missing = getMissingAddressFields(endereco);
       if (missing.length > 0) {
         setErro(`Complete o endereço: ${missing.join(", ")}.`);
+        centralizarNoErro("field-endereco");
         return;
       }
     }
@@ -172,8 +198,14 @@ export default function RegisterPage() {
     setLoading(false);
 
     if (!res.ok) {
-      if (typeof data.error === "object") setErros(data.error);
-      else setErro(data.error ?? "Erro ao criar conta.");
+      if (typeof data.error === "object") {
+        setErros(data.error);
+        const primeiro = FIELD_ORDER.find((key) => data.error[key]?.length);
+        centralizarNoErro(primeiro ? `field-${primeiro}` : "erro-geral");
+      } else {
+        setErro(data.error ?? "Erro ao criar conta.");
+        centralizarNoErro("erro-geral");
+      }
       return;
     }
 
@@ -400,6 +432,7 @@ export default function RegisterPage() {
 
           {erro ? (
             <div
+              id="erro-geral"
               style={{
                 background: "var(--auth-danger-bg)",
                 border: "1px solid var(--auth-danger-border)",
@@ -420,7 +453,7 @@ export default function RegisterPage() {
               <hr />
             </div>
 
-            <div key={tipo} className="a3 tipo-transition">
+            <div id="field-nome" key={tipo} className="a3 tipo-transition">
               <label style={labelStyle}>{tipo === "empresa" ? "Nome da empresa" : "Nome completo"}</label>
               <input
                 type="text"
@@ -432,13 +465,13 @@ export default function RegisterPage() {
               {erros.nome ? <p style={{ color: "var(--auth-danger)", fontSize: ".78rem", marginTop: ".3rem" }}>{erros.nome[0]}</p> : null}
             </div>
 
-            <div className="a3">
+            <div id="field-email" className="a3">
               <label style={labelStyle}>Email</label>
               <input type="email" required placeholder="seu@email.com" style={inputStyle("email")} {...f("email")} />
               {erros.email ? <p style={{ color: "var(--auth-danger)", fontSize: ".78rem", marginTop: ".3rem" }}>{erros.email[0]}</p> : null}
             </div>
 
-            <div className="a4">
+            <div id="field-senha" className="a4">
               <PasswordField
                 label="Senha"
                 name="senha"
@@ -463,16 +496,26 @@ export default function RegisterPage() {
                   <hr />
                 </div>
 
-                <div className="a4">
+                <div id="field-cnpj" className="a4">
                   <label style={labelStyle}>CNPJ</label>
                   <input
                     type="text"
+                    inputMode="numeric"
                     required={tipo === "empresa"}
                     disabled={tipo !== "empresa"}
                     placeholder="00.000.000/0001-00"
+                    maxLength={18}
                     style={inputStyle("cnpj")}
-                    {...f("cnpj")}
+                    value={form.cnpj}
+                    onChange={(e) => setForm({ ...form, cnpj: maskCNPJ(e.target.value) })}
+                    onFocus={() => setFocused("cnpj")}
+                    onBlur={() => setFocused(null)}
                   />
+                  {erros.cnpj ? (
+                    <p style={{ color: "var(--auth-danger)", fontSize: ".78rem", marginTop: ".3rem" }}>
+                      {erros.cnpj[0]}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="a5">
@@ -497,7 +540,7 @@ export default function RegisterPage() {
               <hr />
             </div>
 
-            <div className="a5" style={{ border: "1px solid var(--auth-border)", borderRadius: "14px", padding: "1rem 1rem 1.1rem", background: "var(--auth-surface)" }}>
+            <div id="field-endereco" className="a5" style={{ border: "1px solid var(--auth-border)", borderRadius: "14px", padding: "1rem 1rem 1.1rem", background: "var(--auth-surface)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "center", marginBottom: ".7rem", flexWrap: "wrap" }}>
                 <div>
                   <p style={{ color: "var(--auth-text)", fontWeight: 700, fontSize: ".92rem" }}>Adicionar endereço agora</p>

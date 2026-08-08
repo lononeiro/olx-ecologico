@@ -155,7 +155,7 @@ export default function Home() {
             marginBottom: "3rem",
           }}
         >
-          Conectamos cidadãos a empresas de reciclagem. Solicite uma coleta em minutos,
+          Conectamos cidadãos a empresas de reciclagem. Solicite uma coleta,
           acompanhe tudo em tempo real e faça sua parte pelo planeta.
         </p>
 
@@ -302,7 +302,7 @@ export default function Home() {
               num: "03",
               icon: "🚛",
               title: "Coleta realizada",
-              desc: "Acompanhe o status em tempo real — 'A caminho', 'Em coleta', 'Concluída'. Troque mensagens com a empresa.",
+              desc: "Acompanhe o status em tempo real: 'A caminho', 'Em coleta', 'Concluída'. Troque mensagens com a empresa.",
               color: "rgba(107,63,168,.09)",
               accent: "var(--purple)",
             },

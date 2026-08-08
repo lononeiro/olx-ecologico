@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MapaEndereco } from "@/components/ui/MapaEndereco";
@@ -31,6 +31,25 @@ export function AceitarSolicitacaoButton({
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
   const [dataPrevisaoColeta, setDataPrevisaoColeta] = useState("");
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  const mostrarAnterior = () =>
+    setLightboxIndex((i) => (i === null ? i : (i - 1 + imagens.length) % imagens.length));
+  const mostrarProxima = () =>
+    setLightboxIndex((i) => (i === null ? i : (i + 1) % imagens.length));
+
+  // Navegação por teclado enquanto o lightbox está aberto.
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxIndex(null);
+      else if (e.key === "ArrowRight") mostrarProxima();
+      else if (e.key === "ArrowLeft") mostrarAnterior();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lightboxIndex, imagens.length]);
 
   async function handleAceitar() {
     if (!dataPrevisaoColeta) {
@@ -304,18 +323,21 @@ export function AceitarSolicitacaoButton({
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(92px, 1fr))",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
                         gap: ".7rem",
                       }}
                     >
-                      {imagens.map((img) => (
-                        <a
+                      {imagens.map((img, index) => (
+                        <button
                           key={img.id}
-                          href={img.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          type="button"
+                          onClick={() => setLightboxIndex(index)}
+                          aria-label={`Ampliar foto ${index + 1} de ${imagens.length}`}
                           style={{
+                            position: "relative",
                             display: "block",
+                            padding: 0,
+                            cursor: "zoom-in",
                             borderRadius: 18,
                             overflow: "hidden",
                             border: "1px solid var(--border)",
@@ -329,12 +351,36 @@ export function AceitarSolicitacaoButton({
                             className="img-thumb"
                             style={{
                               width: "100%",
-                              height: 96,
+                              height: 128,
                               objectFit: "cover",
                               display: "block",
                             }}
                           />
-                        </a>
+                          <span
+                            aria-hidden
+                            style={{
+                              position: "absolute",
+                              right: 8,
+                              bottom: 8,
+                              width: 30,
+                              height: 30,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              borderRadius: 10,
+                              background: "rgba(15,23,42,.55)",
+                              color: "#fff",
+                              backdropFilter: "blur(4px)",
+                            }}
+                          >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                              <circle cx="11" cy="11" r="7" />
+                              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                              <line x1="11" y1="8" x2="11" y2="14" />
+                              <line x1="8" y1="11" x2="14" y2="11" />
+                            </svg>
+                          </span>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -412,6 +458,108 @@ export function AceitarSolicitacaoButton({
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {lightboxIndex !== null && imagens[lightboxIndex] && (
+        <Portal>
+          <style>{`
+            @keyframes lbFade { from { opacity: 0; } to { opacity: 1; } }
+            .lb-overlay {
+              position: fixed;
+              inset: 0;
+              z-index: 320;
+              background: rgba(2, 6, 23, .9);
+              backdrop-filter: blur(6px);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 20px;
+              animation: lbFade .18s ease both;
+            }
+            .lb-img {
+              max-width: 92vw;
+              max-height: 84vh;
+              object-fit: contain;
+              border-radius: 12px;
+              box-shadow: 0 24px 60px rgba(0,0,0,.5);
+            }
+            .lb-btn {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 48px;
+              height: 48px;
+              border-radius: 999px;
+              border: 1px solid rgba(255,255,255,.18);
+              background: rgba(255,255,255,.1);
+              color: #fff;
+              cursor: pointer;
+              flex-shrink: 0;
+              transition: background .15s;
+            }
+            .lb-btn:hover { background: rgba(255,255,255,.22); }
+          `}</style>
+          <div
+            className="lb-overlay"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setLightboxIndex(null);
+            }}
+          >
+            <button
+              onClick={() => setLightboxIndex(null)}
+              className="lb-btn"
+              aria-label="Fechar"
+              style={{ position: "absolute", top: 18, right: 18 }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem", maxWidth: "100%" }}>
+              {imagens.length > 1 && (
+                <button onClick={mostrarAnterior} className="lb-btn" aria-label="Foto anterior">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                </button>
+              )}
+
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: ".8rem", minWidth: 0 }}>
+                <img src={imagens[lightboxIndex].url} alt="" className="lb-img" />
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                  {imagens.length > 1 && (
+                    <span style={{ color: "rgba(255,255,255,.85)", fontSize: ".85rem", fontWeight: 600 }}>
+                      {lightboxIndex + 1} / {imagens.length}
+                    </span>
+                  )}
+                  <a
+                    href={imagens[lightboxIndex].url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: "rgba(255,255,255,.85)",
+                      fontSize: ".82rem",
+                      fontWeight: 600,
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Abrir original
+                  </a>
+                </div>
+              </div>
+
+              {imagens.length > 1 && (
+                <button onClick={mostrarProxima} className="lb-btn" aria-label="Próxima foto">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         </Portal>

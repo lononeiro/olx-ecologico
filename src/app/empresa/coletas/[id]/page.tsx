@@ -7,6 +7,7 @@ import { RequestImageGallery } from "@/components/ui/RequestImageGallery";
 import { ColetaStatusTracker } from "@/components/ui/ColetaStatusTracker";
 import { ColetaBadge } from "@/components/ui/StatusBadge";
 import { authOptions } from "@/lib/auth";
+import { formatarData, formatarDataHora } from "@/lib/datas";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -216,17 +217,17 @@ export default async function EmpresaColetaDetailPage({
                 <DocumentField label="Quantidade" value={s.quantidade} />
                 <DocumentField
                   label="Solicitação criada em"
-                  value={new Date(s.createdAt).toLocaleString("pt-BR")}
+                  value={formatarDataHora(s.createdAt)}
                 />
                 <DocumentField
                   label="Aceita em"
-                  value={new Date(coleta.dataAceite).toLocaleDateString("pt-BR")}
+                  value={formatarData(coleta.dataAceite)}
                 />
                 <DocumentField label="Status operacional" value={statusCopy.title} />
                 {coleta.dataConclusao && (
                   <DocumentField
                     label="Concluída em"
-                    value={new Date(coleta.dataConclusao).toLocaleDateString("pt-BR")}
+                    value={formatarData(coleta.dataConclusao)}
                   />
                 )}
                 <DocumentField label="Endereço da coleta" value={s.endereco} full />

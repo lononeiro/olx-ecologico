@@ -35,6 +35,11 @@ async function main() {
       create: { id: i + 1, nome: nomeMateriais[i] },
     });
   }
+  // Inserir IDs explícitos não avança a sequence do Postgres; sem isso o próximo
+  // create() gerado pela API colide com uma PK existente (P2002 -> 500).
+  await prisma.$executeRawUnsafe(
+    `SELECT setval(pg_get_serial_sequence('material_tipos', 'id'), (SELECT MAX(id) FROM material_tipos))`
+  );
   console.log("✅ Materiais criados:", nomeMateriais.length);
 
   // ── Admin ──────────────────────────────────────────────────────────────────

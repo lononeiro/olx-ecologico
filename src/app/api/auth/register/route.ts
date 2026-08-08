@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validations";
+import { sanitizeCNPJ, verificarCnpjNaReceita } from "@/lib/cnpj";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +18,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { nome, senha, endereco, telefone, tipo, cnpj, descricao } = parsed.data;
+    const { nome, senha, endereco, telefone, tipo, descricao } = parsed.data;
     const email = parsed.data.email.toLowerCase().trim();
+    // O schema já garante presença + dígitos verificadores válidos para empresa.
+    const cnpj = tipo === "empresa" ? sanitizeCNPJ(parsed.data.cnpj) : null;
 
     const existente = await prisma.user.findUnique({ where: { email } });
     if (existente) {
@@ -33,6 +36,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (tipo === "empresa" && cnpj) {
+      // Bloqueia duplicidade antes de gastar a chamada externa.
+      const cnpjExistente = await prisma.company.findUnique({ where: { cnpj } });
+      if (cnpjExistente) {
+        return NextResponse.json(
+          { error: { cnpj: ["CNPJ já cadastrado."] } },
+          { status: 409 }
+        );
+      }
+
+      // Confirma que o CNPJ realmente existe e está ativo na Receita Federal.
+      const check = await verificarCnpjNaReceita(cnpj);
+      if (!check.ok) {
+        return NextResponse.json(
+          { error: { cnpj: [check.message] } },
+          { status: check.status }
+        );
+      }
+    }
+
     const senhaHash = await bcrypt.hash(senha, 12);
 
     const user = await prisma.$transaction(async (tx) => {
@@ -40,12 +63,7 @@ export async function POST(req: NextRequest) {
         data: { nome, email, senhaHash, endereco, telefone, roleId: role.id },
       });
 
-      if (tipo === "empresa") {
-        if (!cnpj) throw new Error("CNPJ é obrigatório para empresas.");
-
-        const cnpjExistente = await tx.company.findUnique({ where: { cnpj } });
-        if (cnpjExistente) throw new Error("CNPJ já cadastrado.");
-
+      if (tipo === "empresa" && cnpj) {
         await tx.company.create({
           data: { userId: novoUsuario.id, cnpj, descricao },
         });

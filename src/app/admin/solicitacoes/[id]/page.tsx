@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { buscarSolicitacaoAdminDetailDTO } from "@/services/solicitacao.service";
+import { formatarDataHora } from "@/lib/datas";
 import { AdminActionButtons } from "./AdminActionButtons";
 
 export const dynamic = "force-dynamic";
@@ -95,7 +96,7 @@ export default async function AdminSolicitacaoDetailPage({
           </div>
           <div>
             <span className="text-gray-500 dark:text-zinc-400">Data da solicitação</span>
-            <p className="font-medium text-gray-800 dark:text-zinc-100">{new Date(s.createdAt).toLocaleString("pt-BR")}</p>
+            <p className="font-medium text-gray-800 dark:text-zinc-100">{formatarDataHora(s.createdAt)}</p>
           </div>
         </div>
       </div>

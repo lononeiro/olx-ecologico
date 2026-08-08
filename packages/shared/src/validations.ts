@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidCNPJ } from "./cnpj";
 import { STATUS_COLETA, STATUS_SOLICITACAO } from "./status";
 
 const MAX_SOLICITACAO_IMAGENS = 5;
@@ -19,16 +20,37 @@ const normalizarImagensSolicitacao = (value: unknown) => {
     .filter(Boolean);
 };
 
-export const registerSchema = z.object({
-  nome: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
-  email: z.string().email("Email invalido"),
-  senha: z.string().min(6, "Senha deve ter ao menos 6 caracteres"),
-  endereco: z.string().optional(),
-  telefone: z.string().optional(),
-  tipo: z.enum(["usuario", "empresa"]),
-  cnpj: z.string().optional(),
-  descricao: z.string().optional(),
-});
+export const registerSchema = z
+  .object({
+    nome: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
+    email: z.string().email("Email invalido"),
+    senha: z.string().min(6, "Senha deve ter ao menos 6 caracteres"),
+    endereco: z.string().optional(),
+    telefone: z.string().optional(),
+    tipo: z.enum(["usuario", "empresa"]),
+    cnpj: z.string().optional(),
+    descricao: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.tipo !== "empresa") return;
+
+    if (!data.cnpj || !data.cnpj.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["cnpj"],
+        message: "CNPJ é obrigatório para empresas",
+      });
+      return;
+    }
+
+    if (!isValidCNPJ(data.cnpj)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["cnpj"],
+        message: "CNPJ inválido (verifique os dígitos)",
+      });
+    }
+  });
 
 export const loginSchema = z.object({
   email: z.string().email("Email invalido"),
