@@ -13,7 +13,9 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiBaseUrl": "https://olx-ecologico.vercel.app/"
+      "apiBaseUrl": "https://olx-ecologico.vercel.app/",
+      "cloudinaryCloudName": "dk4ypygnz",
+      "cloudinaryUploadPreset": "solicitacoes_imagens"
     },
     "android": {
       "package": "com.econecta.mobile"
@@ -23,7 +25,13 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O ECOnecta precisa acessar suas fotos para anexar imagens à solicitação."
+        }
+      ]
     ]
   }
 }

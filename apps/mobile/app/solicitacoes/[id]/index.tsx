@@ -7,14 +7,13 @@ import {
   Calendar,
   ChevronDown,
   FileText,
-  Image as ImageIcon,
   MapPin,
   MessageCircle,
   Package,
   Truck,
   type LucideIcon,
 } from "lucide-react-native";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   AppButton,
   AppCard,
@@ -27,6 +26,7 @@ import {
   StatusBadge,
   appColors,
 } from "@/components/AppUI";
+import { ImageGallery } from "@/components/ImageGallery";
 import {
   getConversasSolicitacao,
   getReadableErrorMessage,
@@ -114,6 +114,9 @@ export default function SolicitacaoDetailScreen() {
         />
       }
     >
+      {/* Galeria de fotos em destaque */}
+      <ImageGallery images={item.imagens} />
+
       {/* Resumo enxuto */}
       <AppCard>
         <SectionHeader eyebrow={`SOLICITAÇÃO #${item.id}`} title={item.titulo} />
@@ -171,27 +174,8 @@ export default function SolicitacaoDetailScreen() {
           icon={Calendar}
           label="Criada em"
           value={new Date(item.createdAt).toLocaleString("pt-BR")}
-          last={item.imagens.length === 0}
+          last
         />
-        {item.imagens.length > 0 && (
-          <View style={styles.photos}>
-            <View style={styles.photosLabelRow}>
-              <Icon icon={ImageIcon} size={14} color={appColors.textFaint} />
-              <Text style={styles.detailLabel}>
-                FOTOS ({item.imagens.length})
-              </Text>
-            </View>
-            <View style={styles.photoGrid}>
-              {item.imagens.map((imagem) => (
-                <Image
-                  key={imagem.id}
-                  source={{ uri: imagem.url }}
-                  style={styles.photo}
-                />
-              ))}
-            </View>
-          </View>
-        )}
       </Collapsible>
 
       {item.status !== "aprovada" && !coleta ? (
@@ -330,27 +314,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: appColors.text,
     flex: 1,
-  },
-  photos: {
-    paddingTop: spacing.md,
-    gap: spacing.sm,
-  },
-  photosLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  photoGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  photo: {
-    width: 76,
-    height: 76,
-    borderRadius: radius.sm,
-    backgroundColor: appColors.surfaceTint,
-    borderWidth: 1,
-    borderColor: appColors.stroke,
   },
 });
