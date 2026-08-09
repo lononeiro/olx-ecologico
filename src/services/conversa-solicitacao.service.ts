@@ -165,6 +165,7 @@ export async function enviarMensagemConversaSolicitacao(
     remetenteNome: novaMensagem.remetente.nome,
     assunto: conversa.solicitacao.titulo,
     previa: text,
+    chatKey: `pre_accept:${conversaId}`,
   });
 
   return novaMensagem;

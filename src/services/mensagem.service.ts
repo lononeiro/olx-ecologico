@@ -73,6 +73,7 @@ export async function enviarMensagem(
     remetenteNome: novaMensagem.remetente.nome,
     assunto: acesso.solicitacao.titulo,
     previa: mensagem,
+    chatKey: `coleta:${coletaId}`,
   });
 
   return novaMensagem;

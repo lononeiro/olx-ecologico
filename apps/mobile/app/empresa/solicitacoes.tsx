@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { router } from "expo-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, MessageCircleQuestion, PackageCheck, ClipboardList } from "lucide-react-native";
+import { useQuery } from "@tanstack/react-query";
+import { MapPin, ClipboardList } from "lucide-react-native";
 import { Text, View } from "react-native";
 import {
   AppButton,
@@ -19,7 +19,6 @@ import {
   appColors,
 } from "@/components/AppUI";
 import {
-  acceptSolicitacao,
   getEmpresaSolicitacoesDisponiveis,
   getReadableErrorMessage,
 } from "@/lib/api";
@@ -28,11 +27,8 @@ import { withAutoRefresh } from "@/lib/session";
 import { EMPRESA_TABS } from "@/lib/tabs";
 
 export default function EmpresaSolicitacoesScreen() {
-  const queryClient = useQueryClient();
   const { accessToken, hasAccess, isLoading, refreshSession } =
     useProtectedRoute(["empresa"]);
-  const [message, setMessage] = useState("");
-  const [tone, setTone] = useState<"success" | "error">("success");
   const [materialFilter, setMaterialFilter] = useState("todos");
 
   const query = useQuery({
@@ -54,29 +50,6 @@ export default function EmpresaSolicitacoesScreen() {
     if (materialFilter === "todos") return items;
     return items.filter((item) => item.material.nome === materialFilter);
   }, [query.data, materialFilter]);
-
-  const acceptMutation = useMutation({
-    mutationFn: async (solicitacaoId: number) =>
-      withAutoRefresh(accessToken, refreshSession, (token) =>
-        acceptSolicitacao(token, solicitacaoId)
-      ),
-    onSuccess: (data) => {
-      setTone("success");
-      setMessage("Solicitação aceita com sucesso.");
-      void queryClient.invalidateQueries({
-        queryKey: ["empresa", "solicitacoes", "disponiveis"],
-      });
-      void queryClient.invalidateQueries({ queryKey: ["empresa", "disponiveis"] });
-      void queryClient.invalidateQueries({ queryKey: ["empresa", "coletas"] });
-      router.push(`/empresa/coletas/${data.id}` as any);
-    },
-    onError: (error) => {
-      setTone("error");
-      setMessage(
-        getReadableErrorMessage(error, "Não foi possível aceitar a solicitação.")
-      );
-    },
-  });
 
   return (
     <AppScreen
@@ -102,7 +75,6 @@ export default function EmpresaSolicitacoesScreen() {
       )}
 
       {query.isLoading && <LoadingCard text="Carregando solicitações..." />}
-      {!!message && <MessageBanner message={message} tone={tone} />}
       {query.error && (
         <MessageBanner
           message={getReadableErrorMessage(
@@ -123,7 +95,7 @@ export default function EmpresaSolicitacoesScreen() {
 
       {filtered.map((item) => (
         <AppCard key={item.id}>
-          <SectionHeader title={item.titulo} description={item.user?.nome ?? item.material.nome} />
+          <SectionHeader title={item.titulo} description={item.material.nome} />
           <StatusBadge kind="solicitacao" value={item.status} />
           <Text style={{ color: appColors.textSoft, fontSize: 15, lineHeight: 22 }}>
             {item.quantidade} · {item.material.nome}
@@ -138,18 +110,9 @@ export default function EmpresaSolicitacoesScreen() {
             </Text>
           </View>
           <AppButton
-            label="Tirar dúvida"
+            label="Ver detalhes"
             tone="secondary"
-            icon={MessageCircleQuestion}
-            onPress={() => router.push(`/empresa/solicitacoes/${item.id}/conversa` as any)}
-          />
-          <AppButton
-            label={
-              acceptMutation.isPending ? "Aceitando solicitação..." : "Aceitar solicitação"
-            }
-            icon={PackageCheck}
-            onPress={() => acceptMutation.mutate(item.id)}
-            disabled={acceptMutation.isPending}
+            onPress={() => router.push(`/empresa/solicitacoes/${item.id}` as any)}
           />
         </AppCard>
       ))}

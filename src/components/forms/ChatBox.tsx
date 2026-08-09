@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { chatKeyFor, registerActiveChat } from "@/lib/active-chat";
 
 interface Mensagem {
   id: number;
@@ -63,6 +64,12 @@ export function ChatBox({
       shouldScrollOnNextUpdateRef.current = false;
     }
   }, [mensagens]);
+
+  // Marca este chat como aberto enquanto o componente está montado, para que o
+  // sino de notificações não exiba toast de mensagens desta mesma conversa.
+  useEffect(() => {
+    return registerActiveChat(chatKeyFor({ coletaId, conversaId }));
+  }, [coletaId, conversaId]);
 
   useEffect(() => {
     let disposed = false;
