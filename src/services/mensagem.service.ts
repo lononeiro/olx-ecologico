@@ -42,7 +42,7 @@ export async function listarMensagensColeta(
       coletaId,
       ...(options.sinceId ? { id: { gt: options.sinceId } } : {}),
     },
-    include: { remetente: { select: { id: true, nome: true } } },
+    include: { remetente: { select: { id: true, nome: true, avatarUrl: true } } },
     orderBy: { createdAt: "asc" },
   });
 }
@@ -61,7 +61,7 @@ export async function enviarMensagem(
 
   const novaMensagem = await prisma.mensagem.create({
     data: { coletaId, remetenteId, mensagem },
-    include: { remetente: { select: { id: true, nome: true } } },
+    include: { remetente: { select: { id: true, nome: true, avatarUrl: true } } },
   });
 
   const remetenteEhSolicitante = acesso.solicitacao.userId === remetenteId;
@@ -73,6 +73,7 @@ export async function enviarMensagem(
     remetenteNome: novaMensagem.remetente.nome,
     assunto: acesso.solicitacao.titulo,
     previa: mensagem,
+    chatKey: `coleta:${coletaId}`,
   });
 
   return novaMensagem;

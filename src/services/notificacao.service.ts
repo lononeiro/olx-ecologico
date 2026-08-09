@@ -159,16 +159,21 @@ export function notificarNovaMensagem(params: {
   remetenteNome: string;
   assunto: string;
   previa: string;
+  /** Identifica o chat de origem ("coleta:<id>" ou "pre_accept:<id>").
+   *  Vai no href (?c=) para abrir a conversa exata e permitir que o cliente
+   *  suprima a notificação quando esse chat já estiver aberto. */
+  chatKey: string;
 }) {
+  const base =
+    params.destinatarioRole === "empresa"
+      ? "/empresa/mensagens"
+      : "/dashboard/mensagens";
   return criarNotificacao({
     userId: params.destinatarioId,
     tipo: "nova_mensagem",
     titulo: `Nova mensagem de ${params.remetenteNome}`,
     descricao: `${params.assunto}: ${truncar(params.previa, 60)}`,
-    href:
-      params.destinatarioRole === "empresa"
-        ? "/empresa/mensagens"
-        : "/dashboard/mensagens",
+    href: `${base}?c=${encodeURIComponent(params.chatKey)}`,
   });
 }
 

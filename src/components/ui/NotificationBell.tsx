@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { isChatActive } from "@/lib/active-chat";
 
 type Notificacao = {
   id: number;
@@ -24,6 +25,9 @@ export function NotificationBell() {
   const [naoLidas, setNaoLidas] = useState(0);
   const [toasts, setToasts] = useState<Notificacao[]>([]);
   const wrapRef = useRef<HTMLDivElement>(null);
+  // Ids já processados (lista + toast). Evita duplicação quando o updater do
+  // React é reexecutado (ex.: Strict Mode) ou o stream reentrega uma notificação.
+  const idsVistosRef = useRef<Set<number>>(new Set());
 
   const removerToast = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -46,7 +50,9 @@ export function NotificationBell() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!active || !data) return;
-        setItems(data.notificacoes ?? []);
+        const notificacoes: Notificacao[] = data.notificacoes ?? [];
+        notificacoes.forEach((n) => idsVistosRef.current.add(n.id));
+        setItems(notificacoes);
         setNaoLidas(data.naoLidas ?? 0);
       })
       .catch(() => {});
@@ -70,15 +76,47 @@ export function NotificationBell() {
       try {
         const data = JSON.parse((event as MessageEvent).data);
         const novas: Notificacao[] = data.novas ?? [];
-        if (novas.length > 0) {
-          setItems((prev) => {
-            const existentes = new Set(prev.map((n) => n.id));
-            const filtradas = novas.filter((n) => !existentes.has(n.id));
-            // Preview imersivo: o stream só entrega notificações realmente
-            // novas (id > lastId), então toda chegada merece um toast.
-            empilharToasts(filtradas.slice().reverse());
-            return [...filtradas.reverse(), ...prev].slice(0, LIMITE_LISTA);
+        // Deduplica fora do updater do setItems: o updater precisa ser puro,
+        // pois o React pode reexecutá-lo (Strict Mode) — o que duplicaria toasts.
+        const filtradas = novas.filter((n) => !idsVistosRef.current.has(n.id));
+        if (filtradas.length > 0) {
+          filtradas.forEach((n) => idsVistosRef.current.add(n.id));
+
+          // Mensagens de um chat que já está aberto na tela não devem gerar
+          // toast: são marcadas como lidas e entram na lista sem alarde.
+          const suprimidas = new Set(
+            filtradas
+              .filter(
+                (n) =>
+                  n.tipo === "nova_mensagem" &&
+                  isChatActive(chatKeyFromHref(n.href))
+              )
+              .map((n) => n.id)
+          );
+
+          const visiveis = filtradas.filter((n) => !suprimidas.has(n.id));
+          // O stream só entrega notificações realmente novas, então toda
+          // chegada visível merece um toast (mais recente primeiro).
+          empilharToasts(visiveis.slice().reverse());
+          setItems((prev) =>
+            [
+              ...filtradas
+                .slice()
+                .reverse()
+                .map((n) => (suprimidas.has(n.id) ? { ...n, lida: true } : n)),
+              ...prev,
+            ].slice(0, LIMITE_LISTA)
+          );
+
+          // Marca as suprimidas como lidas no servidor.
+          suprimidas.forEach((id) => {
+            fetch(`/api/notificacoes/${id}`, { method: "PATCH" }).catch(() => {});
           });
+
+          if (typeof data.naoLidas === "number") {
+            setNaoLidas(Math.max(0, data.naoLidas - suprimidas.size));
+          }
+          return;
         }
         if (typeof data.naoLidas === "number") setNaoLidas(data.naoLidas);
       } catch {}
@@ -224,6 +262,15 @@ export function NotificationBell() {
       )}
     </div>
   );
+}
+
+// Extrai a chave do chat ("coleta:<id>" | "pre_accept:<id>") do href da
+// notificação de mensagem (ex.: "/dashboard/mensagens?c=coleta:12").
+function chatKeyFromHref(href: string | null): string | null {
+  if (!href) return null;
+  const sep = href.indexOf("?");
+  if (sep === -1) return null;
+  return new URLSearchParams(href.slice(sep + 1)).get("c");
 }
 
 function formatarTempoRelativo(iso: string) {

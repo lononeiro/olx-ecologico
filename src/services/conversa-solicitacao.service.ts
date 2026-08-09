@@ -81,7 +81,7 @@ export async function listarConversasDaSolicitacaoUsuario(
         include: { user: { select: { id: true, nome: true } } },
       },
       mensagens: {
-        include: { remetente: { select: { id: true, nome: true } } },
+        include: { remetente: { select: { id: true, nome: true, avatarUrl: true } } },
         orderBy: { createdAt: "asc" },
       },
     },
@@ -126,7 +126,7 @@ export async function listarMensagensConversaSolicitacao(
       conversaId,
       ...(options.sinceId ? { id: { gt: options.sinceId } } : {}),
     },
-    include: { remetente: { select: { id: true, nome: true } } },
+    include: { remetente: { select: { id: true, nome: true, avatarUrl: true } } },
     orderBy: { createdAt: "asc" },
   });
 }
@@ -153,7 +153,7 @@ export async function enviarMensagemConversaSolicitacao(
 
   const novaMensagem = await prisma.mensagemPreAceite.create({
     data: { conversaId, remetenteId, mensagem: text },
-    include: { remetente: { select: { id: true, nome: true } } },
+    include: { remetente: { select: { id: true, nome: true, avatarUrl: true } } },
   });
 
   const remetenteEhSolicitante = conversa.solicitacao.userId === remetenteId;
@@ -165,6 +165,7 @@ export async function enviarMensagemConversaSolicitacao(
     remetenteNome: novaMensagem.remetente.nome,
     assunto: conversa.solicitacao.titulo,
     previa: text,
+    chatKey: `pre_accept:${conversaId}`,
   });
 
   return novaMensagem;
@@ -181,7 +182,7 @@ const conversaInclude = {
     },
   },
   mensagens: {
-    include: { remetente: { select: { id: true, nome: true } } },
+    include: { remetente: { select: { id: true, nome: true, avatarUrl: true } } },
     orderBy: { createdAt: "asc" as const },
   },
 };
