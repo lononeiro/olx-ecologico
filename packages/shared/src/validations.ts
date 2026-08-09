@@ -102,6 +102,12 @@ export const avaliacaoCreateSchema = z.object({
   comentario: z.string().max(500).optional(),
 });
 
+const optionalUrl = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}, z.string().url("URL inválida").nullable().optional());
+
 export const profileUpdateSchema = z.object({
   nome: z
     .string()
@@ -110,4 +116,5 @@ export const profileUpdateSchema = z.object({
     .max(120, "Nome muito longo"),
   telefone: optionalTrimmedString,
   endereco: optionalTrimmedString,
+  avatarUrl: optionalUrl,
 });

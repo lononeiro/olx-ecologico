@@ -16,6 +16,7 @@ const userSelect = {
   email: true,
   endereco: true,
   telefone: true,
+  avatarUrl: true,
   status: true,
   createdAt: true,
   role: { select: { id: true, nome: true } },
@@ -67,7 +68,7 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  const { nome, telefone, endereco } = parsed.data;
+  const { nome, telefone, endereco, avatarUrl } = parsed.data;
 
   const user = await prisma.user.update({
     where: { id: userId },
@@ -75,6 +76,7 @@ export async function PATCH(req: NextRequest) {
       nome,
       telefone: telefone ?? null,
       endereco: endereco ?? null,
+      ...(avatarUrl !== undefined ? { avatarUrl } : {}),
     },
     select: userSelect,
   });

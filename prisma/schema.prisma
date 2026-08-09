@@ -22,6 +22,7 @@ model User {
   telefone   String?
   email      String    @unique
   senhaHash  String
+  avatarUrl  String?
   status     String    @default("ativo")
   roleId     Int
   createdAt  DateTime  @default(now())
