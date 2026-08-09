@@ -98,7 +98,7 @@ const solicitacaoDetailInclude = {
   coleta: {
     include: {
       company: {
-        include: { user: { select: { id: true, nome: true, email: true } } },
+        include: { user: { select: { id: true, nome: true, email: true, avatarUrl: true } } },
       },
     },
   },

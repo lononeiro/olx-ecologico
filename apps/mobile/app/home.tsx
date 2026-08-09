@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Plus, Truck } from "lucide-react-native";
 import {
   AppScreen,
@@ -12,7 +12,7 @@ import {
   StatusBadge,
 } from "@/components/AppUI";
 import { useProtectedRoute } from "@/lib/navigation";
-import { ApiError, getReadableErrorMessage, getSolicitacoes } from "@/lib/api";
+import { ApiError, getMyProfile, getReadableErrorMessage, getSolicitacoes } from "@/lib/api";
 import { resolveAccessToken } from "@/lib/session";
 import { USUARIO_TABS } from "@/lib/tabs";
 import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
@@ -39,6 +39,16 @@ export default function HomeScreen() {
     },
   });
 
+  const profileQuery = useQuery({
+    queryKey: ["me", user?.id],
+    enabled: hasAccess && !isLoading && !!user,
+    queryFn: async () => {
+      const token = await resolveAccessToken(accessToken, refreshSession);
+      if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
+      return getMyProfile(token);
+    },
+  });
+
   if (isLoading || !hasAccess || !user) {
     return (
       <AppScreen>
@@ -46,6 +56,8 @@ export default function HomeScreen() {
       </AppScreen>
     );
   }
+
+  const avatarUrl = profileQuery.data?.avatarUrl ?? null;
 
   const solicitacoes = solicitacoesQuery.data ?? [];
   const emAndamento = solicitacoes.filter(
@@ -60,6 +72,19 @@ export default function HomeScreen() {
       footer={<BottomNavigation items={USUARIO_TABS} activeKey="home" />}
     >
       <View style={styles.header}>
+        <Pressable
+          onPress={() => router.push("/me")}
+          style={styles.avatar}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Ver meu perfil"
+        >
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={styles.avatarImg} />
+          ) : (
+            <Text style={styles.avatarInitial}>{user.name.charAt(0).toUpperCase()}</Text>
+          )}
+        </Pressable>
         <View style={styles.headerText}>
           <Text style={styles.greeting}>Olá, {user.name.split(" ")[0]}</Text>
           <Text style={styles.subtitle}>Suas coletas em andamento</Text>
@@ -123,6 +148,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.md,
+  },
+  avatar: {
+    width: 46,
+    height: 46,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  avatarImg: {
+    width: 46,
+    height: 46,
+    borderRadius: radius.pill,
+  },
+  avatarInitial: {
+    ...typography.sectionTitle,
+    color: colors.primary,
   },
   headerText: {
     flex: 1,

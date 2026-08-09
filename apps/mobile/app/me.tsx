@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { router } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Linking, StyleSheet, Text, View } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { profileUpdateSchema } from "@shared";
-import { MapPin, RefreshCw, LogOut } from "lucide-react-native";
+import { Camera, MapPin, RefreshCw, LogOut } from "lucide-react-native";
 import {
   AppButton,
   AppCard,
@@ -16,6 +17,7 @@ import {
   SectionHeader,
   StatusBadge,
 } from "@/components/AppUI";
+import { Icon } from "@/components/ui/Icon";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   getMyProfile,
@@ -23,6 +25,7 @@ import {
   type MobileProfileResponse,
   updateMyProfile,
 } from "@/lib/api";
+import { CloudinaryUploadError, uploadImageToCloudinary } from "@/lib/cloudinary";
 import { withAutoRefresh } from "@/lib/session";
 import { colors, spacing, typography } from "@/theme/tokens";
 import { USUARIO_TABS, EMPRESA_TABS } from "@/lib/tabs";
@@ -31,12 +34,14 @@ type ProfileFormState = {
   nome: string;
   telefone: string;
   endereco: string;
+  avatarUrl: string | null;
 };
 
 const emptyForm: ProfileFormState = {
   nome: "",
   telefone: "",
   endereco: "",
+  avatarUrl: null,
 };
 
 function getProfileForm(profile: MobileProfileResponse): ProfileFormState {
@@ -44,6 +49,7 @@ function getProfileForm(profile: MobileProfileResponse): ProfileFormState {
     nome: profile.nome,
     telefone: profile.telefone ?? "",
     endereco: profile.endereco ?? "",
+    avatarUrl: profile.avatarUrl ?? null,
   };
 }
 
@@ -107,6 +113,81 @@ export default function MeScreen() {
     },
   });
 
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
+  async function salvarAvatar(avatarUrl: string | null) {
+    const nome = form.nome.trim() || profileQuery.data?.nome || "";
+    const profile = await withAutoRefresh(accessToken, refreshSession, (token) =>
+      updateMyProfile(token, {
+        nome,
+        telefone: form.telefone.trim() || null,
+        endereco: form.endereco.trim() || null,
+        avatarUrl,
+      })
+    );
+    setForm(getProfileForm(profile));
+    queryClient.setQueryData(["me", user?.id], profile);
+    await updateUser({
+      id: profile.id,
+      name: profile.nome,
+      email: profile.email,
+      role: profile.role.nome as "usuario" | "empresa",
+    });
+    return profile;
+  }
+
+  async function handlePickAvatar() {
+    setFeedback("");
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setFeedbackTone("error");
+      setFeedback("Permita o acesso às fotos para escolher uma imagem.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (result.canceled || !result.assets?.length) return;
+
+    setAvatarUploading(true);
+    try {
+      const url = await uploadImageToCloudinary(result.assets[0].uri);
+      await salvarAvatar(url);
+      setFeedbackTone("success");
+      setFeedback("Foto de perfil atualizada.");
+    } catch (error) {
+      setFeedbackTone("error");
+      setFeedback(
+        error instanceof CloudinaryUploadError
+          ? error.message
+          : getReadableErrorMessage(error, "Não foi possível enviar a foto.")
+      );
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
+  async function handleRemoveAvatar() {
+    setFeedback("");
+    setAvatarUploading(true);
+    try {
+      await salvarAvatar(null);
+      setFeedbackTone("success");
+      setFeedback("Foto de perfil removida.");
+    } catch (error) {
+      setFeedbackTone("error");
+      setFeedback(getReadableErrorMessage(error, "Não foi possível remover a foto."));
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
+  const avatarUrl = form.avatarUrl ?? profileQuery.data?.avatarUrl ?? null;
+
   const createdAtLabel = useMemo(() => {
     if (!profileQuery.data?.createdAt) return "";
     return new Date(profileQuery.data.createdAt).toLocaleString("pt-BR");
@@ -155,9 +236,26 @@ export default function MeScreen() {
     <AppScreen footer={<BottomNavigation items={tabs} activeKey="me" />}>
       <AppCard>
         <View style={styles.heroTop}>
-          <View style={styles.identityBadge}>
-            <Text style={styles.identityInitial}>{user.name.charAt(0).toUpperCase()}</Text>
-          </View>
+          <Pressable
+            onPress={handlePickAvatar}
+            disabled={avatarUploading}
+            style={styles.identityBadge}
+            accessibilityRole="button"
+            accessibilityLabel="Alterar foto de perfil"
+          >
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.identityImage} />
+            ) : (
+              <Text style={styles.identityInitial}>{user.name.charAt(0).toUpperCase()}</Text>
+            )}
+            <View style={styles.identityCamera}>
+              {avatarUploading ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : (
+                <Icon icon={Camera} size={13} color={colors.white} strokeWidth={2} />
+              )}
+            </View>
+          </Pressable>
           <View style={styles.heroText}>
             <Text style={styles.heroEyebrow}>MINHA CONTA</Text>
             <Text style={styles.heroName}>{user.name}</Text>
@@ -215,6 +313,21 @@ export default function MeScreen() {
               title="Atualizar dados"
               description="Nome, telefone e endereço seguem o mesmo contrato validado pelo backend."
             />
+
+            <View style={styles.avatarActions}>
+              <AppButton
+                label={avatarUploading ? "Enviando foto..." : avatarUrl ? "Trocar foto" : "Adicionar foto"}
+                tone="secondary"
+                icon={Camera}
+                onPress={handlePickAvatar}
+                disabled={avatarUploading}
+              />
+              {avatarUrl ? (
+                <Pressable onPress={handleRemoveAvatar} disabled={avatarUploading} hitSlop={8}>
+                  <Text style={styles.removeAvatar}>Remover foto</Text>
+                </Pressable>
+              ) : null}
+            </View>
 
             <AppField
               label="Nome"
@@ -321,9 +434,37 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  identityImage: {
+    width: 62,
+    height: 62,
+    borderRadius: 22,
+  },
   identityInitial: {
     ...typography.sectionTitle,
     color: colors.white,
+  },
+  identityCamera: {
+    position: "absolute",
+    right: -4,
+    bottom: -4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primaryStrong,
+    borderWidth: 2,
+    borderColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarActions: {
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+    alignItems: "flex-start",
+  },
+  removeAvatar: {
+    ...typography.meta,
+    color: colors.dangerText,
+    paddingVertical: 4,
   },
   heroText: {
     flex: 1,

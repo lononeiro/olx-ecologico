@@ -22,6 +22,7 @@ export default async function MyProfilePage() {
       email: true,
       telefone: true,
       endereco: true,
+      avatarUrl: true,
       status: true,
       createdAt: true,
       role: { select: { id: true, nome: true } },

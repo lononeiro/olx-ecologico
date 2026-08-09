@@ -65,6 +65,7 @@ export interface MobileProfileResponse {
   email: string;
   endereco: string | null;
   telefone: string | null;
+  avatarUrl: string | null;
   status: string;
   createdAt: string;
   role: {
@@ -94,6 +95,7 @@ export interface MessageItem {
   remetente: {
     id: number;
     nome: string;
+    avatarUrl?: string | null;
   };
 }
 
@@ -150,6 +152,7 @@ export interface SolicitacaoItem {
         id: number;
         nome: string;
         email?: string;
+        avatarUrl?: string | null;
       };
     };
     mensagens?: MessageItem[];
@@ -477,5 +480,33 @@ export function sendMensagemConversaSolicitacao(
     method: "POST",
     accessToken,
     body: JSON.stringify({ mensagem }),
+  });
+}
+
+export interface AvaliacaoItem {
+  id: number;
+  coletaId: number;
+  autorId: number;
+  nota: number;
+  comentario: string | null;
+  createdAt: string;
+}
+
+/** Retorna a avaliação já enviada para uma coleta, ou null se ainda não avaliada. */
+export function getAvaliacaoColeta(accessToken: string, coletaId: number) {
+  return apiFetch<AvaliacaoItem | null>(`/api/avaliacoes/coleta/${coletaId}`, {
+    method: "GET",
+    accessToken,
+  });
+}
+
+export function criarAvaliacao(
+  accessToken: string,
+  payload: { coletaId: number; nota: number; comentario?: string }
+) {
+  return apiFetch<AvaliacaoItem>(`/api/avaliacoes`, {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify(payload),
   });
 }

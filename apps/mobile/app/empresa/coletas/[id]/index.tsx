@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Mail,
   MapPin,
+  MessageCircle,
   Package,
   Phone,
   User as UserIcon,
@@ -20,14 +21,13 @@ import {
   InfoRow,
   LoadingCard,
   MessageBanner,
+  MobileListItem,
   SectionHeader,
   StatusBadge,
   appColors,
 } from "@/components/AppUI";
-import { ChatThread } from "@/components/ChatThread";
 import {
   getColetaById,
-  getMensagensColeta,
   getReadableErrorMessage,
   updateColetaStatus,
 } from "@/lib/api";
@@ -231,23 +231,15 @@ export default function EmpresaColetaDetailScreen() {
         </AppCard>
       )}
 
-      {accessToken ? (
-        <ChatThread
-          coletaId={coleta.id}
-          accessToken={accessToken}
-          currentUserId={user.id}
-          messages={coleta.mensagens ?? []}
+      <AppCard>
+        <MobileListItem
+          icon={MessageCircle}
+          tone="primary"
           title="Conversa com o solicitante"
-          emptyText="Nenhuma mensagem ainda. Converse com o solicitante por aqui."
-          placeholder="Escreva para o solicitante"
-          queryKey={["detail", id]}
-          onFetch={(sinceId) =>
-            withAutoRefresh(accessToken, refreshSession, (token) =>
-              getMensagensColeta(token, coleta.id, sinceId)
-            )
-          }
+          subtitle={coleta.solicitacao.user?.nome ?? "Abrir conversa"}
+          onPress={() => router.push(`/empresa/coletas/${coleta.id}/conversa` as any)}
         />
-      ) : null}
+      </AppCard>
     </AppScreen>
   );
 }

@@ -102,7 +102,7 @@ describe("mensagem.service", () => {
 
       expect(prismaMock.mensagem.findMany).toHaveBeenCalledWith({
         where: { coletaId: 9 },
-        include: { remetente: { select: { id: true, nome: true } } },
+        include: { remetente: { select: { id: true, nome: true, avatarUrl: true } } },
         orderBy: { createdAt: "asc" },
       });
     });
@@ -118,7 +118,7 @@ describe("mensagem.service", () => {
 
       expect(prismaMock.mensagem.findMany).toHaveBeenCalledWith({
         where: { coletaId: 9, id: { gt: 44 } },
-        include: { remetente: { select: { id: true, nome: true } } },
+        include: { remetente: { select: { id: true, nome: true, avatarUrl: true } } },
         orderBy: { createdAt: "asc" },
       });
     });
@@ -148,7 +148,7 @@ describe("mensagem.service", () => {
 
       expect(prismaMock.mensagem.create).toHaveBeenCalledWith({
         data: { coletaId: 4, remetenteId: 2, mensagem: "Mensagem de teste" },
-        include: { remetente: { select: { id: true, nome: true } } },
+        include: { remetente: { select: { id: true, nome: true, avatarUrl: true } } },
       });
       expect(prismaMock.notificacao.create).toHaveBeenCalledTimes(1);
     });

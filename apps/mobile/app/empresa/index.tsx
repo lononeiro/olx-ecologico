@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { View } from "react-native";
-import { ClipboardList, LogOut, Truck, User as UserIcon } from "lucide-react-native";
+import { ClipboardList, Truck } from "lucide-react-native";
 import {
   AppButton,
   AppCard,
@@ -25,7 +25,7 @@ import { resolveAccessToken } from "@/lib/session";
 import { EMPRESA_TABS } from "@/lib/tabs";
 
 export default function EmpresaHomeScreen() {
-  const { accessToken, hasAccess, isLoading, refreshSession, signOut, user } =
+  const { accessToken, hasAccess, isLoading, refreshSession, user } =
     useProtectedRoute(["empresa"]);
 
   const disponiveisQuery = useQuery({
@@ -107,38 +107,10 @@ export default function EmpresaHomeScreen() {
       </View>
 
       <AppCard>
-        <SectionHeader title="Ações rápidas" />
-        <AppButton
-          label="Solicitações disponíveis"
-          icon={ClipboardList}
-          onPress={() => router.push("/empresa/solicitacoes")}
-        />
-        <AppButton
-          label="Minhas coletas"
-          tone="secondary"
-          icon={Truck}
-          onPress={() => router.push("/empresa/coletas" as any)}
-        />
-        <AppButton
-          label="Meu perfil"
-          tone="secondary"
-          icon={UserIcon}
-          onPress={() => router.push("/me")}
-        />
-        <AppButton
-          label="Sair"
-          tone="danger"
-          icon={LogOut}
-          onPress={async () => {
-            await signOut();
-            router.replace("/login");
-          }}
-        />
-      </AppCard>
-
-      <AppCard>
-        <SectionHeader eyebrow="EM ANDAMENTO" title="Coletas em andamento" />
-        {!coletasQuery.isLoading && ativas.length === 0 ? (
+        <SectionHeader eyebrow="MINHAS COLETAS" title="Coletas em andamento" />
+        {coletasQuery.isLoading ? (
+          <LoadingCard text="Carregando coletas..." />
+        ) : ativas.length === 0 ? (
           <EmptyState
             icon={Truck}
             title="Nenhuma coleta em andamento"
@@ -157,7 +129,45 @@ export default function EmpresaHomeScreen() {
             />
           ))
         )}
+        <AppButton
+          label="Ver mais"
+          tone="secondary"
+          icon={Truck}
+          onPress={() => router.push("/empresa/coletas" as any)}
+        />
       </AppCard>
+
+      <AppCard>
+        <SectionHeader eyebrow="DISPONÍVEIS" title="Solicitações disponíveis" />
+        {disponiveisQuery.isLoading ? (
+          <LoadingCard text="Carregando solicitações..." />
+        ) : disponiveis.length === 0 ? (
+          <EmptyState
+            icon={ClipboardList}
+            title="Nenhuma solicitação disponível"
+            description="Novas solicitações aprovadas aparecerão aqui para aceite."
+          />
+        ) : (
+          disponiveis.slice(0, 3).map((item) => (
+            <MobileListItem
+              key={item.id}
+              icon={ClipboardList}
+              tone="primary"
+              title={item.titulo}
+              subtitle={`${item.quantidade} · ${item.material.nome}`}
+              meta={item.status}
+              onPress={() => router.push("/empresa/solicitacoes" as any)}
+            />
+          ))
+        )}
+        <AppButton
+          label="Ver mais"
+          tone="secondary"
+          icon={ClipboardList}
+          onPress={() => router.push("/empresa/solicitacoes" as any)}
+        />
+      </AppCard>
+
     </AppScreen>
   );
 }

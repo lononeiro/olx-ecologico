@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -95,6 +95,21 @@ export function AppShell({ children }: { children: ReactNode }) {
   const page = getPageCopy(pathname);
   const userName = session?.user?.name?.split(" ")[0] ?? "Usuário";
   const role = ((session?.user as any)?.role ?? "") as string;
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // Busca a foto de perfil; refaz ao trocar de rota para refletir uma atualização em /me.
+  useEffect(() => {
+    let active = true;
+    fetch("/api/users/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data) setAvatarUrl(data.avatarUrl ?? null);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
 
   return (
     <div className="app-shell">
@@ -122,7 +137,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             <ThemeToggle compact />
 
             <Link href="/me" className="app-user-chip" aria-label="Ver meu perfil" title="Meu perfil">
-              <div className="app-user-avatar">{userName[0]?.toUpperCase() ?? "U"}</div>
+              <div className="app-user-avatar" style={{ overflow: "hidden" }}>
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt=""
+                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "inherit" }}
+                  />
+                ) : (
+                  userName[0]?.toUpperCase() ?? "U"
+                )}
+              </div>
               <div className="app-user-chip-text">
                 <p className="app-user-name">{userName}</p>
                 <p className="app-user-role">{getRoleLabel(role)}</p>

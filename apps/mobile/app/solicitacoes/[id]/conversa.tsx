@@ -11,6 +11,7 @@ import {
   SectionHeader,
   StatusBadge,
 } from "@/components/AppUI";
+import { ChatHeader } from "@/components/ChatHeader";
 import { ChatThread } from "@/components/ChatThread";
 import {
   getConversasSolicitacao,
@@ -80,29 +81,23 @@ export default function SolicitacaoConversaScreen() {
 
   const coleta = item.coleta;
 
-  return (
-    <AppScreen footer={backButton}>
-      <AppCard>
-        <SectionHeader
-          eyebrow="CONVERSA"
-          title={item.titulo}
-          description={
-            coleta
-              ? "Fale com a empresa responsável pela coleta."
-              : "Converse com as empresas interessadas na sua solicitação."
-          }
+  // Conversa 1:1 com a empresa responsável — experiência de tela cheia (estilo WhatsApp).
+  if (coleta) {
+    return (
+      <AppScreen scroll={false}>
+        <ChatHeader
+          name={coleta.company.user.nome}
+          subtitle={item.titulo}
+          avatarUrl={coleta.company.user.avatarUrl}
+          onBack={() => router.push(`/solicitacoes/${id}` as any)}
         />
-        <StatusBadge kind="solicitacao" value={item.status} />
-      </AppCard>
-
-      {coleta ? (
         <ChatThread
+          variant="screen"
           coletaId={coleta.id}
           accessToken={accessToken}
           currentUserId={user.id}
           messages={coleta.mensagens ?? []}
-          title={`Conversa com ${coleta.company.user.nome}`}
-          placeholder="Escreva para a empresa"
+          placeholder="Mensagem"
           queryKey={["detail", id]}
           onFetch={(sinceId) =>
             withAutoRefresh(accessToken, refreshSession, (token) =>
@@ -110,7 +105,22 @@ export default function SolicitacaoConversaScreen() {
             )
           }
         />
-      ) : semColeta ? (
+      </AppScreen>
+    );
+  }
+
+  return (
+    <AppScreen footer={backButton}>
+      <AppCard>
+        <SectionHeader
+          eyebrow="CONVERSA"
+          title={item.titulo}
+          description="Converse com as empresas interessadas na sua solicitação."
+        />
+        <StatusBadge kind="solicitacao" value={item.status} />
+      </AppCard>
+
+      {semColeta ? (
         conversasQuery.isLoading ? (
           <LoadingCard text="Carregando conversas..." />
         ) : conversasQuery.error ? (

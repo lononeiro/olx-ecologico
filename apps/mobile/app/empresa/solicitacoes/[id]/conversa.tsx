@@ -1,19 +1,13 @@
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, MapPin, Package, type LucideIcon } from "lucide-react-native";
-import { Text, View } from "react-native";
+import { ArrowLeft } from "lucide-react-native";
 import {
   AppButton,
-  AppCard,
   AppScreen,
-  Icon,
-  InfoRow,
   LoadingCard,
   MessageBanner,
-  SectionHeader,
-  StatusBadge,
-  appColors,
 } from "@/components/AppUI";
+import { ChatHeader } from "@/components/ChatHeader";
 import { ChatThread } from "@/components/ChatThread";
 import {
   getEmpresaConversaSolicitacao,
@@ -87,42 +81,18 @@ export default function EmpresaSolicitacaoConversaScreen() {
   const solicitacao = conversa.solicitacao;
 
   return (
-    <AppScreen
-      footer={
-        <AppButton
-          label="Voltar para solicitações"
-          tone="secondary"
-          icon={ArrowLeft}
-          onPress={() => router.push("/empresa/solicitacoes" as any)}
-        />
-      }
-    >
-      <AppCard>
-        <SectionHeader
-          eyebrow="CONVERSA PRÉ-ACEITE"
-          title={solicitacao?.titulo ?? `Solicitação #${conversa.solicitacaoId}`}
-          description="Tire dúvidas com o solicitante antes de aceitar a coleta."
-        />
-        {solicitacao?.status && <StatusBadge kind="solicitacao" value={solicitacao.status} />}
-      </AppCard>
-
-      {solicitacao ? (
-        <AppCard>
-          <SectionHeader eyebrow="MATERIAIS" title="Detalhes da solicitação" />
-          <InfoRow
-            label="Material"
-            value={<IconText icon={Package} text={solicitacao.material.nome} />}
-          />
-          <InfoRow label="Quantidade" value={solicitacao.quantidade} />
-          <InfoRow
-            label="Região aproximada"
-            value={<IconText icon={MapPin} text={solicitacao.endereco} />}
-          />
-          <InfoRow label="Descrição" value={solicitacao.descricao} />
-        </AppCard>
-      ) : null}
-
+    <AppScreen scroll={false}>
+      <ChatHeader
+        name={solicitacao?.titulo ?? `Solicitação #${conversa.solicitacaoId}`}
+        subtitle={
+          solicitacao
+            ? `${solicitacao.material.nome} · ${solicitacao.quantidade}`
+            : "Conversa pré-aceite"
+        }
+        onBack={() => router.push("/empresa/solicitacoes" as any)}
+      />
       <ChatThread
+        variant="screen"
         threadId={conversa.id}
         accessToken={accessToken}
         currentUserId={user.id}
@@ -139,21 +109,8 @@ export default function EmpresaSolicitacaoConversaScreen() {
           )
         }
         emptyText="Nenhuma pergunta enviada ainda."
-        placeholder="Pergunte sobre volume, acesso ao local ou estado do material"
+        placeholder="Pergunte sobre volume, acesso ou estado do material"
       />
     </AppScreen>
-  );
-}
-
-function IconText({ icon, text }: { icon: LucideIcon; text: string }) {
-  return (
-    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
-      <Icon icon={icon} size={16} color={appColors.textFaint} />
-      <Text
-        style={{ color: appColors.text, fontSize: 15, lineHeight: 22, fontWeight: "600", flex: 1 }}
-      >
-        {text}
-      </Text>
-    </View>
   );
 }

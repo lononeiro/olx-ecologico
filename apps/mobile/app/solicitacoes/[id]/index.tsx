@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -7,9 +7,11 @@ import {
   Calendar,
   ChevronDown,
   FileText,
+  KeyRound,
   MapPin,
   MessageCircle,
   Package,
+  Star,
   Truck,
   type LucideIcon,
 } from "lucide-react-native";
@@ -27,14 +29,17 @@ import {
   appColors,
 } from "@/components/AppUI";
 import { ImageGallery } from "@/components/ImageGallery";
+import { AvaliacaoModal } from "@/components/AvaliacaoModal";
 import {
+  criarAvaliacao,
+  getAvaliacaoColeta,
   getConversasSolicitacao,
   getReadableErrorMessage,
   getSolicitacaoById,
 } from "@/lib/api";
 import { useProtectedRoute } from "@/lib/navigation";
 import { withAutoRefresh } from "@/lib/session";
-import { radius, spacing, typography } from "@/theme/tokens";
+import { radius, shadows, spacing, typography } from "@/theme/tokens";
 
 const STATUS_COPY: Record<string, string> = {
   aprovada: "Disponível para empresas. Você será avisado quando uma aceitar a coleta.",
@@ -69,6 +74,35 @@ export default function SolicitacaoDetailScreen() {
         getConversasSolicitacao(token, id)
       ),
   });
+
+  // Avaliação: só faz sentido quando a coleta foi concluída.
+  const coletaConcluidaId =
+    item?.coleta?.status === "concluida" ? item.coleta.id : undefined;
+
+  const avaliacaoQuery = useQuery({
+    queryKey: ["avaliacao", coletaConcluidaId],
+    enabled: hasAccess && !isLoading && !!accessToken && !!coletaConcluidaId,
+    queryFn: async () =>
+      withAutoRefresh(accessToken, refreshSession, (token) =>
+        getAvaliacaoColeta(token, coletaConcluidaId!)
+      ),
+  });
+
+  const jaAvaliou = !!avaliacaoQuery.data;
+  const [avaliacaoModalAberta, setAvaliacaoModalAberta] = useState(false);
+  const [avaliacaoDispensada, setAvaliacaoDispensada] = useState(false);
+
+  // Abre o popup automaticamente assim que a coleta é concluída e ainda não foi avaliada.
+  useEffect(() => {
+    if (
+      coletaConcluidaId &&
+      avaliacaoQuery.isSuccess &&
+      !jaAvaliou &&
+      !avaliacaoDispensada
+    ) {
+      setAvaliacaoModalAberta(true);
+    }
+  }, [coletaConcluidaId, avaliacaoQuery.isSuccess, jaAvaliou, avaliacaoDispensada]);
 
   if (isLoading || !hasAccess || !user || query.isLoading) {
     return (
@@ -114,6 +148,13 @@ export default function SolicitacaoDetailScreen() {
         />
       }
     >
+      {/* Código de confirmação em destaque, no topo, enquanto a coleta está ativa */}
+      {coleta?.codigoConfirmacao &&
+      coleta.status !== "concluida" &&
+      coleta.status !== "cancelada" ? (
+        <CodigoConfirmacaoCard codigo={coleta.codigoConfirmacao} />
+      ) : null}
+
       {/* Galeria de fotos em destaque */}
       <ImageGallery images={item.imagens} />
 
@@ -145,6 +186,39 @@ export default function SolicitacaoDetailScreen() {
         </AppCard>
       ) : null}
 
+      {/* Avaliação da coleta concluída */}
+      {coletaConcluidaId ? (
+        jaAvaliou ? (
+          <AppCard>
+            <Text style={styles.avaliacaoDoneLabel}>SUA AVALIAÇÃO</Text>
+            <View style={styles.avaliacaoStarsRow}>
+              {[1, 2, 3, 4, 5].map((valor) => (
+                <Star
+                  key={valor}
+                  size={22}
+                  color="#F5B301"
+                  fill={valor <= (avaliacaoQuery.data?.nota ?? 0) ? "#F5B301" : "transparent"}
+                  strokeWidth={1.8}
+                />
+              ))}
+            </View>
+            {!!avaliacaoQuery.data?.comentario && (
+              <Text style={styles.avaliacaoComentario}>“{avaliacaoQuery.data.comentario}”</Text>
+            )}
+          </AppCard>
+        ) : (
+          <AppCard>
+            <MobileListItem
+              icon={Star}
+              tone="primary"
+              title="Avaliar coleta"
+              subtitle={`Conte como foi o atendimento de ${coleta?.company.user.nome ?? "a empresa"}`}
+              onPress={() => setAvaliacaoModalAberta(true)}
+            />
+          </AppCard>
+        )
+      ) : null}
+
       {/* Acompanhamento da coleta */}
       {coleta ? (
         <Collapsible icon={Truck} eyebrow="COLETA" title="Acompanhamento">
@@ -157,10 +231,8 @@ export default function SolicitacaoDetailScreen() {
             icon={Calendar}
             label="Data do aceite"
             value={new Date(coleta.dataAceite).toLocaleDateString("pt-BR")}
+            last
           />
-          {!!coleta.codigoConfirmacao && (
-            <DetailRow label="Código de confirmação" value={coleta.codigoConfirmacao} last />
-          )}
         </Collapsible>
       ) : null}
 
@@ -184,7 +256,47 @@ export default function SolicitacaoDetailScreen() {
           tone={item.status === "rejeitada" ? "error" : "info"}
         />
       ) : null}
+
+      {coletaConcluidaId ? (
+        <AvaliacaoModal
+          visible={avaliacaoModalAberta}
+          empresaNome={coleta?.company.user.nome}
+          onClose={() => {
+            setAvaliacaoModalAberta(false);
+            setAvaliacaoDispensada(true);
+          }}
+          onSubmit={async (nota, comentario) => {
+            await withAutoRefresh(accessToken, refreshSession, (token) =>
+              criarAvaliacao(token, { coletaId: coletaConcluidaId, nota, comentario })
+            );
+            setAvaliacaoModalAberta(false);
+            await avaliacaoQuery.refetch();
+          }}
+        />
+      ) : null}
     </AppScreen>
+  );
+}
+
+function CodigoConfirmacaoCard({ codigo }: { codigo: string }) {
+  return (
+    <View style={styles.codeCard}>
+      <View style={styles.codeHeader}>
+        <View style={styles.codeIcon}>
+          <Icon icon={KeyRound} size={18} color={appColors.primary} />
+        </View>
+        <Text style={styles.codeEyebrow}>CÓDIGO DE CONFIRMAÇÃO</Text>
+      </View>
+
+      <Text style={styles.codeValue} selectable>
+        {codigo}
+      </Text>
+
+      <Text style={styles.codeHint}>
+        Quando o coletor chegar, informe este código para ele. É assim que a
+        empresa confirma que a coleta foi feita com você — não compartilhe antes.
+      </Text>
+    </View>
   );
 }
 
@@ -249,6 +361,64 @@ function DetailRow({
 }
 
 const styles = StyleSheet.create({
+  codeCard: {
+    backgroundColor: appColors.primaryTint,
+    borderWidth: 1,
+    borderColor: appColors.primary,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    gap: spacing.sm,
+    ...shadows.card,
+  },
+  codeHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  codeIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.pill,
+    backgroundColor: appColors.primarySoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  codeEyebrow: {
+    ...typography.eyebrow,
+    color: appColors.primary,
+  },
+  codeValue: {
+    fontSize: 40,
+    lineHeight: 48,
+    fontFamily: typography.title.fontFamily,
+    fontWeight: "800",
+    color: appColors.primaryStrong,
+    textAlign: "center",
+    letterSpacing: 6,
+    paddingVertical: spacing.xs,
+  },
+  codeHint: {
+    ...typography.body,
+    fontSize: 13,
+    lineHeight: 19,
+    color: appColors.textSoft,
+    textAlign: "center",
+  },
+  avaliacaoDoneLabel: {
+    ...typography.eyebrow,
+    color: appColors.textFaint,
+    marginBottom: spacing.xs,
+  },
+  avaliacaoStarsRow: {
+    flexDirection: "row",
+    gap: spacing.xs,
+  },
+  avaliacaoComentario: {
+    ...typography.body,
+    fontStyle: "italic",
+    color: appColors.textSoft,
+    marginTop: spacing.sm,
+  },
   badgeRow: {
     flexDirection: "row",
     flexWrap: "wrap",

@@ -147,7 +147,7 @@ export async function buscarColetaPorId(
       ...(options.includeMensagens
         ? {
             mensagens: {
-              include: { remetente: { select: { id: true, nome: true } } },
+              include: { remetente: { select: { id: true, nome: true, avatarUrl: true } } },
               orderBy: { createdAt: "asc" as const },
             },
           }

@@ -3,6 +3,11 @@
 import { useMemo, useRef, useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
+  CldUploadWidget,
+  type CloudinaryUploadWidgetInfo,
+  type CloudinaryUploadWidgetResults,
+} from "next-cloudinary";
+import {
   buildAddressString,
   formatCep,
   getMissingAddressFields,
@@ -12,12 +17,19 @@ import {
   type CepLookupResult,
 } from "@/lib/address";
 
+const extractSecureUrl = (result: CloudinaryUploadWidgetResults): string | null => {
+  if (result.event !== "success" || !result.info || typeof result.info === "string") return null;
+  const info = result.info as CloudinaryUploadWidgetInfo;
+  return typeof info.secure_url === "string" ? info.secure_url : null;
+};
+
 interface ProfileData {
   id: number;
   nome: string;
   email: string;
   telefone: string | null;
   endereco: string | null;
+  avatarUrl: string | null;
   status: string;
   createdAt: string | Date;
   role: {
@@ -53,6 +65,42 @@ export function ProfilePageClient({ initialProfile }: Props) {
   const lastFetchedCepRef = useRef(normalizeCep(parseAddressString(initialProfile.endereco).cep));
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [avatarSaving, setAvatarSaving] = useState(false);
+
+  async function persistAvatar(avatarUrl: string | null) {
+    setError("");
+    setSuccess("");
+    setAvatarSaving(true);
+    try {
+      const response = await fetch("/api/users/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: profile.nome,
+          telefone: profile.telefone ?? "",
+          endereco: profile.endereco ?? "",
+          avatarUrl,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setError("Não foi possível atualizar a foto de perfil.");
+        return;
+      }
+      setProfile(data);
+      setSuccess(avatarUrl ? "Foto de perfil atualizada." : "Foto de perfil removida.");
+      startTransition(() => router.refresh());
+    } catch {
+      setError("Não foi possível atualizar a foto de perfil.");
+    } finally {
+      setAvatarSaving(false);
+    }
+  }
+
+  const handleAvatarUpload = (result: CloudinaryUploadWidgetResults) => {
+    const url = extractSecureUrl(result);
+    if (url) void persistAvatar(url);
+  };
 
   const createdAtLabel = useMemo(
     () =>
@@ -235,6 +283,24 @@ export function ProfilePageClient({ initialProfile }: Props) {
           box-shadow: 0 10px 26px rgba(30,122,50,.30);
           flex-shrink: 0;
         }
+        .profile-hero-avatar-wrap { position: relative; flex-shrink: 0; }
+        .profile-hero-avatar-img { object-fit: cover; }
+        .profile-avatar-btn {
+          position: absolute; right: -2px; bottom: -2px;
+          width: 30px; height: 30px; border-radius: 50%;
+          background: var(--green-dark); color: #fff;
+          border: 2px solid var(--surface); cursor: pointer;
+          display: grid; place-items: center;
+          box-shadow: 0 4px 10px rgba(0,0,0,.15);
+        }
+        .profile-avatar-btn:disabled { opacity: .6; cursor: default; }
+        .profile-avatar-remove {
+          justify-self: start; margin-top: .2rem;
+          background: none; border: none; cursor: pointer;
+          font-size: .78rem; font-weight: 600; color: var(--red);
+          padding: 0;
+        }
+        .profile-avatar-remove:disabled { opacity: .6; cursor: default; }
         .profile-hero-info { min-width: 0; display: grid; gap: .32rem; }
         .profile-hero-info h1 {
           font-size: clamp(1.4rem, 3vw, 1.95rem);
@@ -320,7 +386,34 @@ export function ProfilePageClient({ initialProfile }: Props) {
       `}</style>
 
       <section className="card profile-hero">
-        <div className="profile-hero-avatar" aria-hidden="true">{initials}</div>
+        <div className="profile-hero-avatar-wrap">
+          {profile.avatarUrl ? (
+            <img src={profile.avatarUrl} alt="Foto de perfil" className="profile-hero-avatar profile-hero-avatar-img" />
+          ) : (
+            <div className="profile-hero-avatar" aria-hidden="true">{initials}</div>
+          )}
+          <CldUploadWidget
+            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
+            options={{ multiple: false, maxFiles: 1, cropping: true, croppingAspectRatio: 1 }}
+            onSuccess={handleAvatarUpload}
+            onError={() => setError("Não foi possível enviar a foto agora.")}
+          >
+            {({ open }) => (
+              <button
+                type="button"
+                className="profile-avatar-btn"
+                onClick={() => open()}
+                disabled={avatarSaving}
+                aria-label="Alterar foto de perfil"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              </button>
+            )}
+          </CldUploadWidget>
+        </div>
         <div className="profile-hero-info">
           <p className="section-label" style={{ marginBottom: 0 }}>Minha conta</p>
           <h1>{profile.nome}</h1>
@@ -332,6 +425,16 @@ export function ProfilePageClient({ initialProfile }: Props) {
             </span>
           </div>
           <p className="profile-hero-sub">{profile.email} · Membro desde {createdAtLabel}</p>
+          {profile.avatarUrl ? (
+            <button
+              type="button"
+              className="profile-avatar-remove"
+              onClick={() => void persistAvatar(null)}
+              disabled={avatarSaving}
+            >
+              Remover foto
+            </button>
+          ) : null}
         </div>
       </section>
 
