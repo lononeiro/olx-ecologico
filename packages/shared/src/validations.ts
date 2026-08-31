@@ -61,10 +61,21 @@ export const mobileRefreshSchema = z.object({
   refreshToken: z.string().min(1, "refreshToken obrigatorio"),
 });
 
+const optionalPesoKg = z.preprocess((value) => {
+  if (value === "" || value === null || value === undefined) return undefined;
+  const parsed = typeof value === "string" ? Number(value.replace(",", ".")) : value;
+  return Number.isFinite(parsed) ? parsed : undefined;
+}, z
+  .number()
+  .positive("Peso deve ser maior que zero")
+  .max(1_000_000, "Peso muito alto")
+  .optional());
+
 export const solicitacaoCreateSchema = z.object({
   titulo: z.string().min(3, "Titulo deve ter ao menos 3 caracteres"),
   descricao: z.string().min(10, "Descricao deve ter ao menos 10 caracteres"),
   quantidade: z.string().min(1, "Informe a quantidade"),
+  pesoEstimadoKg: optionalPesoKg,
   endereco: z.string().min(5, "Endereco deve ter ao menos 5 caracteres"),
   materialId: z.coerce
     .number({ invalid_type_error: "Selecione um tipo de material" })

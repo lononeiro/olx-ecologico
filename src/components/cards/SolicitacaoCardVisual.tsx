@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { SolicitacaoBadge, ColetaBadge } from "@/components/ui/StatusBadge";
+import { ReputacaoUsuario } from "@/components/ui/ReputacaoUsuario";
 
 interface Props {
   id: number;
@@ -14,6 +15,7 @@ interface Props {
   material: { nome: string };
   imagens: { id: number; url: string }[];
   solicitanteNome?: string;
+  reputacao?: { media: number; total: number };
   coletaStatus?: string;
   coletaId?: number;
   dataAceite?: string | Date;
@@ -24,7 +26,7 @@ interface Props {
 
 export function SolicitacaoCardVisual({
   id, titulo, descricao, quantidade, endereco, status,
-  createdAt, material, imagens, solicitanteNome,
+  createdAt, material, imagens, solicitanteNome, reputacao,
   coletaStatus, dataAceite, dataConclusao,
   actions, detailsHref,
 }: Props) {
@@ -204,6 +206,19 @@ export function SolicitacaoCardVisual({
             <MetaRow icon={<IconCheck />} label="Concluida em"
               value={new Date(dataConclusao).toLocaleDateString("pt-BR")} />
           )}
+          {reputacao && (
+            <div style={{ display: "flex", alignItems: "flex-start", gap: ".4rem", gridColumn: "1 / -1" }}>
+              <span style={{ color: "var(--text-faint)", flexShrink: 0, marginTop: ".1rem" }}><IconStar /></span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: ".67rem", fontWeight: 700, letterSpacing: ".8px", textTransform: "uppercase", color: "var(--text-faint)", lineHeight: 1 }}>
+                  Reputação do solicitante
+                </div>
+                <div style={{ marginTop: ".2rem" }}>
+                  <ReputacaoUsuario media={reputacao.media} total={reputacao.total} starSize={13} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -270,4 +285,7 @@ function IconClock() {
 }
 function IconCheck() {
   return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6 9 17l-5-5"/></svg>;
+}
+function IconStar() {
+  return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
 }

@@ -7,6 +7,7 @@ import {
   type CloudinaryUploadWidgetInfo,
   type CloudinaryUploadWidgetResults,
 } from "next-cloudinary";
+import { ReputacaoUsuario } from "@/components/ui/ReputacaoUsuario";
 import {
   buildAddressString,
   formatCep,
@@ -46,9 +47,10 @@ interface ProfileData {
 
 interface Props {
   initialProfile: ProfileData;
+  reputacao?: { media: number; total: number } | null;
 }
 
-export function ProfilePageClient({ initialProfile }: Props) {
+export function ProfilePageClient({ initialProfile, reputacao }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [profile, setProfile] = useState(initialProfile);
@@ -425,6 +427,14 @@ export function ProfilePageClient({ initialProfile }: Props) {
             </span>
           </div>
           <p className="profile-hero-sub">{profile.email} · Membro desde {createdAtLabel}</p>
+          {reputacao ? (
+            <div style={{ display: "flex", alignItems: "center", gap: ".5rem", marginTop: ".15rem", flexWrap: "wrap" }}>
+              <span style={{ fontSize: ".78rem", fontWeight: 700, color: "var(--text-muted)" }}>
+                Sua reputação:
+              </span>
+              <ReputacaoUsuario media={reputacao.media} total={reputacao.total} vazioLabel="Ainda sem avaliações de empresas" />
+            </div>
+          ) : null}
           {profile.avatarUrl ? (
             <button
               type="button"

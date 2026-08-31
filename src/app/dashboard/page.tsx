@@ -122,8 +122,21 @@ export default async function DashboardPage() {
 }
 
 function MonthlyLineChart({ items }: { items: { createdAt: string | Date }[] }) {
-  const labels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"];
-  const counts = labels.map((_, index) => items.filter((item) => new Date(item.createdAt).getMonth() === index).length);
+  const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const now = new Date();
+  // Últimos 6 meses terminando no mês atual, comparando ano + mês.
+  const buckets = Array.from({ length: 6 }, (_, offset) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - (5 - offset), 1);
+    return { year: date.getFullYear(), month: date.getMonth() };
+  });
+  const labels = buckets.map((bucket) => monthNames[bucket.month]);
+  const counts = buckets.map(
+    (bucket) =>
+      items.filter((item) => {
+        const created = new Date(item.createdAt);
+        return created.getFullYear() === bucket.year && created.getMonth() === bucket.month;
+      }).length
+  );
   const max = Math.max(1, ...counts);
   const points = counts.map((count, index) => {
     const x = 44 + index * 78;

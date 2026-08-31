@@ -8,6 +8,9 @@ const { prismaMock } = vi.hoisted(() => ({
     findFirst: vi.fn(),
     update: vi.fn(),
   },
+  avaliacao: {
+    findMany: vi.fn(),
+  },
   notificacao: {
     create: vi.fn(),
   },
@@ -222,6 +225,7 @@ describe("solicitacao.service", () => {
     prismaMock.solicitacaoColeta.findMany.mockResolvedValueOnce([
       {
         id: 1,
+        userId: 7,
         titulo: "Coleta",
         descricao: "Material",
         quantidade: "2 sacos",
@@ -231,6 +235,7 @@ describe("solicitacao.service", () => {
         user: { nome: "Nao deveria sair", email: "a@b.com", telefone: "11999999999" },
       },
     ]);
+    prismaMock.avaliacao.findMany.mockResolvedValueOnce([]);
 
     const result = await listarSolicitacoesAprovadas();
 

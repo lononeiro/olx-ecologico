@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { calcularMediaUsuario } from "@/services/avaliacao.service";
 import { ProfilePageClient } from "./ProfilePageClient";
 
 export const dynamic = "force-dynamic";
@@ -41,5 +42,9 @@ export default async function MyProfilePage() {
     redirect("/login");
   }
 
-  return <ProfilePageClient initialProfile={user} />;
+  // Reputação só faz sentido para cidadãos (é o que as empresas avaliam).
+  const reputacao =
+    user.role.nome === "usuario" ? await calcularMediaUsuario(userId) : null;
+
+  return <ProfilePageClient initialProfile={user} reputacao={reputacao} />;
 }

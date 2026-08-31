@@ -44,6 +44,7 @@ export default async function EmpresaDashboardPage() {
       dataPrevisaoColeta: null,
       detailHref: `/empresa/solicitacoes`,
       imagens: item.imagens.map((img) => ({ id: img.id, url: img.url })),
+      reputacao: item.reputacaoSolicitante,
     })),
     ...coletas.map((item) => ({
       id: item.solicitacao.id,

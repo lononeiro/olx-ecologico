@@ -348,6 +348,16 @@ async function main() {
       comentario: "Atendimento excelente, pontuais e muito educados. Recomendo!",
     },
   });
+  // Avaliação no sentido inverso: a empresa avalia a cidadã (demo bidirecional).
+  await prisma.avaliacao.create({
+    data: {
+      coletaId: coletaConcluidaAvaliada.id,
+      autorId: emp1User.id,
+      tipo: "empresa_para_usuario",
+      nota: 5,
+      comentario: "Material bem separado e identificado. Cliente pontual, coleta tranquila!",
+    },
+  });
 
   // ── Coleta concluída SEM avaliação (para testar o formulário) ─────────────
   const solConcluidaSemAvaliacao = await prisma.solicitacaoColeta.create({
@@ -411,9 +421,17 @@ async function main() {
     [3, "Ok, mas poderiam comunicar melhor o horário de chegada."],
     [4, ""],
   ];
+  // Notas que a empresa dá ao cidadão (sentido empresa → usuário).
+  const notasEmpresa: [number, string][] = [
+    [5, "Material exatamente como descrito. Cliente pontual."],
+    [4, "Acesso fácil ao local, tudo certo."],
+    [5, "Ótimo cliente, sempre organiza bem o material."],
+    [3, "Material um pouco diferente do combinado, mas resolvemos."],
+  ];
 
   for (let i = 0; i < notasExtra.length; i++) {
     const [nota, comentario] = notasExtra[i];
+    const [notaEmp, comentEmp] = notasEmpresa[i];
     const userId = [joao.id, carlos.id, maria.id, joao.id][i];
     const sol = await prisma.solicitacaoColeta.create({
       data: {
@@ -445,8 +463,17 @@ async function main() {
         comentario: comentario || undefined,
       },
     });
+    await prisma.avaliacao.create({
+      data: {
+        coletaId: col.id,
+        autorId: emp1User.id,
+        tipo: "empresa_para_usuario",
+        nota: notaEmp,
+        comentario: comentEmp || undefined,
+      },
+    });
   }
-  console.log("✅ Avaliações extras criadas para ReciclaMax");
+  console.log("✅ Avaliações extras criadas para ReciclaMax (cidadão↔empresa)");
 
   // ── Resumo ─────────────────────────────────────────────────────────────────
   console.log("\n🎉 Seed concluído com sucesso!");

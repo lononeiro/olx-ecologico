@@ -54,6 +54,10 @@ const PAGE_TITLES: Record<string, { title: string; description: string }> = {
     title: "Solicitações Disponíveis",
     description: "Pedidos aprovados aguardando aceite da empresa.",
   },
+  "/empresa/mapa": {
+    title: "Coletas no Mapa",
+    description: "Veja no mapa onde estão as solicitações disponíveis.",
+  },
   "/empresa/mensagens": {
     title: "Mensagens",
     description: "Central de conversas com clientes antes e depois do aceite.",

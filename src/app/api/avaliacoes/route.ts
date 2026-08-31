@@ -6,7 +6,7 @@ import { criarAvaliacao } from "@/services/avaliacao.service";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const { session, error } = await autorizarRota(["usuario"]);
+  const { session, error } = await autorizarRota(["usuario", "empresa"]);
   if (error) return error;
 
   try {
@@ -17,8 +17,11 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = getUserId(session!);
+    const role = (session!.user as any).role as string;
+    // A direção da avaliação é derivada do papel de quem envia.
+    const tipo = role === "empresa" ? "empresa_para_usuario" : "usuario_para_empresa";
     const { coletaId, nota, comentario } = parsed.data;
-    const avaliacao = await criarAvaliacao(coletaId, userId, nota, comentario);
+    const avaliacao = await criarAvaliacao(coletaId, userId, nota, comentario, tipo);
     return NextResponse.json(avaliacao, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 });

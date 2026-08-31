@@ -34,6 +34,7 @@ export interface EmpresaDashboardData {
     dataPrevisaoColeta: string | null;
     detailHref: string;
     imagens: { id: number; url: string }[];
+    reputacao?: { media: number; total: number };
   }[];
   materiaisContagem: {
     material: string;
@@ -71,13 +72,23 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData }) {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["value"]>("todas");
   const [selectedDay, setSelectedDay] = useState(0);
+  const [weekOffset, setWeekOffset] = useState(0);
   const [materiaisModalAberto, setMateriaisModalAberto] = useState(false);
   const today = new Date();
+  const saudacao = today.getHours() < 12 ? "Bom dia" : today.getHours() < 18 ? "Boa tarde" : "Boa noite";
   const scheduledRequests = useMemo(
     () => data.solicitacoes.filter((item) => item.dataPrevisaoColeta),
     [data.solicitacoes]
   );
-  const week = useMemo(() => buildCurrentWeek(scheduledRequests), [scheduledRequests]);
+  const week = useMemo(() => buildCurrentWeek(scheduledRequests, weekOffset), [scheduledRequests, weekOffset]);
+  const novasHoje = useMemo(
+    () =>
+      data.solicitacoes.filter(
+        (item) => item.status === "pendente" && isSameDay(new Date(item.createdAt), today)
+      ).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data.solicitacoes]
+  );
 
   const filteredRequests = useMemo(
     () =>
@@ -119,7 +130,7 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
     <div className="empresa-dashboard">
       <section className="empresa-page-topbar">
         <div>
-          <h1>Bom dia, {data.empresaNome}</h1>
+          <h1>{saudacao}, {data.empresaNome}</h1>
           <p>Aqui esta o resumo de hoje - {today.toLocaleDateString("pt-BR")}</p>
         </div>
         <div className="empresa-page-actions">
@@ -138,9 +149,9 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
       ) : null}
 
       <section className="empresa-kpi-grid">
-        <OperationalKpi icon={<IconInbox />} iconBg="#DBEAFE" iconColor="#1E40AF" label="Novas solicitações" value={data.metrics.novasSolicitacoes} trend={`↑ ${Math.min(3, data.metrics.novasSolicitacoes)} hoje`} />
+        <OperationalKpi icon={<IconInbox />} iconBg="#DBEAFE" iconColor="#1E40AF" label="Novas solicitações" value={data.metrics.novasSolicitacoes} trend={novasHoje > 0 ? `↑ ${novasHoje} ${novasHoje === 1 ? "nova" : "novas"} hoje` : "nenhuma nova hoje"} info={novasHoje === 0} />
         <OperationalKpi icon={<IconTruck />} iconBg="#FEF9C3" iconColor="#854D0E" label="Em andamento" value={data.metrics.emAndamento} trend={nextScheduled ? `próx: ${new Date(nextScheduled.dataPrevisaoColeta!).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : "sem previsão"} info />
-        <OperationalKpi icon={<IconCheckCircle />} iconBg="#DCFCE7" iconColor="#166534" label="Concluídas este mês" value={data.metrics.concluidasMes} trend="↑ 12% vs mês ant" />
+        <OperationalKpi icon={<IconCheckCircle />} iconBg="#DCFCE7" iconColor="#166534" label="Concluídas este mês" value={data.metrics.concluidasMes} trend={`${data.metrics.taxaConclusao}% de conclusão`} info />
       </section>
 
       <section className="empresa-impact-grid">
@@ -208,7 +219,7 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
                   </div>
                   <div>
                     <div className="rating-track">
-                      <i style={{ width: `${Math.round((data.avaliacao.distribuicao[4] ?? 0 + (data.avaliacao.distribuicao[5] ?? 0)) / data.avaliacao.total * 100)}%` }} />
+                      <i style={{ width: `${Math.round(((data.avaliacao.distribuicao[4] ?? 0) + (data.avaliacao.distribuicao[5] ?? 0)) / data.avaliacao.total * 100)}%` }} />
                     </div>
                     <p>
                       {data.avaliacao.total > 0
@@ -236,9 +247,9 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
         <div className="empresa-panel-header">
           <h2>Proximas coletas agendadas</h2>
           <div className="calendar-actions">
-            <button type="button" aria-label="Semana anterior">← Semana anterior</button>
+            <button type="button" aria-label="Semana anterior" onClick={() => { setWeekOffset((current) => current - 1); setSelectedDay(0); }}>← Semana anterior</button>
             <span>{formatWeekRange(week[0].date, week[6].date)}</span>
-            <button type="button" aria-label="Proxima semana">Proxima semana →</button>
+            <button type="button" aria-label="Proxima semana" onClick={() => { setWeekOffset((current) => current + 1); setSelectedDay(0); }}>Proxima semana →</button>
           </div>
         </div>
 
@@ -281,12 +292,12 @@ export function EmpresaDashboardClient({ data }: { data: EmpresaDashboardData })
   );
 }
 
-function buildCurrentWeek(items: EmpresaDashboardData["solicitacoes"]) {
+function buildCurrentWeek(items: EmpresaDashboardData["solicitacoes"], weekOffset = 0) {
   const now = new Date();
   const start = new Date(now);
   const day = start.getDay();
   const diffToMonday = day === 0 ? -6 : 1 - day;
-  start.setDate(start.getDate() + diffToMonday);
+  start.setDate(start.getDate() + diffToMonday + weekOffset * 7);
   start.setHours(0, 0, 0, 0);
 
   return ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"].map((label, index) => {
@@ -511,6 +522,7 @@ function RequestRow({ item }: { item: EmpresaDashboardData["solicitacoes"][numbe
               endereco={item.endereco}
               materialNome={item.materialNome}
               imagens={item.imagens}
+              reputacao={item.reputacao}
             />
           ) : null}
           {item.status === "em_andamento" ? <Link className="empresa-row-outline" href={item.detailHref}>Registrar conclusão</Link> : null}

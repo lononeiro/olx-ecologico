@@ -2,6 +2,8 @@ import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChatBox } from "@/components/forms/ChatBox";
+import { AvaliacaoForm } from "@/components/forms/AvaliacaoForm";
+import { RatingStars } from "@/components/ui/RatingStars";
 import { FloatingChat } from "@/components/ui/FloatingChat";
 import { RequestImageGallery } from "@/components/ui/RequestImageGallery";
 import { ColetaStatusTracker } from "@/components/ui/ColetaStatusTracker";
@@ -62,6 +64,7 @@ export default async function EmpresaColetaDetailPage({
           },
         },
         company: { include: { user: { select: { id: true, nome: true, email: true } } } },
+        avaliacoes: true,
       },
     }),
   ]);
@@ -276,6 +279,42 @@ export default async function EmpresaColetaDetailPage({
                   currentUserId={userId}
                 />
               </FloatingChat>
+
+              {coleta.status === "concluida" && (
+                <>
+                  <section
+                    className="card"
+                    style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow)" }}
+                  >
+                    <SectionHeading eyebrow="Pós-coleta" title={`Avalie ${s.user.nome.split(" ")[0]}`} compact />
+                    <AvaliacaoForm
+                      coletaId={coleta.id}
+                      avaliacaoExistente={
+                        coleta.avaliacoes.find((a) => a.tipo === "empresa_para_usuario") ?? null
+                      }
+                    />
+                  </section>
+
+                  {(() => {
+                    const daEmpresaRecebida = coleta.avaliacoes.find((a) => a.tipo === "usuario_para_empresa");
+                    if (!daEmpresaRecebida) return null;
+                    return (
+                      <section
+                        className="card"
+                        style={{ background: "var(--surface)", border: "1px solid var(--border)", boxShadow: "var(--shadow)" }}
+                      >
+                        <SectionHeading eyebrow="Pós-coleta" title="Avaliação do solicitante" compact />
+                        <RatingStars mode="display" value={daEmpresaRecebida.nota} size={22} />
+                        {daEmpresaRecebida.comentario && (
+                          <p style={{ marginTop: ".6rem", fontSize: ".875rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                            {daEmpresaRecebida.comentario}
+                          </p>
+                        )}
+                      </section>
+                    );
+                  })()}
+                </>
+              )}
           </aside>
         </div>
       </div>

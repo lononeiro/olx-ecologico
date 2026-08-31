@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MapaEndereco } from "@/components/ui/MapaEndereco";
 import { SolicitacaoBadge } from "@/components/ui/StatusBadge";
+import { ReputacaoUsuario } from "@/components/ui/ReputacaoUsuario";
 import { Portal } from "@/components/ui/Portal";
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
   endereco: string;
   materialNome: string;
   imagens: { id: number; url: string }[];
+  reputacao?: { media: number; total: number };
 }
 
 export function AceitarSolicitacaoButton({
@@ -25,6 +27,7 @@ export function AceitarSolicitacaoButton({
   endereco,
   materialNome,
   imagens,
+  reputacao,
 }: Props) {
   const router = useRouter();
   const [modalAberto, setModalAberto] = useState(false);
@@ -260,6 +263,12 @@ export function AceitarSolicitacaoButton({
                   <InfoField label="Material" value={materialNome} />
                   <InfoField label="Quantidade" value={quantidade} />
                   <InfoField label="Status" value={<SolicitacaoBadge status="aprovada" />} />
+                  {reputacao && (
+                    <InfoField
+                      label="Reputação do solicitante"
+                      value={<ReputacaoUsuario media={reputacao.media} total={reputacao.total} starSize={15} />}
+                    />
+                  )}
                   <InfoField label="Região aproximada" value={endereco} full />
                   {descricao && <InfoField label="Descrição" value={descricao} full muted />}
                 </div>

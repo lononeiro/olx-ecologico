@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChatBox } from "@/components/forms/ChatBox";
 import { AvaliacaoForm } from "@/components/forms/AvaliacaoForm";
+import { RatingStars } from "@/components/ui/RatingStars";
 import { FloatingChat } from "@/components/ui/FloatingChat";
 import { RequestImageGallery } from "@/components/ui/RequestImageGallery";
 import { ColetaStatusTracker } from "@/components/ui/ColetaStatusTracker";
@@ -55,7 +56,7 @@ export default async function SolicitacaoDetailPage({
       coleta: {
         include: {
           company: { include: { user: { select: { id: true, nome: true } } } },
-          avaliacao: true,
+          avaliacoes: true,
         },
       },
     },
@@ -392,20 +393,47 @@ export default async function SolicitacaoDetailPage({
               </FloatingChat>
 
               {s.coleta.status === "concluida" && (
-                <section
-                  className="card"
-                  style={{
-                    background: "var(--surface)",
-                    border: "1px solid var(--border)",
-                    boxShadow: "var(--shadow)",
-                  }}
-                >
-                  <SectionHeading eyebrow="Pós-coleta" title="Avalie a empresa" />
-                  <AvaliacaoForm
-                    coletaId={s.coleta.id}
-                    avaliacaoExistente={(s.coleta as any).avaliacao ?? null}
-                  />
-                </section>
+                <>
+                  <section
+                    className="card"
+                    style={{
+                      background: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      boxShadow: "var(--shadow)",
+                    }}
+                  >
+                    <SectionHeading eyebrow="Pós-coleta" title="Avalie a empresa" />
+                    <AvaliacaoForm
+                      coletaId={s.coleta.id}
+                      avaliacaoExistente={
+                        s.coleta.avaliacoes.find((a) => a.tipo === "usuario_para_empresa") ?? null
+                      }
+                    />
+                  </section>
+
+                  {(() => {
+                    const daEmpresa = s.coleta!.avaliacoes.find((a) => a.tipo === "empresa_para_usuario");
+                    if (!daEmpresa) return null;
+                    return (
+                      <section
+                        className="card"
+                        style={{
+                          background: "var(--surface)",
+                          border: "1px solid var(--border)",
+                          boxShadow: "var(--shadow)",
+                        }}
+                      >
+                        <SectionHeading eyebrow="Pós-coleta" title="Como a empresa avaliou você" />
+                        <RatingStars mode="display" value={daEmpresa.nota} size={22} />
+                        {daEmpresa.comentario && (
+                          <p style={{ marginTop: ".6rem", fontSize: ".875rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                            {daEmpresa.comentario}
+                          </p>
+                        )}
+                      </section>
+                    );
+                  })()}
+                </>
               )}
             </aside>
           )}

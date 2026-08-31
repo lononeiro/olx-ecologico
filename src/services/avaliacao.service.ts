@@ -1,11 +1,17 @@
 import { prisma } from "@/lib/prisma";
-import { notificarAvaliacaoRecebida } from "@/services/notificacao.service";
+import {
+  notificarAvaliacaoRecebida,
+  notificarAvaliacaoUsuario,
+} from "@/services/notificacao.service";
+
+export type TipoAvaliacao = "usuario_para_empresa" | "empresa_para_usuario";
 
 export async function criarAvaliacao(
   coletaId: number,
   autorId: number,
   nota: number,
-  comentario?: string
+  comentario: string | undefined,
+  tipo: TipoAvaliacao
 ) {
   const coleta = await prisma.coleta.findUnique({
     where: { id: coletaId },
@@ -16,32 +22,55 @@ export async function criarAvaliacao(
   });
 
   if (!coleta) throw new Error("Coleta não encontrada.");
-  if (coleta.solicitacao.userId !== autorId) throw new Error("Sem permissão para avaliar esta coleta.");
   if (coleta.status !== "concluida") throw new Error("A coleta precisa estar concluída para ser avaliada.");
 
-  const existente = await prisma.avaliacao.findUnique({ where: { coletaId } });
+  // Valida se o autor tem o papel certo para a direção informada.
+  if (tipo === "usuario_para_empresa" && coleta.solicitacao.userId !== autorId) {
+    throw new Error("Sem permissão para avaliar esta coleta.");
+  }
+  if (tipo === "empresa_para_usuario" && coleta.company.userId !== autorId) {
+    throw new Error("Sem permissão para avaliar esta coleta.");
+  }
+
+  const existente = await prisma.avaliacao.findUnique({
+    where: { coletaId_tipo: { coletaId, tipo } },
+  });
   if (existente) throw new Error("Esta coleta já foi avaliada.");
 
   const avaliacao = await prisma.avaliacao.create({
-    data: { coletaId, autorId, nota, comentario },
+    data: { coletaId, autorId, nota, comentario, tipo },
   });
 
-  await notificarAvaliacaoRecebida({
-    empresaUserId: coleta.company.userId,
-    nota,
-    solicitacaoTitulo: coleta.solicitacao.titulo,
-  });
+  if (tipo === "usuario_para_empresa") {
+    await notificarAvaliacaoRecebida({
+      empresaUserId: coleta.company.userId,
+      nota,
+      solicitacaoTitulo: coleta.solicitacao.titulo,
+    });
+  } else {
+    await notificarAvaliacaoUsuario({
+      usuarioUserId: coleta.solicitacao.userId,
+      nota,
+      solicitacaoId: coleta.solicitacao.id,
+      solicitacaoTitulo: coleta.solicitacao.titulo,
+    });
+  }
 
   return avaliacao;
 }
 
-export async function buscarAvaliacaoDaColeta(coletaId: number) {
-  return prisma.avaliacao.findUnique({ where: { coletaId } });
+export async function buscarAvaliacaoDaColeta(
+  coletaId: number,
+  tipo: TipoAvaliacao = "usuario_para_empresa"
+) {
+  return prisma.avaliacao.findUnique({
+    where: { coletaId_tipo: { coletaId, tipo } },
+  });
 }
 
 export async function calcularMediaEmpresa(companyId: number) {
   const avaliacoes = await prisma.avaliacao.findMany({
-    where: { coleta: { companyId } },
+    where: { coleta: { companyId }, tipo: "usuario_para_empresa" },
     select: { nota: true },
   });
 
@@ -58,6 +87,65 @@ export async function calcularMediaEmpresa(companyId: number) {
   return { media, total, distribuicao };
 }
 
+/** Média das notas que um cidadão recebeu das empresas (empresa → usuário). */
+export async function calcularMediaUsuario(userId: number) {
+  const avaliacoes = await prisma.avaliacao.findMany({
+    where: { tipo: "empresa_para_usuario", coleta: { solicitacao: { userId } } },
+    select: { nota: true },
+  });
+
+  const total = avaliacoes.length;
+  const media = total > 0
+    ? Math.round((avaliacoes.reduce((sum, a) => sum + a.nota, 0) / total) * 10) / 10
+    : 0;
+
+  return { media, total };
+}
+
+/**
+ * Versão em lote de calcularMediaUsuario, para evitar N+1 ao listar
+ * solicitações disponíveis. Sempre retorna uma entrada por userId pedido.
+ */
+export async function calcularMediasUsuarios(
+  userIds: number[]
+): Promise<Map<number, { media: number; total: number }>> {
+  const resultado = new Map<number, { media: number; total: number }>();
+  const unicos = [...new Set(userIds)];
+  if (unicos.length === 0) return resultado;
+
+  const avaliacoes = await prisma.avaliacao.findMany({
+    where: {
+      tipo: "empresa_para_usuario",
+      coleta: { solicitacao: { userId: { in: unicos } } },
+    },
+    select: {
+      nota: true,
+      coleta: { select: { solicitacao: { select: { userId: true } } } },
+    },
+  });
+
+  const acumulado = new Map<number, { soma: number; total: number }>();
+  for (const a of avaliacoes) {
+    const uid = a.coleta.solicitacao.userId;
+    const atual = acumulado.get(uid) ?? { soma: 0, total: 0 };
+    atual.soma += a.nota;
+    atual.total += 1;
+    acumulado.set(uid, atual);
+  }
+
+  for (const uid of unicos) {
+    const atual = acumulado.get(uid);
+    resultado.set(
+      uid,
+      atual
+        ? { media: Math.round((atual.soma / atual.total) * 10) / 10, total: atual.total }
+        : { media: 0, total: 0 }
+    );
+  }
+
+  return resultado;
+}
+
 export async function listarAvaliacoesDaEmpresa(companyId: number) {
   const coletas = await prisma.coleta.findMany({
     where: {
@@ -65,7 +153,8 @@ export async function listarAvaliacoesDaEmpresa(companyId: number) {
       status: "concluida",
     },
     include: {
-      avaliacao: {
+      avaliacoes: {
+        where: { tipo: "usuario_para_empresa" },
         include: {
           autor: {
             select: { id: true, nome: true },
@@ -85,16 +174,22 @@ export async function listarAvaliacoesDaEmpresa(companyId: number) {
     ],
   });
 
+  // A coleta agora tem 0..N avaliações; aqui só interessa a recebida pela empresa.
+  const comAvaliacao = coletas.map((coleta) => ({
+    coleta,
+    avaliacaoRecebida: coleta.avaliacoes[0] ?? null,
+  }));
+
   const totalFinalizadas = coletas.length;
-  const avaliadas = coletas.filter((coleta) => coleta.avaliacao);
+  const avaliadas = comAvaliacao.filter((item) => item.avaliacaoRecebida);
   const totalAvaliacoes = avaliadas.length;
   const media = totalAvaliacoes > 0
-    ? Math.round((avaliadas.reduce((sum, coleta) => sum + (coleta.avaliacao?.nota ?? 0), 0) / totalAvaliacoes) * 10) / 10
+    ? Math.round((avaliadas.reduce((sum, item) => sum + (item.avaliacaoRecebida?.nota ?? 0), 0) / totalAvaliacoes) * 10) / 10
     : 0;
 
   const distribuicao: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  for (const coleta of avaliadas) {
-    const nota = coleta.avaliacao!.nota;
+  for (const item of avaliadas) {
+    const nota = item.avaliacaoRecebida!.nota;
     distribuicao[nota] = (distribuicao[nota] ?? 0) + 1;
   }
 
@@ -106,7 +201,7 @@ export async function listarAvaliacoesDaEmpresa(companyId: number) {
       aguardandoAvaliacao: totalFinalizadas - totalAvaliacoes,
       distribuicao,
     },
-    coletas: coletas.map((coleta) => ({
+    coletas: comAvaliacao.map(({ coleta, avaliacaoRecebida }) => ({
       id: coleta.id,
       status: coleta.status,
       dataAceite: coleta.dataAceite,
@@ -120,13 +215,13 @@ export async function listarAvaliacoesDaEmpresa(companyId: number) {
         materialNome: coleta.solicitacao.material.nome,
         solicitanteNome: coleta.solicitacao.user.nome,
       },
-      avaliacao: coleta.avaliacao
+      avaliacao: avaliacaoRecebida
         ? {
-            id: coleta.avaliacao.id,
-            nota: coleta.avaliacao.nota,
-            comentario: coleta.avaliacao.comentario,
-            createdAt: coleta.avaliacao.createdAt,
-            autorNome: coleta.avaliacao.autor.nome,
+            id: avaliacaoRecebida.id,
+            nota: avaliacaoRecebida.nota,
+            comentario: avaliacaoRecebida.comentario,
+            createdAt: avaliacaoRecebida.createdAt,
+            autorNome: avaliacaoRecebida.autor.nome,
           }
         : null,
     })),

@@ -368,6 +368,9 @@ body * {
   .btn-ghost:hover { background: var(--surface-2); color: var(--text); }
 
   .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: .55rem;
     background: var(--surface);
     border: 1.5px solid var(--border);

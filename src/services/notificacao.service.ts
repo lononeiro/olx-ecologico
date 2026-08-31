@@ -190,3 +190,19 @@ export function notificarAvaliacaoRecebida(params: {
     href: "/empresa/avaliacoes",
   });
 }
+
+/** Avaliação que a empresa deu ao cidadão (direção empresa → usuário). */
+export function notificarAvaliacaoUsuario(params: {
+  usuarioUserId: number;
+  nota: number;
+  solicitacaoId: number;
+  solicitacaoTitulo: string;
+}) {
+  return criarNotificacao({
+    userId: params.usuarioUserId,
+    tipo: "avaliacao_recebida",
+    titulo: "A empresa avaliou você",
+    descricao: `Você recebeu ${params.nota}★ da empresa pela coleta de "${params.solicitacaoTitulo}".`,
+    href: `/dashboard/solicitacoes/${params.solicitacaoId}`,
+  });
+}

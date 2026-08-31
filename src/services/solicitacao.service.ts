@@ -7,6 +7,7 @@ import {
 } from "@/lib/privacy";
 import type { Prisma } from "@prisma/client";
 import { notificarSolicitacaoRemovida } from "@/services/notificacao.service";
+import { calcularMediasUsuarios } from "@/services/avaliacao.service";
 
 const MAX_SOLICITACAO_IMAGENS = 5;
 
@@ -29,6 +30,7 @@ export async function criarSolicitacao(
     quantidade: string;
     endereco: string;
     materialId: number;
+    pesoEstimadoKg?: number;
     imagens?: string[];
   }
 ) {
@@ -278,7 +280,13 @@ export async function listarSolicitacoesAprovadas(filtros: FiltrosSolicitacao = 
     orderBy: { createdAt: "desc" },
   });
 
-  return solicitacoes.map(toEmpresaSolicitacaoDisponivelDTO);
+  // Reputação (média empresa → cidadão) para a empresa consultar antes de aceitar.
+  const medias = await calcularMediasUsuarios(solicitacoes.map((s) => s.userId));
+
+  return solicitacoes.map((s) => ({
+    ...toEmpresaSolicitacaoDisponivelDTO(s),
+    reputacaoSolicitante: medias.get(s.userId) ?? { media: 0, total: 0 },
+  }));
 }
 
 /**

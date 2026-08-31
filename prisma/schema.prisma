@@ -67,6 +67,10 @@ model SolicitacaoColeta {
   titulo     String
   descricao  String
   quantidade String
+  // Peso aproximado informado pelo usuário, já normalizado em kg (opcional).
+  // Quando presente, é a base "confiável" do cálculo de impacto ambiental;
+  // quando ausente, o impacto cai no parser heurístico de `quantidade`.
+  pesoEstimadoKg Float?
   endereco   String
   status     String   @default("aprovada")
   aprovado   Boolean  @default(true)
@@ -106,15 +110,18 @@ model Coleta {
   solicitacao SolicitacaoColeta @relation(fields: [solicitacaoId], references: [id])
   company     Company           @relation(fields: [companyId], references: [id])
   mensagens   Mensagem[]
-  avaliacao   Avaliacao?
+  avaliacoes  Avaliacao[]
 
   @@map("coletas")
 }
 
 model Avaliacao {
   id         Int      @id @default(autoincrement())
-  coletaId   Int      @unique
+  coletaId   Int
   autorId    Int
+  // Direção da avaliação: "usuario_para_empresa" (cidadão avalia a empresa)
+  // ou "empresa_para_usuario" (empresa avalia o cidadão). Uma de cada por coleta.
+  tipo       String   @default("usuario_para_empresa")
   nota       Int
   comentario String?
   createdAt  DateTime @default(now())
@@ -122,6 +129,7 @@ model Avaliacao {
   coleta Coleta @relation(fields: [coletaId], references: [id])
   autor  User   @relation(fields: [autorId], references: [id])
 
+  @@unique([coletaId, tipo])
   @@map("avaliacoes")
 }
 
