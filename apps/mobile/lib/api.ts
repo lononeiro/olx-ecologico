@@ -451,6 +451,30 @@ export function getMensagensConversaSolicitacao(
   );
 }
 
+export interface InboxConversationItem {
+  id: string;
+  dbId: number;
+  type: "pre_accept" | "coleta";
+  title: string;
+  otherPartyName: string;
+  material: string;
+  status: string;
+  statusLabel: string;
+  lastMessage: string | null;
+  lastMessageAt: string | null;
+  createdAt: string;
+  messageApiPath: string;
+  detailHref: string;
+  canSend: boolean;
+}
+
+export function getMensagensInbox(accessToken: string) {
+  return apiFetch<InboxConversationItem[]>("/api/mensagens/inbox", {
+    method: "GET",
+    accessToken,
+  });
+}
+
 export function getEmpresaConversaSolicitacao(accessToken: string, solicitacaoId: number) {
   return apiFetch<PreAcceptConversation>(
     `/api/empresa/solicitacoes/${solicitacaoId}/conversa`,

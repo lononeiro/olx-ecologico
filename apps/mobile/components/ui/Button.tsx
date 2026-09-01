@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, layout, radius, shadows, spacing, typography } from "@/theme/tokens";
 import { Icon, type LucideIcon } from "@/components/ui/Icon";
 
@@ -9,6 +9,7 @@ export function Button({
   onPress,
   tone = "primary",
   disabled,
+  loading,
   align = "center",
   icon,
 }: {
@@ -16,16 +17,18 @@ export function Button({
   onPress: () => void;
   tone?: ButtonTone;
   disabled?: boolean;
+  loading?: boolean;
   align?: "center" | "left";
   icon?: LucideIcon;
 }) {
   const iconColor =
     tone === "primary" || tone === "danger" ? colors.white : colors.primary;
+  const isDisabled = disabled || loading;
 
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled}
+      disabled={isDisabled}
       style={({ pressed }) => [
         styles.base,
         tone === "primary" && styles.primary,
@@ -33,12 +36,15 @@ export function Button({
         tone === "danger" && styles.danger,
         tone === "ghost" && styles.ghost,
         align === "left" && styles.leftAlign,
-        pressed && !disabled && styles.pressed,
-        disabled && styles.disabled,
+        pressed && !isDisabled && styles.pressed,
+        isDisabled && styles.disabled,
       ]}
     >
       <View style={styles.content}>
-        {!!icon && <Icon icon={icon} size={18} color={iconColor} strokeWidth={2} />}
+        {loading && <ActivityIndicator size="small" color={iconColor} />}
+        {!loading && !!icon && (
+          <Icon icon={icon} size={18} color={iconColor} strokeWidth={2} />
+        )}
         <Text
           style={[
             styles.label,

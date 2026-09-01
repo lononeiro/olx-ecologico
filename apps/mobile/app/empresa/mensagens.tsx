@@ -16,6 +16,7 @@ import { Field } from "@/components/ui/Field";
 import {
   getEmpresaColetas,
   getEmpresaSolicitacoesDisponiveis,
+  getMensagensInbox,
   getReadableErrorMessage,
 } from "@/lib/api";
 import { useProtectedRoute } from "@/lib/navigation";
@@ -43,11 +44,38 @@ export default function EmpresaMensagensScreen() {
       ),
   });
 
+  const inboxQuery = useQuery({
+    queryKey: ["mensagens", "inbox"],
+    enabled: hasAccess && !isLoading,
+    queryFn: async () =>
+      withAutoRefresh(accessToken, refreshSession, (token) =>
+        getMensagensInbox(token)
+      ),
+  });
+
   const conversations = useMemo(() => {
+    // Última mensagem por coleta / solicitação, para prévia sob o título.
+    const lastByColeta = new Map<number, string>();
+    const lastBySolicitacao = new Map<number, string>();
+    for (const conversa of inboxQuery.data ?? []) {
+      if (!conversa.lastMessage) continue;
+      if (conversa.type === "coleta") {
+        if (!lastByColeta.has(conversa.dbId))
+          lastByColeta.set(conversa.dbId, conversa.lastMessage);
+      } else {
+        const sid = solicitacaoIdFromHref(conversa.detailHref);
+        if (sid != null && !lastBySolicitacao.has(sid))
+          lastBySolicitacao.set(sid, conversa.lastMessage);
+      }
+    }
+
     const coletas = (coletasQuery.data ?? []).map((item) => ({
       key: `coleta-${item.id}`,
       title: item.solicitacao.titulo,
-      subtitle: item.solicitacao.user?.nome ?? item.solicitacao.material.nome,
+      subtitle:
+        lastByColeta.get(item.id) ??
+        item.solicitacao.user?.nome ??
+        item.solicitacao.material.nome,
       meta: item.status,
       active: true,
       onPress: () => router.push(`/empresa/coletas/${item.id}` as any),
@@ -56,7 +84,8 @@ export default function EmpresaMensagensScreen() {
     const disponiveis = (disponiveisQuery.data ?? []).map((item) => ({
       key: `solicitacao-${item.id}`,
       title: item.titulo,
-      subtitle: item.user?.nome ?? item.material.nome,
+      subtitle:
+        lastBySolicitacao.get(item.id) ?? item.user?.nome ?? item.material.nome,
       meta: item.status,
       active: false,
       onPress: () =>
@@ -64,7 +93,7 @@ export default function EmpresaMensagensScreen() {
     }));
 
     return [...coletas, ...disponiveis];
-  }, [coletasQuery.data, disponiveisQuery.data]);
+  }, [coletasQuery.data, disponiveisQuery.data, inboxQuery.data]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -126,4 +155,10 @@ export default function EmpresaMensagensScreen() {
       )}
     </AppScreen>
   );
+}
+
+/** Extrai o id da solicitação de um detailHref do inbox (ex: .../solicitacoes/42/...). */
+function solicitacaoIdFromHref(href: string): number | null {
+  const match = href.match(/solicitacoes\/(\d+)/);
+  return match ? Number(match[1]) : null;
 }

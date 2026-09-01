@@ -20,6 +20,8 @@ import {
   AppScreen,
   Icon,
   LoadingCard,
+  MapaColetas,
+  type MapaColetaItem,
   MessageBanner,
   MobileListItem,
   SectionHeader,
@@ -113,6 +115,19 @@ export default function EmpresaSolicitacaoDetailScreen() {
   const item = query.data;
   const coleta = item.coleta;
   const disponivel = !coleta && item.status === "aprovada";
+  const temEndereco = (item.endereco ?? "").trim().length > 0;
+  const mapaItems: MapaColetaItem[] = temEndereco
+    ? [
+        {
+          id: item.id,
+          titulo: item.titulo,
+          materialNome: item.material.nome,
+          quantidade: item.quantidade,
+          endereco: item.endereco,
+          imagemUrl: item.imagens?.[0]?.url ?? null,
+        },
+      ]
+    : [];
 
   return (
     <AppScreen
@@ -142,6 +157,18 @@ export default function EmpresaSolicitacaoDetailScreen() {
           {STATUS_COPY[item.status] ?? "Acompanhe os dados desta solicitação."}
         </Text>
       </AppCard>
+
+      {/* Localização da solicitação no mapa */}
+      {temEndereco ? (
+        <AppCard>
+          <SectionHeader eyebrow="LOCALIZAÇÃO" title="Solicitação no mapa" />
+          <MapaColetas items={mapaItems} centerOnUser={false} height={220} />
+          <View style={styles.mapaEnderecoRow}>
+            <Icon icon={MapPin} size={14} color={appColors.textFaint} />
+            <Text style={styles.mapaEndereco}>{item.endereco}</Text>
+          </View>
+        </AppCard>
+      ) : null}
 
       {/* Tirar dúvida com o solicitante (pré-aceite) */}
       {disponivel ? (
@@ -277,6 +304,18 @@ const styles = StyleSheet.create({
   summaryLine: {
     ...typography.bodyStrong,
     color: appColors.text,
+  },
+  mapaEnderecoRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    marginTop: spacing.sm,
+  },
+  mapaEndereco: {
+    ...typography.meta,
+    fontWeight: "500",
+    color: appColors.textSoft,
+    flex: 1,
   },
   statusCopy: {
     ...typography.body,

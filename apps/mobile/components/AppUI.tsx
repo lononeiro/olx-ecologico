@@ -16,5 +16,6 @@ export {
 export { MobileListItem } from "@/components/ui/ListItem";
 export { FilterChip, FilterChipRow } from "@/components/ui/Chip";
 export { BottomNavigation } from "@/components/ui/BottomNavigation";
+export { MapaColetas, type MapaColetaItem } from "@/components/ui/MapaColetas";
 export { Icon } from "@/components/ui/Icon";
 export { colors as appColors, radius as appRadius, spacing as appSpacing, typography as appTypography } from "@/theme/tokens";

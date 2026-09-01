@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -8,28 +8,30 @@ import {
 } from "react-native";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
 
-export function Field({
-  label,
-  helper,
-  error,
-  multiline,
-  secureToggle,
-  ...props
-}: {
-  label: string;
-  value: string;
-  onChangeText: (value: string) => void;
-  placeholder?: string;
-  helper?: string;
-  error?: string;
-  multiline?: boolean;
-  secureTextEntry?: boolean;
-  secureToggle?: boolean;
-  keyboardType?: "default" | "email-address" | "numeric";
-  autoCapitalize?: "none" | "sentences" | "words" | "characters";
-  autoComplete?: any;
-  textContentType?: any;
-}) {
+export const Field = forwardRef<
+  TextInput,
+  {
+    label: string;
+    value: string;
+    onChangeText: (value: string) => void;
+    placeholder?: string;
+    helper?: string;
+    error?: string;
+    multiline?: boolean;
+    secureTextEntry?: boolean;
+    secureToggle?: boolean;
+    keyboardType?: "default" | "email-address" | "numeric";
+    autoCapitalize?: "none" | "sentences" | "words" | "characters";
+    autoComplete?: any;
+    textContentType?: any;
+    returnKeyType?: "done" | "go" | "next" | "search" | "send";
+    onSubmitEditing?: () => void;
+    blurOnSubmit?: boolean;
+  }
+>(function Field(
+  { label, helper, error, multiline, secureToggle, ...props },
+  ref
+) {
   const [focused, setFocused] = useState(false);
   const [visible, setVisible] = useState(false);
   const isSecure = !!props.secureTextEntry;
@@ -47,6 +49,7 @@ export function Field({
       >
         <TextInput
           {...props}
+          ref={ref}
           multiline={multiline}
           textAlignVertical={multiline ? "top" : "center"}
           secureTextEntry={isSecure ? !visible : false}
@@ -71,7 +74,7 @@ export function Field({
       ) : null}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   wrapper: {

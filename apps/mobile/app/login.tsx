@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { router } from "expo-router";
 import {
   KeyboardAvoidingView,
@@ -6,6 +6,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { Recycle } from "lucide-react-native";
@@ -25,29 +26,41 @@ import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [mensagem, setMensagem] = useState("");
-  const [messageTone, setMessageTone] = useState<"success" | "error">("error");
+  const [emailError, setEmailError] = useState("");
+  const [senhaError, setSenhaError] = useState("");
+  const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
   const { signIn } = useAuth();
 
   const validar = async () => {
-    const result = loginSchema.safeParse({ email, senha });
+    const result = loginSchema.safeParse({ email: email.trim(), senha });
     if (!result.success) {
-      const issue = result.error.issues[0];
-      setMessageTone("error");
-      setMensagem(issue?.message ?? "Revise os dados informados.");
+      let nextEmailError = "";
+      let nextSenhaError = "";
+      for (const issue of result.error.issues) {
+        if (issue.path[0] === "email" && !nextEmailError) {
+          nextEmailError = issue.message;
+        }
+        if (issue.path[0] === "senha" && !nextSenhaError) {
+          nextSenhaError = issue.message;
+        }
+      }
+      setEmailError(nextEmailError);
+      setSenhaError(nextSenhaError);
       return;
     }
 
+    setEmailError("");
+    setSenhaError("");
+
     try {
       setLoading(true);
-      setMessageTone("success");
-      setMensagem("Entrando na sua conta...");
+      setFormError("");
       const sessionUser = await signIn(email.trim(), senha);
       router.replace(getHomeRouteForRole(sessionUser.role) as any);
     } catch (error) {
-      setMessageTone("error");
-      setMensagem(
+      setFormError(
         getReadableErrorMessage(error, "Não foi possível entrar agora.")
       );
     } finally {
@@ -67,6 +80,7 @@ export default function LoginScreen() {
               <Icon icon={Recycle} size={30} color={colors.white} strokeWidth={2} />
             </View>
             <Text style={styles.brandName}>ECOnecta</Text>
+            <Text style={styles.brandTagline}>Reciclagem que conecta</Text>
           </View>
 
           <View style={styles.heading}>
@@ -79,36 +93,46 @@ export default function LoginScreen() {
             </Text>
           </View>
 
-          {!!mensagem && <MessageBanner message={mensagem} tone={messageTone} />}
+          {!!formError && <MessageBanner message={formError} tone="error" />}
 
           <View style={styles.form}>
             <AppField
               label="Email"
               value={email}
               onChangeText={(value) => {
-                if (mensagem) setMensagem("");
+                if (emailError) setEmailError("");
+                if (formError) setFormError("");
                 setEmail(value);
               }}
               placeholder="seu@email.com"
+              error={emailError}
               autoCapitalize="none"
               keyboardType="email-address"
               autoComplete="email"
               textContentType="emailAddress"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => passwordRef.current?.focus()}
             />
 
             <View>
               <AppField
+                ref={passwordRef}
                 label="Senha"
                 value={senha}
                 onChangeText={(value) => {
-                  if (mensagem) setMensagem("");
+                  if (senhaError) setSenhaError("");
+                  if (formError) setFormError("");
                   setSenha(value);
                 }}
                 placeholder="Digite sua senha"
+                error={senhaError}
                 secureTextEntry
                 secureToggle
                 autoComplete="password"
                 textContentType="password"
+                returnKeyType="go"
+                onSubmitEditing={validar}
               />
               <Pressable
                 style={styles.forgotWrap}
@@ -123,7 +147,7 @@ export default function LoginScreen() {
           <AppButton
             label={loading ? "Entrando..." : "Entrar"}
             onPress={validar}
-            disabled={loading}
+            loading={loading}
           />
 
           <View style={styles.divider}>
@@ -172,6 +196,11 @@ const styles = StyleSheet.create({
     ...typography.eyebrow,
     color: colors.primary,
     letterSpacing: 2,
+  },
+  brandTagline: {
+    ...typography.meta,
+    color: colors.textFaint,
+    fontWeight: "500",
   },
   heading: {
     alignItems: "center",

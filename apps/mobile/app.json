@@ -31,6 +31,12 @@
         {
           "photosPermission": "O ECOnecta precisa acessar suas fotos para anexar imagens à solicitação."
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O ECOnecta usa sua localização para centralizar o mapa de coletas na sua região."
+        }
       ]
     ]
   }

@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { View } from "react-native";
-import { ClipboardList, Truck } from "lucide-react-native";
+import { ClipboardList, MapPin, Truck } from "lucide-react-native";
 import {
   AppButton,
   AppCard,
@@ -9,6 +9,8 @@ import {
   BottomNavigation,
   EmptyState,
   LoadingCard,
+  MapaColetas,
+  type MapaColetaItem,
   MessageBanner,
   MobileListItem,
   SectionHeader,
@@ -74,6 +76,16 @@ export default function EmpresaHomeScreen() {
 
   const disponiveis = disponiveisQuery.data ?? [];
   const coletas = coletasQuery.data ?? [];
+  const mapaItems: MapaColetaItem[] = disponiveis
+    .filter((item) => (item.endereco ?? "").trim().length > 0)
+    .map((item) => ({
+      id: item.id,
+      titulo: item.titulo,
+      materialNome: item.material.nome,
+      quantidade: item.quantidade,
+      endereco: item.endereco,
+      imagemUrl: item.imagens?.[0]?.url ?? null,
+    }));
   const ativas = coletas.filter(
     (item) => item.status !== "concluida" && item.status !== "cancelada"
   );
@@ -105,6 +117,25 @@ export default function EmpresaHomeScreen() {
         <StatRow label="Concluídas" value={concluidas} />
         <StatRow label="Total" value={coletas.length} />
       </View>
+
+      <AppCard>
+        <SectionHeader
+          eyebrow="NO MAPA"
+          title="Coletas disponíveis"
+          description="Solicitações aprovadas com endereço, localizadas no mapa."
+        />
+        {disponiveisQuery.isLoading ? (
+          <LoadingCard text="Carregando mapa..." />
+        ) : mapaItems.length === 0 ? (
+          <EmptyState
+            icon={MapPin}
+            title="Nada para mapear"
+            description="Assim que houver solicitações aprovadas com endereço, elas aparecerão aqui no mapa."
+          />
+        ) : (
+          <MapaColetas items={mapaItems} />
+        )}
+      </AppCard>
 
       <AppCard>
         <SectionHeader eyebrow="MINHAS COLETAS" title="Coletas em andamento" />
