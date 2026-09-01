@@ -1,13 +1,11 @@
 @startuml estado-solicitacao
 ' Estados - SolicitacaoColeta
-[*] --> pendente : criada
-pendente --> aprovada : admin aprova
-pendente --> rejeitada : admin rejeita
-pendente --> cancelada : cidadao cancela
+[*] --> aprovada : criada\n(nasce publicada, sem fila de aprovacao)
 aprovada --> cancelada : cidadao cancela (sem coleta avancada)
+aprovada --> removida : admin remove\n(moderacao reativa por abuso)
 aprovada --> [*] : aceite gera Coleta
-rejeitada --> [*]
 cancelada --> [*]
+removida --> [*]
 @enduml
 
 @startuml estado-coleta

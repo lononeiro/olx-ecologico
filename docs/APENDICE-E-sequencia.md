@@ -29,7 +29,7 @@ sequenceDiagram
         API-->>UI: 400 { erros por campo }
     else Dados válidos
         API->>Svc: criarSolicitacao(userId, data)
-        Svc->>DB: create SolicitacaoColeta (status=pendente)
+        Svc->>DB: create SolicitacaoColeta (status=aprovada, aprovado=true)
         DB-->>Svc: solicitação criada
         Svc-->>API: solicitação
         API-->>UI: 201 { solicitação }
@@ -41,30 +41,35 @@ sequenceDiagram
 
 ---
 
-## E.2 — Aprovar / rejeitar solicitação (Administrador)
+## E.2 — Remover solicitação (Administrador, moderação reativa)
+
+> Não existe aprovação prévia: toda solicitação já nasce `aprovada` e publicada (ver E.1). O
+> administrador só age reativamente, removendo pedidos identificados como abuso.
 
 ```mermaid
 sequenceDiagram
     actor Admin as Administrador
     participant UI as Front-end (/admin)
-    participant API as PATCH /api/admin/solicitacoes/[id]
+    participant API as DELETE /api/admin/solicitacoes/[id]
     participant Svc as solicitacao.service
+    participant Not as notificacao.service
     participant DB as Prisma / PostgreSQL
 
-    Admin->>UI: Abre solicitação pendente
-    Admin->>UI: Decide aprovar/rejeitar
-    UI->>API: PATCH { aprovado: true | false }
+    Admin->>UI: Abre uma solicitação publicada
+    Admin->>UI: Identifica abuso e decide remover
+    UI->>API: DELETE /api/admin/solicitacoes/[id]
     API->>API: autorizarRota(["admin"])
-    API->>API: schema.safeParse()
-    API->>Svc: atualizarStatusSolicitacao(id, aprovado)
-    Svc->>DB: update status = aprovada | rejeitada
+    API->>Svc: removerSolicitacao(id)
+    Svc->>DB: update aprovado=false, status=removida
     DB-->>Svc: solicitação atualizada
+    Svc->>Not: notificarSolicitacaoRemovida(userId, id, titulo)
+    Not->>DB: create Notificacao (best-effort)
     Svc-->>API: solicitação
     API-->>UI: 200 { solicitação }
     UI-->>Admin: Status atualizado
 ```
 
-![Sequência — Aprovar/rejeitar solicitação](diagrams/APENDICE-E-2.png)
+![Sequência — Remover solicitação (moderação reativa)](diagrams/APENDICE-E-2.png)
 
 ---
 

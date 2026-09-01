@@ -6,7 +6,7 @@
 |-------|-----------|--------------|
 | **Cidadão / Usuário** | Pessoa física que possui material reciclável e cria solicitações (`role = usuario`). | `roles`, `prisma/seed.ts` |
 | **Empresa Coletora** | Organização que aceita e executa coletas (`role = empresa`). | `Company`, `coleta.service.ts` |
-| **Administrador** | Modera solicitações e gerencia o catálogo (`role = admin`). | `api/admin/**` |
+| **Administrador** | Modera reativamente (remove por abuso) e gerencia o catálogo (`role = admin`). | `api/admin/**` |
 | **Solicitação de Coleta** | Pedido criado pelo cidadão com material, quantidade, endereço e imagens. | `SolicitacaoColeta` |
 | **Coleta** | Execução de uma solicitação aceita por uma empresa; tem ciclo de vida próprio. | `Coleta` |
 | **Material (Tipo)** | Categoria de reciclável (papel, plástico, vidro, e-lixo...). | `MaterialTipo`, `seed.ts` |
@@ -14,20 +14,20 @@
 | **Chat pré-aceite (negociação)** | Conversa entre cidadão e empresa antes de a coleta ser aceita. | `ConversaSolicitacao`, `MensagemPreAceite` |
 | **Chat da coleta** | Conversa operacional vinculada a uma coleta já aceita. | `Mensagem` |
 | **Código de confirmação** | Código de 8 caracteres hex gerado no aceite para validar a coleta presencial. | `coleta.service.ts` |
-| **Moderação** | Ato do admin de aprovar ou rejeitar uma solicitação. | `atualizarStatusSolicitacao` |
-| **Marketplace de solicitações** | Lista de solicitações aprovadas e sem coleta, visível às empresas. | `listarSolicitacoesAprovadas` |
+| **Moderação** | Ato reativo do admin de **remover** uma solicitação já publicada em caso de abuso (não há aprovação prévia). | `removerSolicitacao` |
+| **Marketplace de solicitações** | Lista de solicitações aprovadas e sem coleta, visível às empresas. Toda solicitação nasce nesse estado. | `listarSolicitacoesAprovadas` |
 | **Região (endereço aproximado)** | Versão reduzida do endereço exibida antes do aceite (privacidade). | `lib/privacy.ts` |
 
 ## Status (ciclos de vida)
 
 | Entidade | Valores | Fonte |
 |----------|---------|-------|
-| **SolicitacaoColeta.status** | `pendente`, `aprovada`, `rejeitada`, `cancelada` | `packages/shared/src/status.ts` |
-| **SolicitacaoColeta.aprovado** | `true` / `false` (flag de moderação) | `schema.prisma` |
+| **SolicitacaoColeta.status** | `aprovada` (nasce assim), `cancelada`, `removida` | `packages/shared/src/status.ts` |
+| **SolicitacaoColeta.aprovado** | `true` (padrão) / `false` (após remoção reativa pelo admin) | `schema.prisma` |
 | **Coleta.status** | `aceita`, `a_caminho`, `em_coleta`, `concluida`, `cancelada` | `packages/shared/src/status.ts` |
 | **ConversaSolicitacao.status** | `aberta`, `convertida`, `encerrada` | `conversa-solicitacao.service.ts`, `coleta.service.ts` (não centralizado — ver melhorias) |
 | **Notificacao.lida** | `true` / `false` | `schema.prisma` |
-| **Notificacao.tipo** | `solicitacao_aprovada`, `solicitacao_rejeitada`, `coleta_aceita`, `coleta_status`, `nova_mensagem`, `avaliacao_recebida` | `notificacao.service.ts` |
+| **Notificacao.tipo** | `solicitacao_removida`, `coleta_aceita`, `coleta_status`, `nova_mensagem`, `avaliacao_recebida` | `notificacao.service.ts` |
 
 ## Termos técnicos
 

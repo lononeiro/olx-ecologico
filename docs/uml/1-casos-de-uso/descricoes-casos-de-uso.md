@@ -26,8 +26,8 @@ aos serviços (`src/services`) e às rotas de API (`src/app/api`).
 | UC14 | Concluir coleta com código | Empresa |
 | UC15 | Receber notificações | Cidadão, Empresa |
 | UC16 | Visualizar dashboard | Administrador |
-| UC17 | Analisar solicitações | Administrador |
-| UC18 | Aprovar / rejeitar solicitação | Administrador |
+| UC17 | Monitorar solicitações | Administrador |
+| UC18 | Remover solicitação (moderação reativa) | Administrador |
 | UC19 | Gerenciar usuários | Administrador |
 | UC20 | Gerenciar empresas | Administrador |
 | UC21 | Gerenciar materiais | Administrador |
@@ -55,7 +55,7 @@ aos serviços (`src/services`) e às rotas de API (`src/app/api`).
 3. Marca a solicitação como `cancelada` e, se houver coleta em `aceita`/`a_caminho`, também a cancela.
 
 **Fluxos de exceção**
-- **A1 —** Solicitação já `rejeitada`/`cancelada`: retorna erro "não pode ser cancelada neste estado".
+- **A1 —** Solicitação já `cancelada`/`removida`: retorna erro "não pode ser cancelada neste estado".
 - **A2 —** Coleta em `em_coleta`/`concluida`: retorna erro "coleta já em andamento avançado".
 
 ---
@@ -127,8 +127,8 @@ aos serviços (`src/services`) e às rotas de API (`src/app/api`).
 
 **Fluxo principal**
 1. Ao autenticar, o `NotificationBell` abre um `EventSource` para `/api/notificacoes/stream`.
-2. O servidor envia o estado inicial e, a cada 4s, novas notificações dos tipos: `solicitacao_aprovada`,
-   `solicitacao_rejeitada`, `coleta_aceita`, `coleta_status`, `nova_mensagem`, `avaliacao_recebida`.
+2. O servidor envia o estado inicial e, a cada 4s, novas notificações dos tipos: `solicitacao_removida`,
+   `coleta_aceita`, `coleta_status`, `nova_mensagem`, `avaliacao_recebida`.
 3. O usuário pode marcar como lida(s).
 
 > A criação de notificações é *best-effort*: uma falha não interrompe o fluxo principal que a originou.

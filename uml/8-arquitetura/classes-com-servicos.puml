@@ -33,8 +33,8 @@ class SolicitacaoColeta {
   +descricao: String
   +quantidade: String
   +endereco: String
-  +status: String = "pendente"
-  +aprovado: Boolean = false
+  +status: String = "aprovada"
+  +aprovado: Boolean = true
   +userId: Int
   +materialId: Int
   +createdAt: DateTime

@@ -36,9 +36,9 @@
 
 ## 1. Resumo Executivo
 
-**ECOnecta** (nome de pacote: `recycling-system`) é uma plataforma full-stack de economia circular que intermedia a **doação/coleta de materiais recicláveis** entre três perfis: o **cidadão** que possui o material, a **empresa coletora** que executa a coleta, e o **administrador** que modera a plataforma.
+**ECOnecta** (nome de pacote: `recycling-system`) é uma plataforma full-stack de economia circular que intermedia a **doação/coleta de materiais recicláveis** entre três perfis: o **cidadão** que possui o material, a **empresa coletora** que executa a coleta, e o **administrador** que modera reativamente a plataforma.
 
-O fluxo central é: o cidadão **cria uma solicitação** (com material, quantidade, endereço e até 5 imagens) → o administrador **aprova ou rejeita** → a solicitação aprovada fica **disponível** no marketplace para empresas → uma empresa **aceita** (gerando uma *Coleta*) → a empresa **atualiza o andamento** (`aceita → a_caminho → em_coleta → concluida`) → após a conclusão, o cidadão **avalia** a empresa (1 a 5 estrelas). Comunicação por **chat** existe em dois momentos: antes do aceite (chat de negociação por solicitação) e durante a coleta (chat vinculado à coleta). Há **notificações em tempo real** via Server-Sent Events.
+O fluxo central é: o cidadão **cria uma solicitação** (com material, quantidade, endereço e até 5 imagens), que **já nasce aprovada e publicada** — não há fila de aprovação prévia pelo admin → a solicitação fica **disponível** no marketplace para empresas → uma empresa **aceita** (gerando uma *Coleta*) → a empresa **atualiza o andamento** (`aceita → a_caminho → em_coleta → concluida`) → após a conclusão, o cidadão **avalia** a empresa (1 a 5 estrelas). O administrador pode, a qualquer momento, **remover reativamente** uma solicitação já publicada em caso de abuso. Comunicação por **chat** existe em dois momentos: antes do aceite (chat de negociação por solicitação) e durante a coleta (chat vinculado à coleta). Há **notificações em tempo real** via Server-Sent Events.
 
 | Item | Valor |
 |------|-------|
@@ -61,18 +61,18 @@ O fluxo central é: o cidadão **cria uma solicitação** (com material, quantid
 ## 2. Visão Geral do Sistema
 
 ### 2.1 Problema resolvido
-Materiais recicláveis domésticos frequentemente vão para o lixo comum por falta de um canal simples que conecte quem tem o material a quem faz a coleta. O ECOnecta cria esse canal, com **moderação** (para evitar solicitações inválidas) e **rastreabilidade** do andamento da coleta.
+Materiais recicláveis domésticos frequentemente vão para o lixo comum por falta de um canal simples que conecte quem tem o material a quem faz a coleta. O ECOnecta cria esse canal, com **moderação reativa** (o admin remove pedidos abusivos já publicados, sem barrar a publicação inicial) e **rastreabilidade** do andamento da coleta.
 
 ### 2.2 Público-alvo e usuários principais
 - **Cidadãos** (`role = usuario`): pessoas físicas com material reciclável.
 - **Empresas coletoras** (`role = empresa`): organizações que recolhem e processam recicláveis.
-- **Administradores** (`role = admin`): equipe da plataforma que modera e gerencia o catálogo.
+- **Administradores** (`role = admin`): equipe da plataforma que modera reativamente e gerencia o catálogo.
 
 ### 2.3 Principais funcionalidades (confirmadas no código)
 - Cadastro e login (cidadão e empresa) — `src/app/api/auth/*`
 - Recuperação de senha por token — `forgot-password` / `reset-password`
-- Criação de solicitações com upload de até 5 imagens (Cloudinary) — `solicitacao.service.ts`
-- Moderação (aprovar/rejeitar) pelo admin — `atualizarStatusSolicitacao`
+- Criação de solicitações com upload de até 5 imagens (Cloudinary) — nasce já `aprovada` — `solicitacao.service.ts`
+- Moderação reativa (remoção por abuso) pelo admin — `removerSolicitacao`
 - Marketplace de solicitações disponíveis para empresas — `listarSolicitacoesAprovadas`
 - Aceite de coleta com transação atômica + código de confirmação — `aceitarSolicitacao`
 - Atualização de status da coleta — `atualizarStatusColeta`
@@ -169,8 +169,8 @@ O pacote `packages/shared` centraliza **schemas Zod**, **contratos de tipos** e 
 - *Onde aparece*: `src/app/empresa/**`, `coleta.service.ts`, `conversa-solicitacao.service.ts`.
 
 **Administrador (`admin`)**
-- *Permissões*: `/admin/**`, aprovar/rejeitar solicitações, CRUD de usuários/empresas/materiais, dashboard.
-- *Funcionalidades*: `listarSolicitacoesAdmin`, `atualizarStatusSolicitacao`, endpoints `api/admin/**`.
+- *Permissões*: `/admin/**`, remover solicitações reativamente (moderação por abuso), CRUD de usuários/empresas/materiais, dashboard.
+- *Funcionalidades*: `listarSolicitacoesAdmin`, `removerSolicitacao`, endpoints `api/admin/**`.
 - *Restrições*: dados de contato do cidadão são mascarados na listagem (`maskEmail`, `maskPhone`, `summarizeAddress`). Não existe app mobile para admin.
 - *Onde aparece*: `src/app/admin/**`, `src/app/api/admin/**`.
 
@@ -212,7 +212,7 @@ O pacote `packages/shared` centraliza **schemas Zod**, **contratos de tipos** e 
 
 **RF008 — Criar solicitação de coleta**
 - *Ator*: Cidadão · *Entrada*: título, descrição, quantidade, endereço, materialId, imagens[≤5].
-- *Processamento*: `solicitacaoCreateSchema` + `criarSolicitacao` (status `pendente`, `aprovado=false`).
+- *Processamento*: `solicitacaoCreateSchema` + `criarSolicitacao` (nasce com status `aprovada`, `aprovado=true` — sem fila de aprovação prévia).
 - *Saída*: 201 solicitação · *Arquivos*: `api/solicitacoes/route.ts`, `solicitacao.service.ts`.
 
 **RF009 — Listar solicitações (multi-perfil)**
@@ -223,7 +223,7 @@ O pacote `packages/shared` centraliza **schemas Zod**, **contratos de tipos** e 
 
 **RF011 — Cancelar solicitação** · *Ator*: Cidadão · *Processamento*: `cancelarSolicitacao` (regras de estado).
 
-**RF012 — Aprovar/Rejeitar solicitação** · *Ator*: Admin · *Arquivo*: `api/admin/solicitacoes/[id]/route.ts` → `atualizarStatusSolicitacao`.
+**RF012 — Remover solicitação (moderação reativa)** · *Ator*: Admin · *Arquivo*: `api/admin/solicitacoes/[id]/route.ts` (`DELETE`) → `removerSolicitacao`.
 
 **RF013 — Listar solicitações disponíveis (marketplace)** · *Ator*: Empresa · `listarSolicitacoesAprovadas`.
 
@@ -264,8 +264,8 @@ O pacote `packages/shared` centraliza **schemas Zod**, **contratos de tipos** e 
 **RN002 — Autorização por papel (role)**
 - *Condição*: role do usuário não está em `rolesPermitidas`. *Resultado*: `403 Acesso negado`. · *Arquivo*: `route-guard.ts`.
 
-**RN003 — Solicitação nasce pendente e não aprovada**
-- *Condição*: ao criar. *Resultado*: `status="pendente"`, `aprovado=false`. · *Arquivo*: `solicitacao.service.ts` (`criarSolicitacao`).
+**RN003 — Solicitação nasce aprovada e publicada**
+- *Condição*: ao criar. *Resultado*: `status="aprovada"`, `aprovado=true` — disponível no marketplace imediatamente, sem fila de aprovação prévia. · *Arquivo*: `solicitacao.service.ts` (`criarSolicitacao`).
 
 **RN004 — Máximo de 5 imagens por solicitação**
 - *Condição*: `imagens.length > 5`. *Resultado*: erro (validado no Zod **e** no service). · *Arquivos*: `validations.ts`, `solicitacao.service.ts`.
@@ -290,7 +290,7 @@ O pacote `packages/shared` centraliza **schemas Zod**, **contratos de tipos** e 
 - *Resultado*: cria `Avaliacao` (nota 1–5) e notifica a empresa. · *Arquivo*: `avaliacao.service.ts`.
 
 **RN011 — Cancelamento condicionado ao estado**
-- *Condições*: não cancela se já `rejeitada`/`cancelada`; não cancela se coleta em `em_coleta`/`concluida`; se coleta em `aceita`/`a_caminho`, cancela também a coleta. · *Arquivo*: `cancelarSolicitacao`.
+- *Condições*: não cancela se já `cancelada`/`removida`; não cancela se coleta em `em_coleta`/`concluida`; se coleta em `aceita`/`a_caminho`, cancela também a coleta. · *Arquivo*: `cancelarSolicitacao`.
 
 **RN012 — Chat pré-aceite só enquanto a solicitação está disponível**
 - *Condições*: conversa `aberta` e solicitação ainda **sem** coleta. *Resultado*: bloqueia envio caso contrário. · *Arquivo*: `conversa-solicitacao.service.ts`.
@@ -307,8 +307,8 @@ O pacote `packages/shared` centraliza **schemas Zod**, **contratos de tipos** e 
 **RN016 — Admin não acessa app mobile**
 - *Condição*: token de acesso de admin no contexto mobile. *Resultado*: erro. · *Arquivo*: `mobile-auth.ts`.
 
-**RN017 — Escopo da fila administrativa de moderação**
-- *Condição*: `getAdminSolicitacaoScope` retorna rejeitadas, aprovadas-sem-coleta e pendentes com mais de 24h. · *Arquivo*: `solicitacao.service.ts`.
+**RN017 — Remoção é reativa e irrestrita ao estado**
+- *Condição*: admin identifica abuso em uma solicitação já publicada. *Resultado*: `removerSolicitacao` marca `aprovado=false`, `status="removida"`, independente de já ter coleta ou não. Não existe fila/escopo de solicitações "aguardando aprovação" — a listagem admin (`listarSolicitacoesAdmin`) traz todas, sem filtro. · *Arquivo*: `solicitacao.service.ts`.
 
 **RN018 — Notificação é best-effort**
 - *Condição*: falha ao criar notificação. *Resultado*: erro logado e engolido, sem quebrar o fluxo principal. · *Arquivo*: `notificacao.service.ts`.
@@ -349,7 +349,7 @@ rectangle "ECOnecta" {
   usecase "Cancelar solicitação" as UC14
   usecase "Avaliar coleta" as UC15
 
-  usecase "Moderar solicitação\n(aprovar/rejeitar)" as UC20
+  usecase "Moderar solicitação\n(remoção reativa)" as UC20
   usecase "Gerenciar usuários/empresas" as UC21
   usecase "Gerenciar materiais" as UC22
   usecase "Ver dashboard" as UC23
@@ -451,8 +451,8 @@ class SolicitacaoColeta {
   +descricao: String
   +quantidade: String
   +endereco: String
-  +status: String = "pendente"
-  +aprovado: Boolean = false
+  +status: String = "aprovada"
+  +aprovado: Boolean = true
   +userId: Int
   +materialId: Int
   +createdAt: DateTime
@@ -595,8 +595,8 @@ entity "solicitacao_coleta" as sol {
   descricao : text
   quantidade : text
   endereco : text
-  status : text = 'pendente'
-  aprovado : bool = false
+  status : text = 'aprovada'
+  aprovado : bool = true
   createdAt : timestamp
   userId : int <<FK>>
   materialId : int <<FK>>
@@ -760,7 +760,7 @@ alt inválido
   EP --> UI : 400 {error, resumo}
 else válido
   EP -> SVC : criarSolicitacao(userId, data)
-  SVC -> DB : create Solicitacao (pendente) + imagens
+  SVC -> DB : create Solicitacao (aprovada, aprovado=true) + imagens
   DB --> SVC : solicitacao
   SVC --> EP : solicitacao
   EP --> UI : 201
@@ -768,22 +768,27 @@ end
 @enduml
 ```
 
-### 10.4 Moderação pelo admin
+### 10.4 Moderação pelo admin (remoção reativa)
 
 ```plantuml
 @startuml seq-moderacao
 actor Administrador
-participant "PATCH /api/admin/solicitacoes/[id]" as EP
+participant "DELETE /api/admin/solicitacoes/[id]" as EP
 participant "route-guard" as RG
 participant "solicitacao.service" as SVC
 participant "notificacao.service" as N
 database PostgreSQL as DB
 
-Administrador -> EP : PATCH {aprovado: true|false}
+note over Administrador, DB
+  Não há aprovação prévia: a solicitação já nasce publicada.
+  O admin só remove reativamente pedidos identificados como abuso.
+end note
+
+Administrador -> EP : DELETE /api/admin/solicitacoes/[id]
 EP -> RG : autorizarRota(["admin"])
-EP -> SVC : atualizarStatusSolicitacao(id, aprovado)
-SVC -> DB : update status=aprovada|rejeitada
-SVC -> N : notificarSolicitacaoAvaliada()
+EP -> SVC : removerSolicitacao(id)
+SVC -> DB : update aprovado=false, status=removida
+SVC -> N : notificarSolicitacaoRemovida(userId, id, titulo)
 N -> DB : create Notificacao (best-effort)
 SVC --> EP : solicitacao
 EP --> Administrador : 200
@@ -927,31 +932,32 @@ end
 ```plantuml
 @startuml atividade-macro
 start
-:Cidadão cria solicitação (pendente);
-:Admin analisa;
-if (Aprovada?) then (sim)
-  :status = aprovada\ndisponível no marketplace;
-  :Empresas negociam (chat pré-aceite);
-  if (Empresa aceita?) then (sim)
-    :cria Coleta (aceita)\ncódigo de confirmação;
-    :conversa vencedora -> convertida\noutras -> encerrada;
-    :Empresa atualiza status;
-    while (status != concluida?) is (avança)
-      :a_caminho -> em_coleta;
-    endwhile (concluida)
-    :grava dataConclusao;
-    if (Cidadão avalia?) then (sim)
-      :cria Avaliacao (1-5★);
-      :notifica empresa;
-    else (não)
-      :aguardando avaliação;
-    endif
+:Cidadão cria solicitação;
+:status = aprovada (nasce publicada)\ndisponível no marketplace;
+if (Admin identifica abuso?) then (sim)
+  :Admin remove solicitação\n(moderação reativa);
+  :status = removida;
+  :notifica cidadão;
+  stop
+else (não)
+endif
+:Empresas negociam (chat pré-aceite);
+if (Empresa aceita?) then (sim)
+  :cria Coleta (aceita)\ncódigo de confirmação;
+  :conversa vencedora -> convertida\noutras -> encerrada;
+  :Empresa atualiza status;
+  while (status != concluida?) is (avança)
+    :a_caminho -> em_coleta;
+  endwhile (concluida)
+  :grava dataConclusao;
+  if (Cidadão avalia?) then (sim)
+    :cria Avaliacao (1-5★);
+    :notifica empresa;
   else (não)
-    :permanece disponível;
+    :aguardando avaliação;
   endif
 else (não)
-  :status = rejeitada;
-  :notifica cidadão;
+  :permanece disponível\n(ou cidadão cancela);
 endif
 stop
 @enduml
@@ -991,7 +997,7 @@ stop
 start
 :Cidadão solicita cancelamento;
 :Carrega solicitação + coleta;
-if (rejeitada ou cancelada?) then (sim)
+if (cancelada ou removida?) then (sim)
   :Erro: estado não permite;
   stop
 endif
@@ -1015,14 +1021,12 @@ stop
 
 ```plantuml
 @startuml estado-solicitacao
-[*] --> pendente : criada
-pendente --> aprovada : admin aprova
-pendente --> rejeitada : admin rejeita
-pendente --> cancelada : cidadão cancela
+[*] --> aprovada : criada\n(nasce publicada, sem fila de aprovação)
 aprovada --> cancelada : cidadão cancela (sem coleta avançada)
+aprovada --> removida : admin remove\n(moderação reativa por abuso)
 aprovada --> [*] : aceite gera Coleta
-rejeitada --> [*]
 cancelada --> [*]
+removida --> [*]
 @enduml
 ```
 
@@ -1226,9 +1230,9 @@ NX ..> ENV
 | GET | `/api/solicitacoes` | usuario/admin/empresa | Lista (ramifica por role) | solicitacao |
 | POST | `/api/solicitacoes` | usuario | Cria | solicitacao |
 | GET | `/api/solicitacoes/[id]` | autenticado | Detalha | solicitacao |
-| DELETE/PATCH | `/api/solicitacoes/[id]` | usuario | Cancela | solicitacao |
+| PATCH | `/api/solicitacoes/[id]` | usuario | Cancela (`{action:"cancelar"}`) | solicitacao |
 | GET | `/api/solicitacoes/[id]/conversas` | usuario | Conversas pré-aceite | conversa-solicitacao |
-| PATCH | `/api/admin/solicitacoes/[id]` | admin | Aprova/rejeita | solicitacao |
+| DELETE | `/api/admin/solicitacoes/[id]` | admin | Remove (moderação reativa) | solicitacao |
 | GET | `/api/admin/dashboard` | admin | Estatísticas | — |
 | GET/POST/PATCH/DELETE | `/api/admin/users\|companies\|materiais` | admin | CRUD | — |
 | GET | `/api/empresa/coletas` | empresa | Lista coletas | coleta |
@@ -1262,7 +1266,7 @@ NX ..> ENV
 | Nova solicitação | `/dashboard/solicitacoes/nova` | usuario | Cloudinary, `cep`, `materiais`, `solicitacoes` | criar, upload |
 | Detalhe solicitação | `/dashboard/solicitacoes/[id]` | usuario | `solicitacoes/[id]`, `conversas`, `avaliacoes` | cancelar, conversar, avaliar |
 | Painel admin | `/admin` | admin | `admin/dashboard` | KPIs e gráficos |
-| Moderação | `/admin/solicitacoes/[id]` | admin | `admin/solicitacoes/[id]` | aprovar/rejeitar |
+| Moderação | `/admin/solicitacoes/[id]` | admin | `admin/solicitacoes/[id]` | remover (reativo) |
 | Painel empresa | `/empresa` | empresa | `empresa/coletas` | visão geral |
 | Marketplace | `/empresa/solicitacoes` | empresa | `solicitacoes`, conversa | negociar, aceitar |
 | Coleta (detalhe) | `/empresa/coletas/[id]` | empresa | `empresa/coletas/[id]`, `mensagens` | atualizar status, chat |

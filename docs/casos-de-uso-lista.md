@@ -29,7 +29,7 @@ CDU 17: Avaliar Coleta Concluída
 
 ## Empresa Coletora
 
-CDU 18: Listar Solicitações Aprovadas Disponíveis
+CDU 18: Listar Solicitações Disponíveis (nascem aprovadas, sem fila de moderação prévia)
 CDU 19: Conversar com o Cidadão antes do Aceite
 CDU 20: Aceitar Solicitação
 CDU 21: Listar Minhas Coletas
@@ -50,9 +50,9 @@ CDU 31: Receber Notificações em Tempo Real
 ## Administrador
 
 CDU 32: Visualizar Dashboard
-CDU 33: Listar e Analisar Solicitações
-CDU 34: Aprovar Solicitação
-CDU 35: Rejeitar Solicitação
+CDU 33: Listar e Monitorar Solicitações
+CDU 34: Remover Solicitação (moderação reativa por abuso)
+CDU 35: *(descontinuado — não há mais aprovação/rejeição prévia; toda solicitação nasce publicada)*
 CDU 36: Listar Usuários
 CDU 37: Ativar / Inativar Usuário
 CDU 38: Excluir Usuário

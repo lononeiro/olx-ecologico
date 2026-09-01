@@ -1,31 +1,32 @@
 @startuml atividade-macro
 ' Atividade - Fluxo macro: solicitacao -> coleta -> avaliacao
 start
-:Cidadao cria solicitacao (pendente);
-:Admin analisa;
-if (Aprovada?) then (sim)
-  :status = aprovada\ndisponivel no marketplace;
-  :Empresas negociam (chat pre-aceite);
-  if (Empresa aceita?) then (sim)
-    :cria Coleta (aceita)\ncodigo de confirmacao;
-    :conversa vencedora -> convertida\noutras -> encerrada;
-    :Empresa atualiza status;
-    while (status != concluida?) is (avanca)
-      :a_caminho -> em_coleta;
-    endwhile (concluida)
-    :grava dataConclusao;
-    if (Cidadao avalia?) then (sim)
-      :cria Avaliacao (1-5 estrelas);
-      :notifica empresa;
-    else (nao)
-      :aguardando avaliacao;
-    endif
+:Cidadao cria solicitacao;
+:status = aprovada (nasce publicada)\ndisponivel no marketplace;
+if (Admin identifica abuso?) then (sim)
+  :Admin remove solicitacao\n(moderacao reativa);
+  :status = removida;
+  :notifica cidadao;
+  stop
+else (nao)
+endif
+:Empresas negociam (chat pre-aceite);
+if (Empresa aceita?) then (sim)
+  :cria Coleta (aceita)\ncodigo de confirmacao;
+  :conversa vencedora -> convertida\noutras -> encerrada;
+  :Empresa atualiza status;
+  while (status != concluida?) is (avanca)
+    :a_caminho -> em_coleta;
+  endwhile (concluida)
+  :grava dataConclusao;
+  if (Cidadao avalia?) then (sim)
+    :cria Avaliacao (1-5 estrelas);
+    :notifica empresa;
   else (nao)
-    :permanece disponivel;
+    :aguardando avaliacao;
   endif
 else (nao)
-  :status = rejeitada;
-  :notifica cidadao;
+  :permanece disponivel\n(ou cidadao cancela);
 endif
 stop
 @enduml
@@ -59,7 +60,7 @@ stop
 start
 :Cidadao solicita cancelamento;
 :Carrega solicitacao + coleta;
-if (rejeitada ou cancelada?) then (sim)
+if (cancelada ou removida?) then (sim)
   :Erro: estado nao permite;
   stop
 endif

@@ -15,8 +15,8 @@ alt role == usuario
   SVC -> DB : where userId (todas as proprias)
 else role == admin
   EP -> SVC : listarSolicitacoesAdmin()
-  SVC -> DB : escopo de moderacao\n(rejeitadas / aprovadas-sem-coleta / pendentes > 24h)
-  SVC -> PR : mascara contato (regiao)
+  SVC -> DB : todas as solicitacoes\n(sem filtro de status)
+  SVC -> PR : remove dados do solicitante\nendereco -> regiao aproximada
 else role == empresa
   EP -> SVC : listarSolicitacoesAprovadas()
   SVC -> DB : where aprovado, status=aprovada, coleta=null

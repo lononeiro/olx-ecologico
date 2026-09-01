@@ -68,8 +68,8 @@ Solicitações de coleta criadas pelos cidadãos.
 | descricao | String | Não | — | — | Descrição (mín. 10 caracteres) |
 | quantidade | String | Não | — | — | Quantidade estimada do material |
 | endereco | String | Não | — | — | Endereço da coleta (mín. 5 caracteres) |
-| status | String | Não | — | `pendente` | `pendente` / `aprovada` / `rejeitada` |
-| aprovado | Boolean | Não | — | false | Indica se foi aprovada pelo administrador |
+| status | String | Não | — | `aprovada` | `aprovada` / `cancelada` / `removida` (nasce `aprovada`, sem fila de moderação prévia) |
+| aprovado | Boolean | Não | — | true | `false` somente após remoção reativa pelo admin |
 | userId | Int | Não | FK → users.id | — | Cidadão solicitante |
 | materialId | Int | Não | FK → material_tipos.id | — | Tipo de material |
 | createdAt | DateTime | Não | — | now() | Data de criação |
@@ -122,5 +122,5 @@ Mensagens trocadas entre cidadão e empresa no contexto de uma coleta.
 |-------|-------------------|
 | `roles.nome` | `usuario`, `admin`, `empresa` |
 | `users.status` | `ativo`, `inativo` |
-| `solicitacao_coleta.status` | `pendente`, `aprovada`, `rejeitada` |
+| `solicitacao_coleta.status` | `aprovada`, `cancelada`, `removida` |
 | `coletas.status` | `aceita`, `a_caminho`, `em_coleta`, `concluida`, `cancelada` |

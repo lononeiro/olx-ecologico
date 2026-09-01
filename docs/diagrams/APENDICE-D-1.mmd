@@ -4,15 +4,11 @@ flowchart TD
     imgs --> valida{Dados válidos?}
     valida -- Não --> erroV[Exibe erros de validação]
     erroV --> criar
-    valida -- Sim --> pendente[Solicitação salva como pendente]
-
-    pendente --> analisa[Administrador analisa a solicitação]
-    analisa --> decisao{Aprovar?}
-    decisao -- Não --> rejeitada[Status: rejeitada]
-    rejeitada --> fimRej([Fim])
-
-    decisao -- Sim --> aprovada[Status: aprovada / disponível]
+    valida -- Sim --> aprovada[Solicitação salva como aprovada / publicada]
     aprovada --> espera[Disponível para empresas]
+
+    espera -. admin identifica abuso .-> removida[Status: removida]
+    removida --> fimRem([Fim])
 
     espera --> aceita{Empresa aceita?}
     aceita -- Não --> espera

@@ -62,8 +62,8 @@ Solicitações de coleta criadas pelos cidadãos.
 | descricao | String | Não | — | — | Descrição (mín. 10 caracteres) |
 | quantidade | String | Não | — | — | Quantidade estimada do material |
 | endereco | String | Não | — | — | Endereço da coleta (mín. 5 caracteres) |
-| status | String | Não | — | `pendente` | `pendente` / `aprovada` / `rejeitada` / `cancelada` |
-| aprovado | Boolean | Não | — | false | Indica se foi aprovada pelo administrador |
+| status | String | Não | — | `aprovada` | `aprovada` / `cancelada` / `removida` (nasce `aprovada`, sem fila de moderação prévia) |
+| aprovado | Boolean | Não | — | true | `false` somente quando o admin remove reativamente por abuso |
 | userId | Int | Não | FK → users.id | — | Cidadão solicitante |
 | materialId | Int | Não | FK → material_tipos.id | — | Tipo de material |
 | createdAt | DateTime | Não | — | now() | Data de criação |
@@ -163,10 +163,10 @@ Notificações dos usuários, consumidas em tempo real via SSE.
 |-------|-------------------|
 | `roles.nome` | `usuario`, `admin`, `empresa` |
 | `users.status` | `ativo`, `inativo` |
-| `solicitacao_coleta.status` | `pendente`, `aprovada`, `rejeitada`, `cancelada` |
+| `solicitacao_coleta.status` | `aprovada`, `cancelada`, `removida` |
 | `coletas.status` | `aceita`, `a_caminho`, `em_coleta`, `concluida`, `cancelada` |
 | `conversas_solicitacao.status` | `aberta`, `convertida`, `encerrada` |
-| `notificacoes.tipo` | `solicitacao_aprovada`, `solicitacao_rejeitada`, `coleta_aceita`, `coleta_status`, `nova_mensagem`, `avaliacao_recebida` |
+| `notificacoes.tipo` | `solicitacao_removida`, `coleta_aceita`, `coleta_status`, `nova_mensagem`, `avaliacao_recebida` |
 | `avaliacoes.nota` | `1`, `2`, `3`, `4`, `5` |
 
 ## Observações de integridade

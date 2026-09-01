@@ -27,7 +27,7 @@ com a extensão *PlantUML* do VS Code).
 |------|-----------------|------------------|
 | Cidadão / Usuário | `usuario` | Cria solicitações de coleta e acompanha o andamento |
 | Empresa Coletora | `empresa` | Aceita solicitações aprovadas e executa as coletas |
-| Administrador | `admin` | Modera solicitações e gerencia usuários, empresas e materiais |
+| Administrador | `admin` | Modera solicitações reativamente (remove abusos) e gerencia usuários, empresas e materiais |
 
 ## Imagens renderizadas
 

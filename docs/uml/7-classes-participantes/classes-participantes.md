@@ -14,7 +14,7 @@ estereótipos:
 | CP-01 | Cadastro | `/register` | `registerSchema`, transação | User, Company, Role |
 | CP-02 | Autenticar | `/login`, NextAuth/mobile | `loginSchema`, bcrypt, JWT | User, Role |
 | CP-03 | Criar solicitação | Form, Cloudinary, API | `route-guard`, `criarSolicitacao` | SolicitacaoColeta, SolicitacaoImagem, MaterialTipo |
-| CP-04 | Moderar solicitação | Admin, PATCH | `atualizarStatusSolicitacao`, notificar | SolicitacaoColeta, Notificacao |
+| CP-04 | Moderar solicitação (remoção reativa) | Admin, DELETE | `removerSolicitacao`, notificar | SolicitacaoColeta, Notificacao |
 | CP-05 | Negociar (pré-aceite) **novo** | Chat, POST mensagens | `buscarConversaAutorizada`, `enviarMensagem...` | ConversaSolicitacao, MensagemPreAceite, Notificacao |
 | CP-06 | Aceitar solicitação | Lista, POST coletas | `aceitarSolicitacao` (transação), código | SolicitacaoColeta, Coleta, ConversaSolicitacao, Notificacao |
 | CP-07 | Atualizar/concluir coleta | Detalhe, PATCH | `coletaStatusSchema`, `atualizarStatusColeta` | Coleta, Notificacao |

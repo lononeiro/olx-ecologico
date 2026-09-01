@@ -37,8 +37,8 @@ rectangle "ECOnecta" {
 
   ' --- Admin ---
   usecase "Visualizar dashboard" as UC16
-  usecase "Analisar solicitacoes" as UC17
-  usecase "Aprovar / rejeitar solicitacao" as UC18
+  usecase "Monitorar solicitacoes" as UC17
+  usecase "Remover solicitacao\n(moderacao reativa)" as UC18
   usecase "Gerenciar usuarios" as UC19
   usecase "Gerenciar empresas" as UC20
   usecase "Gerenciar materiais" as UC21

@@ -100,7 +100,7 @@ validações (`packages/shared/src/validations.ts`), os serviços (`src/services
 | **Ator principal** | Cidadão |
 | **Objetivo** | Registrar um material disponível para coleta |
 | **Pré-condições** | Estar autenticado como `usuario` |
-| **Pós-condições** | Solicitação criada com `status = pendente` e `aprovado = false` |
+| **Pós-condições** | Solicitação criada com `status = aprovada` e `aprovado = true` (já publicada, sem fila de aprovação prévia) |
 
 **Fluxo principal**
 1. O ator acessa `/dashboard/solicitacoes/nova`.
@@ -278,22 +278,23 @@ validações (`packages/shared/src/validations.ts`), os serviços (`src/services
 
 ---
 
-## UC17 / UC18 — Analisar e aprovar/rejeitar solicitações
+## UC17 / UC18 — Monitorar e remover solicitações (moderação reativa)
 
 | Campo | Descrição |
 |-------|-----------|
 | **Ator principal** | Administrador |
-| **Objetivo** | Moderar as solicitações criadas pelos cidadãos |
+| **Objetivo** | Monitorar as solicitações publicadas e remover as identificadas como abuso |
 | **Pré-condições** | Estar autenticado como `admin` |
-| **Pós-condições** | Solicitação fica `aprovada` (`aprovado = true`) ou `rejeitada` |
+| **Pós-condições** | Solicitação removida fica `removida` (`aprovado = false`) |
 
 **Fluxo principal**
-1. O ator acessa `/admin/solicitacoes` e abre uma solicitação pendente (UC17).
+1. O ator acessa `/admin/solicitacoes` e abre uma solicitação (UC17). Toda solicitação já nasce
+   `aprovada` e publicada — não existe uma fila de "pendentes de aprovação".
 2. Analisa título, descrição, material, imagens e dados do solicitante.
-3. Decide **aprovar** ou **rejeitar** (UC18).
-4. O sistema atualiza o status: aprovada (`aprovado = true`) ou rejeitada.
+3. Se identificar abuso, decide **remover** (UC18).
+4. O sistema atualiza o status para `removida` (`aprovado = false`) e notifica o cidadão.
 
-> Aprovada, a solicitação passa a ser listada para as empresas (UC10).
+> Enquanto não for removida, a solicitação permanece listada para as empresas (UC10).
 
 ---
 

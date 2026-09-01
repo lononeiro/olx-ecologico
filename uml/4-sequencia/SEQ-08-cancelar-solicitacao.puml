@@ -13,7 +13,7 @@ group Transacao
     SVC --> EP : throw
     EP --> Cidadao : 400
   else
-    SVC -> SVC : status rejeitada/cancelada? -> erro
+    SVC -> SVC : status cancelada/removida? -> erro
     SVC -> SVC : coleta em em_coleta/concluida? -> erro
     alt coleta em aceita/a_caminho
       SVC -> DB : update Coleta -> cancelada

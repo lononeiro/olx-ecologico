@@ -14,7 +14,7 @@ Conjunto completo de diagramas de sequência dos **métodos/fluxos principais** 
 | SEQ-04 | Recuperação de senha | `forgot-password` + `reset-password` | Visitante | `render/SEQ-04-recuperar-senha.png` |
 | SEQ-05 | Criar solicitação (upload) | `criarSolicitacao` | Cidadão | `render/SEQ-05-criar-solicitacao.png` |
 | SEQ-06 | Listar solicitações (por perfil) | `GET /api/solicitacoes` | Cidadão/Empresa/Admin | `render/SEQ-06-listar-solicitacoes.png` |
-| SEQ-07 | Moderar solicitação | `atualizarStatusSolicitacao` | Administrador | `render/SEQ-07-moderar-solicitacao.png` |
+| SEQ-07 | Moderar solicitação (remoção reativa) | `removerSolicitacao` | Administrador | `render/SEQ-07-moderar-solicitacao.png` |
 | SEQ-08 | Cancelar solicitação | `cancelarSolicitacao` | Cidadão | `render/SEQ-08-cancelar-solicitacao.png` |
 | SEQ-09 | Negociar (chat pré-aceite) | `enviarMensagemConversaSolicitacao` | Empresa/Cidadão | `render/SEQ-09-negociar-pre-aceite.png` |
 | SEQ-10 | Aceitar solicitação (cria Coleta) | `aceitarSolicitacao` | Empresa | `render/SEQ-10-aceitar-solicitacao.png` |
@@ -44,19 +44,19 @@ Conjunto completo de diagramas de sequência dos **métodos/fluxos principais** 
 
 ## SEQ-05 — Criar Solicitação (com upload)
 **Objetivo:** mostrar a criação de uma solicitação de coleta com imagens.
-**Descrição:** As imagens são enviadas **diretamente** ao Cloudinary pelo navegador (preset *unsigned*), que retorna URLs seguras. O formulário então chama `POST /api/solicitacoes`, protegido pelo `route-guard` (apenas `usuario`). O corpo é validado pelo `solicitacaoCreateSchema` (incluindo o limite de 5 imagens) e o `criarSolicitacao` persiste a solicitação com status `pendente` e `aprovado=false`, gravando as imagens associadas. Retorna `201`. *Arquivo:* `src/services/solicitacao.service.ts`.
+**Descrição:** As imagens são enviadas **diretamente** ao Cloudinary pelo navegador (preset *unsigned*), que retorna URLs seguras. O formulário então chama `POST /api/solicitacoes`, protegido pelo `route-guard` (apenas `usuario`). O corpo é validado pelo `solicitacaoCreateSchema` (incluindo o limite de 5 imagens) e o `criarSolicitacao` persiste a solicitação **já com status `aprovada` e `aprovado=true`** — não existe fila de aprovação prévia, a solicitação nasce publicada e disponível no marketplace —, gravando as imagens associadas. Retorna `201`. *Arquivo:* `src/services/solicitacao.service.ts`.
 
 ## SEQ-06 — Listar Solicitações (ramificação por perfil)
 **Objetivo:** evidenciar como o mesmo endpoint serve aos três perfis com regras distintas.
-**Descrição:** O `GET /api/solicitacoes` autoriza os três papéis e ramifica internamente: o **cidadão** vê apenas as próprias solicitações; o **admin** vê o escopo de moderação (rejeitadas, aprovadas-sem-coleta e pendentes há mais de 24h); a **empresa** vê apenas as aprovadas e ainda sem coleta. Para admin e empresa, o *privacy mapper* mascara dados de contato e reduz o endereço a uma "região aproximada". *Arquivos:* `api/solicitacoes/route.ts`, `lib/privacy.ts`.
+**Descrição:** O `GET /api/solicitacoes` autoriza os três papéis e ramifica internamente: o **cidadão** vê apenas as próprias solicitações; o **admin** vê **todas** as solicitações da plataforma (sem filtro de status, para fins de monitoramento/moderação); a **empresa** vê apenas as aprovadas e ainda sem coleta. Para admin e empresa, o *privacy mapper* remove os dados do solicitante e reduz o endereço a uma "região aproximada". *Arquivos:* `api/solicitacoes/route.ts`, `lib/privacy.ts`.
 
-## SEQ-07 — Moderar Solicitação
-**Objetivo:** representar a aprovação/rejeição pelo administrador.
-**Descrição:** O admin envia `PATCH /api/admin/solicitacoes/[id]` com o campo `aprovado`. O `atualizarStatusSolicitacao` define o status como `aprovada` ou `rejeitada` e dispara uma notificação ao cidadão. A notificação é *best-effort*: uma eventual falha é registrada em log e ignorada, sem interromper a moderação. *Arquivo:* `src/services/solicitacao.service.ts`.
+## SEQ-07 — Moderar Solicitação (remoção reativa)
+**Objetivo:** representar a remoção de uma solicitação pelo administrador em caso de abuso.
+**Descrição:** Não há aprovação prévia: toda solicitação nasce com `status="aprovada"`. O admin só age **reativamente**, quando identifica um pedido abusivo/impróprio já publicado. Ele envia `DELETE /api/admin/solicitacoes/[id]`; o `removerSolicitacao` atualiza `aprovado=false` e `status="removida"` e dispara uma notificação (`solicitacao_removida`) ao cidadão. A notificação é *best-effort*: uma eventual falha é registrada em log e ignorada, sem interromper a remoção. *Arquivo:* `src/services/solicitacao.service.ts`.
 
 ## SEQ-08 — Cancelar Solicitação
 **Objetivo:** descrever o cancelamento pelo próprio cidadão e suas regras de estado.
-**Descrição:** Via `PATCH /api/solicitacoes/[id]` com `{action:"cancelar"}`, o `cancelarSolicitacao` executa em transação: carrega a solicitação (validando posse), recusa o cancelamento se já estiver `rejeitada`/`cancelada` ou se a coleta estiver em estágio avançado (`em_coleta`/`concluida`). Se houver coleta em `aceita`/`a_caminho`, ela também é cancelada. Por fim, marca a solicitação como `cancelada`. *Arquivo:* `src/services/solicitacao.service.ts`.
+**Descrição:** Via `PATCH /api/solicitacoes/[id]` com `{action:"cancelar"}`, o `cancelarSolicitacao` executa em transação: carrega a solicitação (validando posse), recusa o cancelamento se já estiver `cancelada`/`removida` ou se a coleta estiver em estágio avançado (`em_coleta`/`concluida`). Se houver coleta em `aceita`/`a_caminho`, ela também é cancelada. Por fim, marca a solicitação como `cancelada`. *Arquivo:* `src/services/solicitacao.service.ts`.
 
 ## SEQ-09 — Negociar (chat pré-aceite)
 **Objetivo:** mostrar a conversa entre empresa e cidadão antes do aceite.

@@ -41,8 +41,8 @@ entity "solicitacao_coleta" as sol {
   descricao : text
   quantidade : text
   endereco : text
-  status : text = 'pendente'
-  aprovado : bool = false
+  status : text = 'aprovada'
+  aprovado : bool = true
   createdAt : timestamp
   userId : int <<FK>>
   materialId : int <<FK>>

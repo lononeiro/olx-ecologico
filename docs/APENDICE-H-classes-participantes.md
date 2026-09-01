@@ -48,7 +48,10 @@ flowchart LR
 
 ---
 
-## H.2 — Aprovar / rejeitar solicitação (UC17/UC18)
+## H.2 — Remover solicitação (UC17/UC18, moderação reativa)
+
+> Não há aprovação prévia: a solicitação já nasce publicada. O admin só remove reativamente
+> pedidos identificados como abuso.
 
 ```mermaid
 flowchart LR
@@ -56,26 +59,30 @@ flowchart LR
 
     subgraph boundary["«boundary»"]
         telaAdmin["Tela Admin Solicitações"]
-        apiAdmin["PATCH /api/admin/solicitacoes/[id]"]
+        apiAdmin["DELETE /api/admin/solicitacoes/[id]"]
     end
 
     subgraph control["«control»"]
         guard["autorizarRota(['admin'])"]
-        svcStatus["atualizarStatusSolicitacao()"]
+        svcRemover["removerSolicitacao()"]
+        svcNotifica["notificarSolicitacaoRemovida()"]
     end
 
     subgraph entity["«entity»"]
         eSol[(SolicitacaoColeta)]
+        eNotif[(Notificacao)]
     end
 
     actor --> telaAdmin
     telaAdmin --> apiAdmin
     apiAdmin --> guard
-    guard --> svcStatus
-    svcStatus --> eSol
+    guard --> svcRemover
+    svcRemover --> eSol
+    svcRemover --> svcNotifica
+    svcNotifica --> eNotif
 ```
 
-![Classes participantes — Aprovar/rejeitar solicitação](diagrams/APENDICE-H-2.png)
+![Classes participantes — Remover solicitação (moderação reativa)](diagrams/APENDICE-H-2.png)
 
 ---
 

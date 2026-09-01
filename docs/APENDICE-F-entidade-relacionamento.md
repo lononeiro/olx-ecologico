@@ -55,8 +55,8 @@ erDiagram
         string descricao
         string quantidade
         string endereco
-        string status "default pendente"
-        boolean aprovado "default false"
+        string status "default aprovada"
+        boolean aprovado "default true"
         int userId FK
         int materialId FK
         datetime createdAt

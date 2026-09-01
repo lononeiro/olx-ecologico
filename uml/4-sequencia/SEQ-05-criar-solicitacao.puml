@@ -22,7 +22,7 @@ alt invalido
 else valido
   EP -> SVC : criarSolicitacao(userId, data)
   SVC -> SVC : normaliza/deduplica imagens (max 5)
-  SVC -> DB : create Solicitacao (pendente, aprovado=false)\n+ imagens (nested create)
+  SVC -> DB : create Solicitacao (aprovada, aprovado=true)\n+ imagens (nested create)\n(nasce publicada, sem revisao previa)
   DB --> SVC : solicitacao
   SVC --> EP : solicitacao
   EP --> UI : 201

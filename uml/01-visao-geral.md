@@ -3,7 +3,7 @@
 **ECOnecta** (pacote `recycling-system`) é uma plataforma full-stack de economia circular que intermedia a doação/coleta de materiais recicláveis entre **cidadãos** (quem tem o material), **empresas coletoras** (quem coleta) e **administradores** (quem modera).
 
 ## Fluxo central
-Cidadão cria solicitação → Admin aprova/rejeita → solicitação aprovada vira disponível no marketplace → Empresa aceita (cria *Coleta*) → Empresa atualiza status (`aceita → a_caminho → em_coleta → concluida`) → Cidadão avalia a empresa (1–5★). Há chat antes do aceite (negociação) e durante a coleta, além de notificações em tempo real (SSE).
+Cidadão cria solicitação (já nasce `aprovada`, sem fila de aprovação prévia) → fica disponível no marketplace → Empresa aceita (cria *Coleta*) → Empresa atualiza status (`aceita → a_caminho → em_coleta → concluida`) → Cidadão avalia a empresa (1–5★). O admin pode remover reativamente uma solicitação publicada em caso de abuso. Há chat antes do aceite (negociação) e durante a coleta, além de notificações em tempo real (SSE).
 
 ## Stack (confirmada em `package.json`)
 | Camada | Tecnologia |

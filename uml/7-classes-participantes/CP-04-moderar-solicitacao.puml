@@ -1,12 +1,12 @@
 @startuml CP-04-moderar-solicitacao
-title CP-04 - Moderar Solicitacao (robustez)
+title CP-04 - Moderar Solicitacao (remocao reativa, robustez)
 left to right direction
 actor "Administrador" as ator
 boundary "Tela Admin Solicitacoes" as b1
-boundary "PATCH /api/admin/solicitacoes/[id]" as b2
+boundary "DELETE /api/admin/solicitacoes/[id]" as b2
 control "route-guard (admin)" as c0
-control "atualizarStatusSolicitacao()" as c1
-control "notificarSolicitacaoAvaliada()" as c2
+control "removerSolicitacao()" as c1
+control "notificarSolicitacaoRemovida()" as c2
 entity "SolicitacaoColeta" as e1
 entity "Notificacao" as e2
 

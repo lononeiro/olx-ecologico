@@ -17,7 +17,7 @@ sequenceDiagram
         API-->>UI: 400 { erros por campo }
     else Dados válidos
         API->>Svc: criarSolicitacao(userId, data)
-        Svc->>DB: create SolicitacaoColeta (status=pendente)
+        Svc->>DB: create SolicitacaoColeta (status=aprovada, aprovado=true)
         DB-->>Svc: solicitação criada
         Svc-->>API: solicitação
         API-->>UI: 201 { solicitação }

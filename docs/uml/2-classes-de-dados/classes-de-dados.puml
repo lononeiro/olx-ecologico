@@ -38,8 +38,8 @@ class SolicitacaoColeta {
   +descricao : string
   +quantidade : string
   +endereco : string
-  +status : string = "pendente"
-  +aprovado : bool = false
+  +status : string = "aprovada"
+  +aprovado : bool = true
   +userId : int
   +materialId : int
   +createdAt : datetime

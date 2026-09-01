@@ -15,7 +15,7 @@ Relaciona Requisitos Funcionais (RF) ↔ Casos de Uso (UC) ↔ Entidades ↔ End
 | RF009 | UC13/UC30 Listar | SolicitacaoColeta | `GET /api/solicitacoes` | `/dashboard/solicitacoes`, `/admin/solicitacoes`, `/empresa/solicitacoes` | RN002, RN005, RN014, RN017 | `src/app/api/solicitacoes/route.ts` |
 | RF010 | UC13 Consultar | SolicitacaoColeta | `GET /api/solicitacoes/[id]` | `/dashboard/solicitacoes/[id]` | RN002 | `src/app/api/solicitacoes/[id]/route.ts` |
 | RF011 | UC14 Cancelar | SolicitacaoColeta, Coleta | `PATCH/DELETE /api/solicitacoes/[id]` | `/dashboard/solicitacoes/[id]` | RN011 | `services/solicitacao.service.ts` (`cancelarSolicitacao`) |
-| RF012 | UC20 Moderar | SolicitacaoColeta, Notificacao | `PATCH /api/admin/solicitacoes/[id]` | `/admin/solicitacoes/[id]` | RN018 | `src/app/api/admin/solicitacoes/[id]/route.ts` |
+| RF012 | UC20 Moderar (remoção reativa) | SolicitacaoColeta, Notificacao | `DELETE /api/admin/solicitacoes/[id]` | `/admin/solicitacoes/[id]` | RN017 | `src/app/api/admin/solicitacoes/[id]/route.ts` |
 | RF013 | UC30 Marketplace | SolicitacaoColeta | `GET /api/solicitacoes` (empresa) | `/empresa/solicitacoes` | RN005, RN014 | `listarSolicitacoesAprovadas` |
 | RF014 | UC32 Aceitar | Coleta, ConversaSolicitacao, Notificacao | `POST /api/empresa/coletas` | `/empresa/solicitacoes` | RN006, RN007, RN008 | `services/coleta.service.ts` (`aceitarSolicitacao`) |
 | RF015 | UC34 Atualizar status | Coleta, Notificacao | `PATCH /api/empresa/coletas/[id]` | `/empresa/coletas/[id]` | RN009 | `services/coleta.service.ts` (`atualizarStatusColeta`) |

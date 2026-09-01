@@ -39,8 +39,8 @@ rectangle "ECOnecta" {
 
   ' --- Admin ---
   usecase "Visualizar dashboard" as UC16
-  usecase "Analisar solicitações" as UC17
-  usecase "Aprovar / rejeitar solicitação" as UC18
+  usecase "Monitorar solicitações" as UC17
+  usecase "Remover solicitação\n(moderação reativa)" as UC18
   usecase "Gerenciar usuários" as UC19
   usecase "Gerenciar empresas" as UC20
   usecase "Gerenciar materiais" as UC21
@@ -124,8 +124,8 @@ UC21 ..> UC02 : <<include>>
 | UC14 | Concluir coleta com código de confirmação | Empresa |
 | UC15 | Conversar com o cidadão | Empresa |
 | UC16 | Visualizar dashboard | Administrador |
-| UC17 | Analisar solicitações | Administrador |
-| UC18 | Aprovar / rejeitar solicitação | Administrador |
+| UC17 | Monitorar solicitações | Administrador |
+| UC18 | Remover solicitação (moderação reativa) | Administrador |
 | UC19 | Gerenciar usuários | Administrador |
 | UC20 | Gerenciar empresas | Administrador |
 | UC21 | Gerenciar materiais | Administrador |
