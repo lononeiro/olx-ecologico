@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { Plus, Truck } from "lucide-react-native";
+import { Clock, Plus, Truck } from "lucide-react-native";
 import {
   AppScreen,
   BottomNavigation,
@@ -60,16 +60,33 @@ export default function HomeScreen() {
   const avatarUrl = profileQuery.data?.avatarUrl ?? null;
 
   const solicitacoes = solicitacoesQuery.data ?? [];
-  const emAndamento = solicitacoes.filter(
-    (item) =>
-      item.coleta &&
-      item.coleta.status !== "concluida" &&
-      item.coleta.status !== "cancelada"
+  const emAndamento = solicitacoes
+    .filter(
+      (item) =>
+        item.coleta &&
+        item.coleta.status !== "concluida" &&
+        item.coleta.status !== "cancelada"
+    )
+    // Coletas com alteração mais recente (mudança de status, etc.) primeiro.
+    .sort(
+      (a, b) =>
+        new Date(b.coleta!.updatedAt).getTime() -
+        new Date(a.coleta!.updatedAt).getTime()
+    );
+  // Solicitações publicadas que ainda não foram aceitas por nenhuma empresa.
+  const aguardandoEmpresa = solicitacoes.filter(
+    (item) => item.status === "aprovada" && !item.coleta
   );
+  const semNada = emAndamento.length === 0 && aguardandoEmpresa.length === 0;
 
   return (
     <AppScreen
       footer={<BottomNavigation items={USUARIO_TABS} activeKey="home" />}
+      refreshing={solicitacoesQuery.isRefetching || profileQuery.isRefetching}
+      onRefresh={() => {
+        solicitacoesQuery.refetch();
+        profileQuery.refetch();
+      }}
     >
       <View style={styles.header}>
         <Pressable
@@ -87,7 +104,7 @@ export default function HomeScreen() {
         </Pressable>
         <View style={styles.headerText}>
           <Text style={styles.greeting}>Olá, {user.name.split(" ")[0]}</Text>
-          <Text style={styles.subtitle}>Suas coletas em andamento</Text>
+          <Text style={styles.subtitle}>Suas solicitações e coletas</Text>
         </View>
         <Pressable
           style={({ pressed }) => [styles.plus, pressed && styles.plusPressed]}
@@ -111,32 +128,61 @@ export default function HomeScreen() {
         />
       )}
 
-      {!solicitacoesQuery.isLoading && emAndamento.length === 0 ? (
+      {!solicitacoesQuery.isLoading && semNada && (
         <EmptyState
           icon={Truck}
-          title="Nenhuma coleta em andamento"
+          title="Nenhuma solicitação por aqui"
           description="Toque no botão + para criar uma nova solicitação de coleta."
         />
-      ) : (
-        emAndamento.map((item) => (
-          <Pressable
-            key={item.id}
-            style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-            onPress={() => router.push(`/solicitacoes/${item.id}` as any)}
-          >
-            <View style={styles.cardTop}>
+      )}
+
+      {emAndamento.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>Em andamento</Text>
+          {emAndamento.map((item) => (
+            <Pressable
+              key={item.id}
+              style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+              onPress={() => router.push(`/solicitacoes/${item.id}` as any)}
+            >
+              <View style={styles.cardTop}>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {item.titulo}
+                </Text>
+                {!!item.coleta && (
+                  <StatusBadge kind="coleta" value={item.coleta.status} />
+                )}
+              </View>
+              <Text style={styles.cardMeta} numberOfLines={1}>
+                {item.material.nome} · {item.quantidade}
+              </Text>
+            </Pressable>
+          ))}
+        </>
+      )}
+
+      {aguardandoEmpresa.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>Aguardando empresa</Text>
+          {aguardandoEmpresa.map((item) => (
+            <Pressable
+              key={item.id}
+              style={({ pressed }) => [styles.card, styles.cardWaiting, pressed && styles.cardPressed]}
+              onPress={() => router.push(`/solicitacoes/${item.id}` as any)}
+            >
               <Text style={styles.cardTitle} numberOfLines={1}>
                 {item.titulo}
               </Text>
-              {!!item.coleta && (
-                <StatusBadge kind="coleta" value={item.coleta.status} />
-              )}
-            </View>
-            <Text style={styles.cardMeta} numberOfLines={1}>
-              {item.material.nome} · {item.quantidade}
-            </Text>
-          </Pressable>
-        ))
+              <Text style={styles.cardMeta} numberOfLines={1}>
+                {item.material.nome} · {item.quantidade}
+              </Text>
+              <View style={styles.waitingRow}>
+                <Icon icon={Clock} size={14} color={colors.textFaint} strokeWidth={2} />
+                <Text style={styles.waitingText}>Aguardando alguma empresa aceitar</Text>
+              </View>
+            </Pressable>
+          ))}
+        </>
       )}
     </AppScreen>
   );
@@ -193,6 +239,13 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.94 }],
     opacity: 0.92,
   },
+  sectionTitle: {
+    ...typography.meta,
+    color: colors.textFaint,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginTop: 4,
+  },
   card: {
     backgroundColor: colors.surfaceStrong,
     borderRadius: radius.lg,
@@ -221,5 +274,19 @@ const styles = StyleSheet.create({
     ...typography.meta,
     fontWeight: "500",
     color: colors.textSoft,
+  },
+  cardWaiting: {
+    borderStyle: "dashed",
+    borderColor: colors.strokeStrong,
+  },
+  waitingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  waitingText: {
+    ...typography.meta,
+    fontWeight: "500",
+    color: colors.textFaint,
   },
 });

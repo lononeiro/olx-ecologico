@@ -53,6 +53,8 @@ export default function SolicitacoesListScreen() {
   return (
     <AppScreen
       footer={<BottomNavigation items={USUARIO_TABS} activeKey="solicitacoes" />}
+      refreshing={query.isRefetching}
+      onRefresh={() => query.refetch()}
     >
       <SectionHeader
         eyebrow="MINHAS SOLICITAÇÕES"
@@ -91,7 +93,10 @@ export default function SolicitacoesListScreen() {
       {filtered.map((item) => (
         <AppCard key={item.id}>
           <SectionHeader title={item.titulo} description={item.material.nome} />
-          <StatusBadge kind="solicitacao" value={item.status} />
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            <StatusBadge kind="solicitacao" value={item.status} />
+            {!!item.coleta && <StatusBadge kind="coleta" value={item.coleta.status} />}
+          </View>
           <Text style={{ color: appColors.textSoft, ...{ fontSize: 15, lineHeight: 22 } }}>
             {item.quantidade}
           </Text>

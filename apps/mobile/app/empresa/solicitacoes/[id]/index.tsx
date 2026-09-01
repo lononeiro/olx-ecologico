@@ -131,6 +131,8 @@ export default function EmpresaSolicitacaoDetailScreen() {
 
   return (
     <AppScreen
+      refreshing={query.isRefetching}
+      onRefresh={() => query.refetch()}
       footer={
         <AppButton
           label="Voltar para solicitações"

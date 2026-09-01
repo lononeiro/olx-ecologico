@@ -111,6 +111,11 @@ export default function EmpresaMensagensScreen() {
   return (
     <AppScreen
       footer={<BottomNavigation items={EMPRESA_TABS} activeKey="mensagens" />}
+      refreshing={coletasQuery.isRefetching || disponiveisQuery.isRefetching}
+      onRefresh={() => {
+        coletasQuery.refetch();
+        disponiveisQuery.refetch();
+      }}
     >
       <SectionHeader eyebrow="CONVERSAS" title="Mensagens" />
 

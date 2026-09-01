@@ -106,6 +106,7 @@ model Coleta {
   dataAceite          DateTime  @default(now())
   dataPrevisaoColeta  DateTime?
   dataConclusao       DateTime?
+  updatedAt           DateTime  @updatedAt
 
   solicitacao SolicitacaoColeta @relation(fields: [solicitacaoId], references: [id])
   company     Company           @relation(fields: [companyId], references: [id])

@@ -53,6 +53,8 @@ export default function EmpresaColetasListScreen() {
   return (
     <AppScreen
       footer={<BottomNavigation items={EMPRESA_TABS} activeKey="coletas" />}
+      refreshing={query.isRefetching}
+      onRefresh={() => query.refetch()}
     >
       <SectionHeader
         eyebrow="EMPRESA"

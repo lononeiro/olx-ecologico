@@ -144,6 +144,7 @@ export interface SolicitacaoItem {
     status: string;
     dataAceite: string;
     dataConclusao?: string | null;
+    updatedAt: string;
     codigoConfirmacao?: string | null;
     company: {
       id: number;
@@ -164,6 +165,7 @@ export interface ColetaItem {
   status: string;
   dataAceite: string;
   dataConclusao: string | null;
+  updatedAt: string;
   codigoConfirmacao: string | null;
   companyId: number;
   solicitacaoId: number;

@@ -93,6 +93,11 @@ export default function EmpresaHomeScreen() {
 
   return (
     <AppScreen
+      refreshing={disponiveisQuery.isRefetching || coletasQuery.isRefetching}
+      onRefresh={() => {
+        disponiveisQuery.refetch();
+        coletasQuery.refetch();
+      }}
       footer={<BottomNavigation items={EMPRESA_TABS} activeKey="home" />}
     >
       <SectionHeader

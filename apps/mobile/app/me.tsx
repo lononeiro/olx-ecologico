@@ -233,7 +233,11 @@ export default function MeScreen() {
   const tabs = user.role === "empresa" ? EMPRESA_TABS : USUARIO_TABS;
 
   return (
-    <AppScreen footer={<BottomNavigation items={tabs} activeKey="me" />}>
+    <AppScreen
+      footer={<BottomNavigation items={tabs} activeKey="me" />}
+      refreshing={profileQuery.isRefetching}
+      onRefresh={() => profileQuery.refetch()}
+    >
       <AppCard>
         <View style={styles.heroTop}>
           <Pressable

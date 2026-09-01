@@ -75,6 +75,8 @@ export default function MensagensScreen() {
   return (
     <AppScreen
       footer={<BottomNavigation items={USUARIO_TABS} activeKey="mensagens" />}
+      refreshing={query.isRefetching}
+      onRefresh={() => query.refetch()}
     >
       <SectionHeader eyebrow="CONVERSAS" title="Mensagens" />
 

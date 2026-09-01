@@ -117,6 +117,8 @@ export default function EmpresaColetaDetailScreen() {
 
   return (
     <AppScreen
+      refreshing={query.isRefetching}
+      onRefresh={() => query.refetch()}
       footer={
         <AppButton
           label="Voltar para coletas"

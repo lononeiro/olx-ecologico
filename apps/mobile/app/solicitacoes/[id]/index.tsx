@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   ArrowLeft,
   Building2,
@@ -91,18 +92,50 @@ export default function SolicitacaoDetailScreen() {
   const jaAvaliou = !!avaliacaoQuery.data;
   const [avaliacaoModalAberta, setAvaliacaoModalAberta] = useState(false);
   const [avaliacaoDispensada, setAvaliacaoDispensada] = useState(false);
+  // Só decide se abre o popup depois de checar se o usuário já dispensou antes
+  // (evita reabrir sozinho toda vez que a tela remonta — ex.: sair e voltar).
+  const [dispensaCarregada, setDispensaCarregada] = useState(false);
+
+  useEffect(() => {
+    if (!coletaConcluidaId) {
+      setDispensaCarregada(true);
+      return;
+    }
+    let ativo = true;
+    setDispensaCarregada(false);
+    AsyncStorage.getItem(`avaliacao_dispensada_${coletaConcluidaId}`)
+      .then((valor) => {
+        if (!ativo) return;
+        setAvaliacaoDispensada(valor === "1");
+      })
+      .finally(() => {
+        if (ativo) setDispensaCarregada(true);
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [coletaConcluidaId]);
 
   // Abre o popup automaticamente assim que a coleta é concluída e ainda não foi avaliada.
   useEffect(() => {
     if (
       coletaConcluidaId &&
+      dispensaCarregada &&
       avaliacaoQuery.isSuccess &&
       !jaAvaliou &&
       !avaliacaoDispensada
     ) {
       setAvaliacaoModalAberta(true);
     }
-  }, [coletaConcluidaId, avaliacaoQuery.isSuccess, jaAvaliou, avaliacaoDispensada]);
+  }, [coletaConcluidaId, dispensaCarregada, avaliacaoQuery.isSuccess, jaAvaliou, avaliacaoDispensada]);
+
+  function dispensarAvaliacao() {
+    setAvaliacaoModalAberta(false);
+    setAvaliacaoDispensada(true);
+    if (coletaConcluidaId) {
+      AsyncStorage.setItem(`avaliacao_dispensada_${coletaConcluidaId}`, "1").catch(() => {});
+    }
+  }
 
   if (isLoading || !hasAccess || !user || query.isLoading) {
     return (
@@ -139,6 +172,11 @@ export default function SolicitacaoDetailScreen() {
 
   return (
     <AppScreen
+      refreshing={query.isRefetching || conversasQuery.isRefetching}
+      onRefresh={() => {
+        query.refetch();
+        if (semColeta) conversasQuery.refetch();
+      }}
       footer={
         <AppButton
           label="Voltar para solicitações"
@@ -261,10 +299,7 @@ export default function SolicitacaoDetailScreen() {
         <AvaliacaoModal
           visible={avaliacaoModalAberta}
           empresaNome={coleta?.company.user.nome}
-          onClose={() => {
-            setAvaliacaoModalAberta(false);
-            setAvaliacaoDispensada(true);
-          }}
+          onClose={dispensarAvaliacao}
           onSubmit={async (nota, comentario) => {
             await withAutoRefresh(accessToken, refreshSession, (token) =>
               criarAvaliacao(token, { coletaId: coletaConcluidaId, nota, comentario })

@@ -1,20 +1,28 @@
 import type { ReactNode } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, layout, radius } from "@/theme/tokens";
+import { RefreshBanner } from "@/components/ui/RefreshBanner";
 
 export function Screen({
   children,
   scroll = true,
   center = false,
   footer,
+  refreshing,
+  onRefresh,
 }: {
   children: ReactNode;
   scroll?: boolean;
   center?: boolean;
   footer?: ReactNode;
+  /** Estado do pull-to-refresh (controlado pela tela, ex.: query.isRefetching). */
+  refreshing?: boolean;
+  /** Informe para habilitar o "arraste para atualizar" nesta tela. */
+  onRefresh?: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const canRefresh = scroll && !!onRefresh;
   const body = scroll ? (
     <ScrollView
       contentContainerStyle={[
@@ -24,7 +32,19 @@ export function Screen({
       ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
+      refreshControl={
+        canRefresh ? (
+          <RefreshControl
+            refreshing={!!refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary, colors.primaryMid]}
+            progressBackgroundColor={colors.primaryTint}
+          />
+        ) : undefined
+      }
     >
+      {canRefresh && <RefreshBanner visible={!!refreshing} />}
       {children}
     </ScrollView>
   ) : (

@@ -54,6 +54,8 @@ export default function EmpresaSolicitacoesScreen() {
   return (
     <AppScreen
       footer={<BottomNavigation items={EMPRESA_TABS} activeKey="solicitacoes" />}
+      refreshing={query.isRefetching}
+      onRefresh={() => query.refetch()}
     >
       <SectionHeader
         eyebrow="EMPRESA"
