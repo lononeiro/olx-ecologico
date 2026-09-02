@@ -14,7 +14,6 @@ import {
   MessageBanner,
   MobileListItem,
   SectionHeader,
-  StatRow,
 } from "@/components/AppUI";
 import {
   ApiError,
@@ -89,7 +88,6 @@ export default function EmpresaHomeScreen() {
   const ativas = coletas.filter(
     (item) => item.status !== "concluida" && item.status !== "cancelada"
   );
-  const concluidas = coletas.filter((item) => item.status === "concluida").length;
 
   return (
     <AppScreen
@@ -111,18 +109,10 @@ export default function EmpresaHomeScreen() {
         />
       )}
 
-      <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
-        <StatRow label="Disponíveis" value={disponiveis.length} />
-        <StatRow label="Em andamento" value={ativas.length} />
-        <StatRow label="Concluídas" value={concluidas} />
-        <StatRow label="Total" value={coletas.length} />
-      </View>
-
       <AppCard>
         <SectionHeader
           eyebrow="NO MAPA"
           title="Coletas disponíveis"
-          description="Solicitações aprovadas com endereço, localizadas no mapa."
         />
         {disponiveisQuery.isLoading ? (
           <LoadingCard text="Carregando mapa..." />

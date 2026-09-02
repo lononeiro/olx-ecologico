@@ -5,7 +5,8 @@ import { Icon } from "@/components/ui/Icon";
 import { radius, spacing, typography } from "@/theme/tokens";
 
 /**
- * Cabeçalho compacto de conversa, estilo WhatsApp: voltar + avatar + nome/status.
+ * Cabeçalho compacto de conversa: voltar + avatar + nome/status,
+ * usando a paleta verde do ECOnecta.
  */
 export function ChatHeader({
   name,

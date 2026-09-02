@@ -31,6 +31,15 @@ const FILTERS = [
   { key: "removida", label: "Removidas" },
 ];
 
+// Uma solicitação é "finalizada" quando foi cancelada/removida
+// ou quando sua coleta já foi concluída/cancelada.
+function isFinalizada(item: { status: string; coleta?: { status: string } | null }) {
+  if (item.status === "cancelada" || item.status === "removida") return true;
+  if (item.coleta && (item.coleta.status === "concluida" || item.coleta.status === "cancelada"))
+    return true;
+  return false;
+}
+
 export default function SolicitacoesListScreen() {
   const { accessToken, hasAccess, isLoading, refreshSession } =
     useProtectedRoute(["usuario"]);
@@ -44,10 +53,14 @@ export default function SolicitacoesListScreen() {
   });
 
   const filtered = useMemo(() => {
-    const items = query.data ?? [];
-    if (filter === "todas") return items;
-    if (filter === "com_coleta") return items.filter((item) => !!item.coleta);
-    return items.filter((item) => item.status === filter);
+    let items = query.data ?? [];
+    if (filter === "com_coleta") items = items.filter((item) => !!item.coleta);
+    else if (filter !== "todas") items = items.filter((item) => item.status === filter);
+
+    // Não-finalizadas primeiro; mantém a ordem original dentro de cada grupo.
+    return [...items].sort(
+      (a, b) => Number(isFinalizada(a)) - Number(isFinalizada(b))
+    );
   }, [query.data, filter]);
 
   return (

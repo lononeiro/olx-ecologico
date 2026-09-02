@@ -6,6 +6,7 @@ import {
   Building2,
   Calendar,
   ChevronDown,
+  ChevronRight,
   FileText,
   KeyRound,
   MapPin,
@@ -173,17 +174,13 @@ export default function SolicitacaoDetailScreen() {
         </Text>
       </AppCard>
 
-      {/* Conversa com a empresa */}
+      {/* Conversa com a empresa — em destaque */}
       {podeConversar ? (
-        <AppCard>
-          <MobileListItem
-            icon={MessageCircle}
-            tone="primary"
-            title="Conversa com a empresa"
-            subtitle={chatSubtitle}
-            onPress={() => router.push(`/solicitacoes/${id}/conversa` as any)}
-          />
-        </AppCard>
+        <ChatHighlightCard
+          subtitle={chatSubtitle}
+          badge={!coleta && conversasCount > 0 ? conversasCount : undefined}
+          onPress={() => router.push(`/solicitacoes/${id}/conversa` as any)}
+        />
       ) : null}
 
       {/* Avaliação da coleta concluída */}
@@ -278,6 +275,42 @@ export default function SolicitacaoDetailScreen() {
   );
 }
 
+function ChatHighlightCard({
+  subtitle,
+  badge,
+  onPress,
+}: {
+  subtitle: string;
+  badge?: number;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.chatCard, pressed && styles.chatCardPressed]}
+      accessibilityRole="button"
+      accessibilityLabel="Abrir conversa com a empresa"
+    >
+      <View style={styles.chatIcon}>
+        <Icon icon={MessageCircle} size={26} color={appColors.white} strokeWidth={2} />
+        {badge ? (
+          <View style={styles.chatBadge}>
+            <Text style={styles.chatBadgeText}>{badge}</Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.chatTextCol}>
+        <Text style={styles.chatEyebrow}>CONVERSA</Text>
+        <Text style={styles.chatTitle}>Conversar com a empresa</Text>
+        <Text style={styles.chatSubtitle} numberOfLines={1}>
+          {subtitle}
+        </Text>
+      </View>
+      <Icon icon={ChevronRight} size={22} color={appColors.white} strokeWidth={2.2} />
+    </Pressable>
+  );
+}
+
 function CodigoConfirmacaoCard({ codigo }: { codigo: string }) {
   return (
     <View style={styles.codeCard}>
@@ -361,6 +394,62 @@ function DetailRow({
 }
 
 const styles = StyleSheet.create({
+  // Card de acesso ao chat, em destaque (verde da marca, igual à bolha enviada).
+  chatCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: appColors.primary,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    ...shadows.button,
+  },
+  chatCardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.99 }],
+  },
+  chatIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.pill,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chatBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: radius.pill,
+    paddingHorizontal: 5,
+    backgroundColor: appColors.white,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chatBadgeText: {
+    ...typography.meta,
+    fontSize: 11,
+    color: appColors.primaryStrong,
+  },
+  chatTextCol: {
+    flex: 1,
+    gap: 2,
+  },
+  chatEyebrow: {
+    ...typography.eyebrow,
+    color: "rgba(255,255,255,0.75)",
+  },
+  chatTitle: {
+    ...typography.sectionTitle,
+    color: appColors.white,
+  },
+  chatSubtitle: {
+    ...typography.body,
+    fontSize: 13,
+    color: "rgba(255,255,255,0.85)",
+  },
   codeCard: {
     backgroundColor: appColors.primaryTint,
     borderWidth: 1,

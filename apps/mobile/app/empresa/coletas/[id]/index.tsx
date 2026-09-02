@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
   ArrowLeft,
+  ChevronRight,
   Mail,
   MapPin,
   MessageCircle,
@@ -11,7 +12,7 @@ import {
   User as UserIcon,
   type LucideIcon,
 } from "lucide-react-native";
-import { Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   AppButton,
   AppCard,
@@ -21,7 +22,6 @@ import {
   InfoRow,
   LoadingCard,
   MessageBanner,
-  MobileListItem,
   SectionHeader,
   StatusBadge,
   appColors,
@@ -33,6 +33,7 @@ import {
 } from "@/lib/api";
 import { useProtectedRoute } from "@/lib/navigation";
 import { withAutoRefresh } from "@/lib/session";
+import { radius, shadows, spacing, typography } from "@/theme/tokens";
 
 const NEXT_STATUS: Record<string, string[]> = {
   aceita: ["a_caminho", "cancelada"],
@@ -135,6 +136,12 @@ export default function EmpresaColetaDetailScreen() {
         <StatusBadge kind="coleta" value={coleta.status} />
       </AppCard>
 
+      {/* Conversa com o solicitante — em destaque */}
+      <ChatHighlightCard
+        subtitle={coleta.solicitacao.user?.nome ?? "Abrir conversa"}
+        onPress={() => router.push(`/empresa/coletas/${coleta.id}/conversa` as any)}
+      />
+
       {!!feedback && <MessageBanner message={feedback} tone={feedbackTone} />}
 
       <AppCard>
@@ -231,16 +238,36 @@ export default function EmpresaColetaDetailScreen() {
         </AppCard>
       )}
 
-      <AppCard>
-        <MobileListItem
-          icon={MessageCircle}
-          tone="primary"
-          title="Conversa com o solicitante"
-          subtitle={coleta.solicitacao.user?.nome ?? "Abrir conversa"}
-          onPress={() => router.push(`/empresa/coletas/${coleta.id}/conversa` as any)}
-        />
-      </AppCard>
     </AppScreen>
+  );
+}
+
+function ChatHighlightCard({
+  subtitle,
+  onPress,
+}: {
+  subtitle: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.chatCard, pressed && styles.chatCardPressed]}
+      accessibilityRole="button"
+      accessibilityLabel="Abrir conversa com o solicitante"
+    >
+      <View style={styles.chatIcon}>
+        <Icon icon={MessageCircle} size={26} color={appColors.white} strokeWidth={2} />
+      </View>
+      <View style={styles.chatTextCol}>
+        <Text style={styles.chatEyebrow}>CONVERSA</Text>
+        <Text style={styles.chatTitle}>Conversar com o solicitante</Text>
+        <Text style={styles.chatSubtitle} numberOfLines={1}>
+          {subtitle}
+        </Text>
+      </View>
+      <Icon icon={ChevronRight} size={22} color={appColors.white} strokeWidth={2.2} />
+    </Pressable>
   );
 }
 
@@ -256,3 +283,45 @@ function IconText({ icon, text }: { icon: LucideIcon; text: string }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  // Card de acesso ao chat, em destaque (verde da marca, igual à bolha enviada).
+  chatCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: appColors.primary,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    ...shadows.button,
+  },
+  chatCardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.99 }],
+  },
+  chatIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.pill,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chatTextCol: {
+    flex: 1,
+    gap: 2,
+  },
+  chatEyebrow: {
+    ...typography.eyebrow,
+    color: "rgba(255,255,255,0.75)",
+  },
+  chatTitle: {
+    ...typography.sectionTitle,
+    color: appColors.white,
+  },
+  chatSubtitle: {
+    ...typography.body,
+    fontSize: 13,
+    color: "rgba(255,255,255,0.85)",
+  },
+});
