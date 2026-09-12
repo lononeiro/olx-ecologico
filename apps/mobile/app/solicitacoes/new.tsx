@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { router } from "expo-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
-import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { solicitacaoCreateSchema } from "@shared";
 import type { MaterialOption } from "@shared";
 import {
@@ -53,7 +53,7 @@ import {
   lookupCep,
 } from "@/lib/api";
 import type { SolicitacaoItem } from "@/lib/api";
-import { CloudinaryUploadError, uploadImageToCloudinary } from "@/lib/cloudinary";
+import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import { useProtectedRoute } from "@/lib/navigation";
 import { withAutoRefresh } from "@/lib/session";
 import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
@@ -249,6 +249,7 @@ export default function NewSolicitacaoScreen() {
       allowsMultipleSelection: true,
       selectionLimit: remainingSlots,
       quality: 0.7,
+      base64: true,
     });
 
     if (result.canceled || result.assets.length === 0) return;
@@ -258,15 +259,24 @@ export default function NewSolicitacaoScreen() {
 
     const enviadas: string[] = [];
     let falhas = 0;
+    let primeiroErro = "";
 
     for (const asset of result.assets) {
       try {
-        const url = await uploadImageToCloudinary(asset.uri);
+        const url = await uploadImageToCloudinary({
+          uri: asset.uri,
+          base64: asset.base64,
+          mimeType: asset.mimeType,
+          fileName: asset.fileName,
+        });
         enviadas.push(url);
       } catch (error) {
         falhas += 1;
-        if (error instanceof CloudinaryUploadError && falhas === 1) {
-          fail(error.message);
+        if (!primeiroErro) {
+          primeiroErro =
+            error instanceof Error && error.message
+              ? error.message
+              : "Falha desconhecida no upload.";
         }
       }
     }
@@ -286,8 +296,8 @@ export default function NewSolicitacaoScreen() {
       setMensagemTone("error");
       setMensagem(
         enviadas.length > 0
-          ? `${enviadas.length} imagem(ns) enviada(s). ${falhas} falharam.`
-          : "Não foi possível enviar as imagens selecionadas."
+          ? `${enviadas.length} imagem(ns) enviada(s). ${falhas} falharam. Motivo: ${primeiroErro}`
+          : `Não foi possível enviar a imagem. Motivo: ${primeiroErro}`
       );
     }
 
@@ -302,8 +312,33 @@ export default function NewSolicitacaoScreen() {
     return <SuccessScreen solicitacao={criada} />;
   }
 
+  const navFooter = (
+    <View style={styles.nav}>
+      <View style={styles.navButton}>
+        <AppButton
+          label={step === 1 ? "Cancelar" : "Voltar"}
+          tone="secondary"
+          icon={ArrowLeft}
+          onPress={step === 1 ? () => router.back() : goBack}
+        />
+      </View>
+      <View style={styles.navButton}>
+        {step < TOTAL_STEPS ? (
+          <AppButton label="Próximo" icon={ArrowRight} onPress={goNext} />
+        ) : (
+          <AppButton
+            label={createMutation.isPending ? "Criando..." : "Criar solicitação"}
+            icon={createMutation.isPending ? Plus : Check}
+            onPress={submit}
+            disabled={createMutation.isPending}
+          />
+        )}
+      </View>
+    </View>
+  );
+
   return (
-    <AppScreen center>
+    <AppScreen center footer={navFooter}>
       <StepIndicator step={step} />
 
       {(materialsQuery.isLoading || profileQuery.isLoading) && (
@@ -323,7 +358,7 @@ export default function NewSolicitacaoScreen() {
             label="Título"
             value={form.titulo}
             onChangeText={(value) => setForm((current) => ({ ...current, titulo: value }))}
-            placeholder="Ex: Coleta de plástico do condomínio"
+            placeholder="Ex: Coleta de plástico"
           />
 
           <MaterialSelect
@@ -506,29 +541,6 @@ export default function NewSolicitacaoScreen() {
         </>
       )}
 
-      {/* ── Navegação entre etapas ────────────────────────────── */}
-      <View style={styles.nav}>
-        <View style={styles.navButton}>
-          <AppButton
-            label={step === 1 ? "Cancelar" : "Voltar"}
-            tone="secondary"
-            icon={ArrowLeft}
-            onPress={step === 1 ? () => router.back() : goBack}
-          />
-        </View>
-        <View style={styles.navButton}>
-          {step < TOTAL_STEPS ? (
-            <AppButton label="Próximo" icon={ArrowRight} onPress={goNext} />
-          ) : (
-            <AppButton
-              label={createMutation.isPending ? "Criando..." : "Criar solicitação"}
-              icon={createMutation.isPending ? Plus : Check}
-              onPress={submit}
-              disabled={createMutation.isPending}
-            />
-          )}
-        </View>
-      </View>
     </AppScreen>
   );
 }
@@ -591,33 +603,48 @@ function MaterialSelect({
         </View>
       </Pressable>
 
-      {open && !loading && (
-        <View style={styles.selectList}>
-          {materials.map((item, index) => {
-            const active = String(item.id) === value;
-            return (
-              <Pressable
-                key={item.id}
-                style={({ pressed }) => [
-                  styles.option,
-                  index > 0 && styles.optionDivider,
-                  (active || pressed) && styles.optionActive,
-                ]}
-                onPress={() => {
-                  onChange(String(item.id));
-                  setOpen(false);
-                }}
-              >
-                <View style={styles.optionIcon}>
-                  <Icon icon={materialIcon(item.nome)} size={18} color={colors.primary} />
-                </View>
-                <Text style={styles.optionText}>{item.nome}</Text>
-                {active && <Icon icon={Check} size={18} color={colors.primary} />}
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
+      <Modal
+        visible={open && !loading}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setOpen(false)}
+      >
+        <Pressable style={styles.sheetBackdrop} onPress={() => setOpen(false)}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Selecione o material</Text>
+            <ScrollView
+              style={styles.sheetList}
+              contentContainerStyle={styles.sheetListContent}
+              showsVerticalScrollIndicator
+            >
+              {materials.map((item, index) => {
+                const active = String(item.id) === value;
+                return (
+                  <Pressable
+                    key={item.id}
+                    style={({ pressed }) => [
+                      styles.option,
+                      index > 0 && styles.optionDivider,
+                      (active || pressed) && styles.optionActive,
+                    ]}
+                    onPress={() => {
+                      onChange(String(item.id));
+                      setOpen(false);
+                    }}
+                  >
+                    <View style={styles.optionIcon}>
+                      <Icon icon={materialIcon(item.nome)} size={18} color={colors.primary} />
+                    </View>
+                    <Text style={styles.optionText}>{item.nome}</Text>
+                    {active && <Icon icon={Check} size={18} color={colors.primary} />}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -758,12 +785,38 @@ const styles = StyleSheet.create({
   chevronOpen: {
     transform: [{ rotate: "180deg" }],
   },
-  selectList: {
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.stroke,
+  sheetBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 20, 0.45)",
+    justifyContent: "flex-end",
+  },
+  sheet: {
     backgroundColor: colors.surface,
-    overflow: "hidden",
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    maxHeight: "70%",
+  },
+  sheetHandle: {
+    alignSelf: "center",
+    width: 44,
+    height: 5,
+    borderRadius: radius.pill,
+    backgroundColor: colors.strokeStrong,
+    marginBottom: spacing.md,
+  },
+  sheetTitle: {
+    ...typography.sectionTitle,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  sheetList: {
+    flexGrow: 0,
+  },
+  sheetListContent: {
+    paddingBottom: spacing.sm,
   },
   option: {
     flexDirection: "row",

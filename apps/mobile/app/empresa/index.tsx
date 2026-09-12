@@ -15,6 +15,7 @@ import {
   MobileListItem,
   SectionHeader,
 } from "@/components/AppUI";
+import { STATUS_COLETA_LABEL, STATUS_SOLICITACAO_LABEL } from "@shared";
 import {
   ApiError,
   getEmpresaColetas,
@@ -145,7 +146,7 @@ export default function EmpresaHomeScreen() {
               tone="primary"
               title={item.solicitacao.titulo}
               subtitle={item.solicitacao.user?.nome ?? item.solicitacao.material.nome}
-              meta={item.status}
+              meta={STATUS_COLETA_LABEL[item.status] ?? item.status}
               onPress={() => router.push(`/empresa/coletas/${item.id}` as any)}
             />
           ))
@@ -176,7 +177,7 @@ export default function EmpresaHomeScreen() {
               tone="primary"
               title={item.titulo}
               subtitle={`${item.quantidade} · ${item.material.nome}`}
-              meta={item.status}
+              meta={STATUS_SOLICITACAO_LABEL[item.status] ?? item.status}
               onPress={() => router.push("/empresa/solicitacoes" as any)}
             />
           ))

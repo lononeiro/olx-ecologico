@@ -132,6 +132,8 @@ export interface SolicitacaoItem {
     nome: string;
   };
   imagens: SolicitacaoImage[];
+  /** Reputação do solicitante (média empresa→cidadão), disponível para a empresa antes de aceitar. */
+  reputacaoSolicitante?: { media: number; total: number };
   user?: {
     id: number;
     nome: string;

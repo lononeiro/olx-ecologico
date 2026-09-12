@@ -22,6 +22,7 @@ import {
   getEmpresaSolicitacoesDisponiveis,
   getReadableErrorMessage,
 } from "@/lib/api";
+import { ReputacaoUsuario } from "@/components/ui/ReputacaoUsuario";
 import { useProtectedRoute } from "@/lib/navigation";
 import { withAutoRefresh } from "@/lib/session";
 import { EMPRESA_TABS } from "@/lib/tabs";
@@ -97,6 +98,12 @@ export default function EmpresaSolicitacoesScreen() {
         <AppCard key={item.id}>
           <SectionHeader title={item.titulo} description={item.material.nome} />
           <StatusBadge kind="solicitacao" value={item.status} />
+          {item.reputacaoSolicitante ? (
+            <ReputacaoUsuario
+              media={item.reputacaoSolicitante.media}
+              total={item.reputacaoSolicitante.total}
+            />
+          ) : null}
           <Text style={{ color: appColors.textSoft, fontSize: 15, lineHeight: 22 }}>
             {item.quantidade} · {item.material.nome}
           </Text>

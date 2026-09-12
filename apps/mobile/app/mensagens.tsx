@@ -12,6 +12,7 @@ import {
   MobileListItem,
   SectionHeader,
 } from "@/components/AppUI";
+import { STATUS_COLETA_LABEL, STATUS_SOLICITACAO_LABEL } from "@shared";
 import { Field } from "@/components/ui/Field";
 import {
   getMensagensInbox,
@@ -116,7 +117,11 @@ export default function MensagensScreen() {
                   ? item.coleta.company.user.nome
                   : "Aguardando conversa com empresas interessadas")
               }
-              meta={item.coleta ? item.coleta.status : item.status}
+              meta={
+                item.coleta
+                  ? STATUS_COLETA_LABEL[item.coleta.status] ?? item.coleta.status
+                  : STATUS_SOLICITACAO_LABEL[item.status] ?? item.status
+              }
               onPress={() => router.push(`/solicitacoes/${item.id}` as any)}
             />
           ))}

@@ -104,7 +104,11 @@ export default function SolicitacoesListScreen() {
       {filtered.map((item) => (
         <AppCard key={item.id}>
           <SectionHeader title={item.titulo} description={item.material.nome} />
-          <StatusBadge kind="solicitacao" value={item.status} />
+          {item.coleta ? (
+            <StatusBadge kind="coleta" value={item.coleta.status} />
+          ) : (
+            <StatusBadge kind="solicitacao" value={item.status} />
+          )}
           <Text style={{ color: appColors.textSoft, ...{ fontSize: 15, lineHeight: 22 } }}>
             {item.quantidade}
           </Text>

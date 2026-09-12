@@ -12,6 +12,7 @@ import {
   MobileListItem,
   SectionHeader,
 } from "@/components/AppUI";
+import { STATUS_COLETA_LABEL, STATUS_SOLICITACAO_LABEL } from "@shared";
 import { Field } from "@/components/ui/Field";
 import {
   getEmpresaColetas,
@@ -76,7 +77,7 @@ export default function EmpresaMensagensScreen() {
         lastByColeta.get(item.id) ??
         item.solicitacao.user?.nome ??
         item.solicitacao.material.nome,
-      meta: item.status,
+      meta: STATUS_COLETA_LABEL[item.status] ?? item.status,
       active: true,
       onPress: () => router.push(`/empresa/coletas/${item.id}` as any),
     }));
@@ -86,7 +87,7 @@ export default function EmpresaMensagensScreen() {
       title: item.titulo,
       subtitle:
         lastBySolicitacao.get(item.id) ?? item.user?.nome ?? item.material.nome,
-      meta: item.status,
+      meta: STATUS_SOLICITACAO_LABEL[item.status] ?? item.status,
       active: false,
       onPress: () =>
         router.push(`/empresa/solicitacoes/${item.id}/conversa` as any),

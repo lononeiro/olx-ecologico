@@ -150,12 +150,19 @@ export default function MeScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
+      base64: true,
     });
     if (result.canceled || !result.assets?.length) return;
 
     setAvatarUploading(true);
     try {
-      const url = await uploadImageToCloudinary(result.assets[0].uri);
+      const asset = result.assets[0];
+      const url = await uploadImageToCloudinary({
+        uri: asset.uri,
+        base64: asset.base64,
+        mimeType: asset.mimeType,
+        fileName: asset.fileName,
+      });
       await salvarAvatar(url);
       setFeedbackTone("success");
       setFeedback("Foto de perfil atualizada.");
