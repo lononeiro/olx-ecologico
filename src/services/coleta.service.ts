@@ -110,7 +110,7 @@ export async function atualizarStatusColeta(
 }
 
 export async function listarColetasDaEmpresa(companyId: number) {
-  return prisma.coleta.findMany({
+  const coletas = await prisma.coleta.findMany({
     where: { companyId },
     include: {
       solicitacao: {
@@ -123,6 +123,14 @@ export async function listarColetasDaEmpresa(companyId: number) {
     },
     orderBy: { dataAceite: "desc" },
   });
+
+  // Coletas em andamento (não concluídas/canceladas) aparecem antes das
+  // finalizadas; dentro de cada grupo mantém a ordem por dataAceite desc.
+  const isFinalizada = (status: string) =>
+    status === "concluida" || status === "cancelada";
+  return coletas.sort(
+    (a, b) => Number(isFinalizada(a.status)) - Number(isFinalizada(b.status))
+  );
 }
 
 export async function buscarColetaPorId(

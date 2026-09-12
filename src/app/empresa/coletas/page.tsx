@@ -56,7 +56,7 @@ export default async function EmpresaColetasPage() {
           gap: "1.25rem",
         }}>
           {coletas.map((c, i) => (
-            <div key={c.id} className="anim-fade-up" style={{ animationDelay: `${i * 0.06}s` }}>
+            <div key={c.id} className="anim-fade-up" style={{ animationDelay: `${i * 0.06}s`, height: "100%" }}>
               <SolicitacaoCardVisual
                 id={c.solicitacao.id}
                 titulo={c.solicitacao.titulo}
