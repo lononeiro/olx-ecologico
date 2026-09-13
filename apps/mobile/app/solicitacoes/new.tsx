@@ -677,11 +677,6 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function formatRequestNumber(solicitacao: SolicitacaoItem): string {
-  const ano = new Date(solicitacao.createdAt).getFullYear() || new Date().getFullYear();
-  return `#SOL-${ano}-${String(solicitacao.id).padStart(6, "0")}`;
-}
-
 function SuccessScreen({ solicitacao }: { solicitacao: SolicitacaoItem }) {
   return (
     <AppScreen center>
@@ -694,10 +689,6 @@ function SuccessScreen({ solicitacao }: { solicitacao: SolicitacaoItem }) {
           Sua solicitação foi registrada e já pode ser vista por empresas de coleta parceiras.
         </Text>
 
-        <View style={styles.successNumberCard}>
-          <Text style={styles.successNumberLabel}>NÚMERO DA SOLICITAÇÃO</Text>
-          <Text style={styles.successNumberValue}>{formatRequestNumber(solicitacao)}</Text>
-        </View>
 
         <View style={styles.successActions}>
           <AppButton

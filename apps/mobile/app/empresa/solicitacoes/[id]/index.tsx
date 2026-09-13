@@ -146,7 +146,7 @@ export default function EmpresaSolicitacaoDetailScreen() {
 
       {/* Resumo enxuto */}
       <AppCard>
-        <SectionHeader eyebrow={`SOLICITAÇÃO #${item.id}`} title={item.titulo} />
+        <SectionHeader eyebrow="SOLICITAÇÃO" title={item.titulo} />
         <View style={styles.badgeRow}>
           <StatusBadge kind="solicitacao" value={item.status} />
           {!!coleta && <StatusBadge kind="coleta" value={coleta.status} />}

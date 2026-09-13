@@ -83,7 +83,7 @@ export default function EmpresaSolicitacaoConversaScreen() {
   return (
     <AppScreen scroll={false}>
       <ChatHeader
-        name={solicitacao?.titulo ?? `Solicitação #${conversa.solicitacaoId}`}
+        name={solicitacao?.titulo ?? "Solicitação"}
         subtitle={
           solicitacao
             ? `${solicitacao.material.nome} · ${solicitacao.quantidade}`

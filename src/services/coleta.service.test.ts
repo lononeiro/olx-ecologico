@@ -179,6 +179,8 @@ describe("coleta.service", () => {
   });
 
   it("lista coletas da empresa com relacionamento necessário", async () => {
+    prismaMock.coleta.findMany.mockResolvedValueOnce([]);
+
     await listarColetasDaEmpresa(22);
 
     expect(prismaMock.coleta.findMany).toHaveBeenCalledWith({

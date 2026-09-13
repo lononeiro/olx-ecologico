@@ -128,9 +128,13 @@ export async function listarColetasDaEmpresa(companyId: number) {
   // finalizadas; dentro de cada grupo mantém a ordem por dataAceite desc.
   const isFinalizada = (status: string) =>
     status === "concluida" || status === "cancelada";
-  return coletas.sort(
+  const ordenadas = coletas.sort(
     (a, b) => Number(isFinalizada(a.status)) - Number(isFinalizada(b.status))
   );
+
+  // A empresa não recebe o código de confirmação do solicitante (ver
+  // buscarColetaPorId): ele deve ser informado pelo cliente na coleta.
+  return ordenadas.map(({ codigoConfirmacao: _codigo, ...rest }) => rest);
 }
 
 export async function buscarColetaPorId(
@@ -166,6 +170,13 @@ export async function buscarColetaPorId(
   if (!coleta) return null;
   if (userId && coleta.solicitacao.userId !== userId) return null;
   if (companyId && coleta.companyId !== companyId) return null;
+
+  // O código de confirmação pertence ao solicitante: a empresa deve pedi-lo ao
+  // cliente no momento da coleta, então nunca é exposto no acesso da empresa.
+  if (companyId && !userId) {
+    const { codigoConfirmacao: _codigo, ...semCodigo } = coleta;
+    return semCodigo;
+  }
 
   return coleta;
 }
