@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useMapaFocus } from "./MapaFocusContext";
 
 export interface MapaColetaItem {
   id: number;
@@ -122,12 +124,43 @@ async function geocodificar(endereco: string): Promise<GeoPonto | null> {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Localização do dispositivo (mesmo comportamento do mobile). Resolve para null
+ * se o usuário negar a permissão ou a busca demorar demais, sem travar o mapa.
+ */
+function obterLocalizacao(): Promise<GeoPonto | null> {
+  return new Promise((resolve) => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return resolve(null);
+
+    let feito = false;
+    const finalizar = (v: GeoPonto | null) => {
+      if (feito) return;
+      feito = true;
+      resolve(v);
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => finalizar({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => finalizar(null),
+      { enableHighAccuracy: false, timeout: 6000, maximumAge: 600000 }
+    );
+    // Rede/GPS lentos não devem travar o mapa: cai no enquadramento padrão.
+    setTimeout(() => finalizar(null), 6000);
+  });
+}
+
 export function MapaColetas({ items }: { items: MapaColetaItem[] }) {
+  const router = useRouter();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<Record<number, any>>({});
+  const removeWheelRef = useRef<(() => void) | null>(null);
+  const dicaTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const focus = useMapaFocus();
   const [status, setStatus] = useState<"carregando" | "geocodificando" | "pronto">("carregando");
   const [progresso, setProgresso] = useState({ feitos: 0, total: items.length });
   const [localizadas, setLocalizadas] = useState(0);
+  const [dicaZoom, setDicaZoom] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -161,10 +194,14 @@ export function MapaColetas({ items }: { items: MapaColetaItem[] }) {
         mapInstanceRef.current = null;
       }
 
-      // Centro inicial: Brasil. O fitBounds ajusta assim que houver marcadores.
+      // Centraliza na localização do dispositivo (igual ao mobile); sem ela,
+      // parte do Brasil e o fitBounds ajusta assim que houver marcadores.
+      const userLoc = await obterLocalizacao();
+      if (!isMounted || !mapRef.current) return;
+
       const map = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: false }).setView(
-        [-14.235, -51.925],
-        4
+        userLoc ? [userLoc.lat, userLoc.lon] : [-14.235, -51.925],
+        userLoc ? 13 : 4
       );
       mapInstanceRef.current = map;
       setTimeout(() => { if (isMounted) map.invalidateSize(); }, 120);
@@ -173,6 +210,63 @@ export function MapaColetas({ items }: { items: MapaColetaItem[] }) {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
       }).addTo(map);
+
+      // Zoom só com Ctrl + scroll: sem Ctrl a página rola normalmente e mostramos
+      // uma dica. Com Ctrl, dá/tira zoom em torno do ponto sob o cursor.
+      const container = mapRef.current;
+      const onWheel = (e: WheelEvent) => {
+        if (!e.ctrlKey) {
+          setDicaZoom(true);
+          if (dicaTimeoutRef.current) clearTimeout(dicaTimeoutRef.current);
+          dicaTimeoutRef.current = setTimeout(() => setDicaZoom(false), 1400);
+          return;
+        }
+        e.preventDefault();
+        setDicaZoom(false);
+        const rect = container.getBoundingClientRect();
+        const point = L.point(e.clientX - rect.left, e.clientY - rect.top);
+        const latlng = map.containerPointToLatLng(point);
+        map.setZoomAround(latlng, map.getZoom() + (e.deltaY < 0 ? 1 : -1));
+      };
+      container.addEventListener("wheel", onWheel, { passive: false });
+      removeWheelRef.current = () => container.removeEventListener("wheel", onWheel);
+
+      // Liga os botões de ação do popup (HTML) às ações React quando ele abre.
+      map.on("popupopen", (e: any) => {
+        const node: HTMLElement | null = e.popup?.getElement?.() ?? null;
+        node?.querySelectorAll<HTMLElement>("[data-popup-acao]").forEach((btn) => {
+          btn.onclick = (ev) => {
+            ev.preventDefault();
+            const id = Number(btn.getAttribute("data-popup-id"));
+            const acao = btn.getAttribute("data-popup-acao");
+            if (!id) return;
+            if (acao === "mensagem") {
+              router.push(`/empresa/solicitacoes/${id}/conversa`);
+            } else if (acao === "aceitar") {
+              // Reaproveita o modal de aceitação já renderizado no card abaixo.
+              document.querySelector<HTMLElement>(`[data-aceitar-id="${id}"] .btn-blue`)?.click();
+            } else if (acao === "detalhes") {
+              const card = document.getElementById(`coleta-card-${id}`);
+              if (!card) return;
+              card.scrollIntoView({ behavior: "smooth", block: "center" });
+              card.classList.add("coleta-card-destaque");
+              setTimeout(() => card.classList.remove("coleta-card-destaque"), 1800);
+            }
+          };
+        });
+      });
+
+      if (userLoc) {
+        L.circleMarker([userLoc.lat, userLoc.lon], {
+          radius: 8,
+          color: "#1B4332",
+          weight: 3,
+          fillColor: "#2D6A4F",
+          fillOpacity: 1,
+        })
+          .addTo(map)
+          .bindPopup("Você está aqui");
+      }
 
       const grupo: any[] = [];
       setStatus(items.length > 0 ? "geocodificando" : "pronto");
@@ -206,20 +300,40 @@ export function MapaColetas({ items }: { items: MapaColetaItem[] }) {
           const imagemHtml = item.imagemUrl
             ? `<img src="${escapeHtml(item.imagemUrl)}" alt="" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:6px;display:block" />`
             : "";
+          const btnBase =
+            "display:flex;align-items:center;justify-content:center;gap:5px;width:100%;padding:7px 10px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;line-height:1;";
+          const btnSecundario = `${btnBase}border:1.5px solid #d9e0d5;background:#fff;color:#2b3a2e;`;
+          const btnPrimario = `${btnBase}border:none;background:#1D6FA8;color:#fff;`;
+          const iconOlho =
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+          const iconCheck =
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>';
+          const iconChat =
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
           const popup = `
             <div style="min-width:190px;max-width:220px">
               ${imagemHtml}
               <strong style="font-size:.86rem">${escapeHtml(item.titulo)}</strong>
               <div style="font-size:.78rem;color:#555;margin-top:2px;display:flex;align-items:center;gap:4px"><span style="display:inline-flex">${iconSvg(visual.icon, visual.color, 13)}</span>${escapeHtml(item.materialNome)} · ${escapeHtml(item.quantidade)}</div>
               <div style="font-size:.74rem;color:#777;margin-top:4px">${escapeHtml(item.endereco)}</div>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+                <button type="button" data-popup-acao="detalhes" data-popup-id="${item.id}" style="${btnSecundario}">${iconOlho} Ver detalhes</button>
+                <button type="button" data-popup-acao="aceitar" data-popup-id="${item.id}" style="${btnPrimario}">${iconCheck} Aceitar coleta</button>
+                <button type="button" data-popup-acao="mensagem" data-popup-id="${item.id}" style="${btnSecundario}">${iconChat} Mandar mensagem</button>
+              </div>
             </div>`;
           const marker = L.marker([ponto.lat, ponto.lon], { icon }).addTo(map).bindPopup(popup);
+          markersRef.current[item.id] = marker;
           grupo.push(marker);
           setLocalizadas((n) => n + 1);
 
-          const bounds = L.featureGroup(grupo).getBounds();
-          if (bounds.isValid()) {
-            map.fitBounds(bounds.pad(0.25), { maxZoom: 15 });
+          // Com localização do usuário, mantém o mapa centrado nele; sem ela,
+          // ajusta o enquadramento aos marcadores conforme vão surgindo.
+          if (!userLoc) {
+            const bounds = L.featureGroup(grupo).getBounds();
+            if (bounds.isValid()) {
+              map.fitBounds(bounds.pad(0.25), { maxZoom: 15 });
+            }
           }
         }
 
@@ -232,6 +346,10 @@ export function MapaColetas({ items }: { items: MapaColetaItem[] }) {
     init();
     return () => {
       isMounted = false;
+      markersRef.current = {};
+      removeWheelRef.current?.();
+      removeWheelRef.current = null;
+      if (dicaTimeoutRef.current) clearTimeout(dicaTimeoutRef.current);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -239,6 +357,18 @@ export function MapaColetas({ items }: { items: MapaColetaItem[] }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // "Mostrar no mapa" (cards abaixo): centraliza no marcador e abre o popup.
+  useEffect(() => {
+    if (!focus?.target) return;
+    const map = mapInstanceRef.current;
+    const marker = markersRef.current[focus.target.id];
+    if (!map || !marker) return;
+
+    map.setView(marker.getLatLng(), Math.max(map.getZoom(), 15), { animate: true });
+    marker.openPopup();
+    mapRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focus?.target]);
 
   const naoLocalizadas = status === "pronto" ? progresso.total - localizadas : 0;
 
@@ -333,6 +463,36 @@ export function MapaColetas({ items }: { items: MapaColetaItem[] }) {
           .leaflet-popup-content { margin: .6rem .8rem; }
         `}</style>
         <div ref={mapRef} style={{ height: 420, width: "100%" }} />
+        {dicaZoom && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 20,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(15,23,42,.35)",
+              backdropFilter: "blur(1px)",
+              pointerEvents: "none",
+              transition: "opacity .2s ease",
+            }}
+          >
+            <span
+              style={{
+                background: "rgba(15,23,42,.82)",
+                color: "#fff",
+                fontSize: ".85rem",
+                fontWeight: 600,
+                padding: ".55rem .95rem",
+                borderRadius: 999,
+                boxShadow: "0 4px 16px rgba(0,0,0,.3)",
+              }}
+            >
+              Use Ctrl + scroll para dar zoom
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
