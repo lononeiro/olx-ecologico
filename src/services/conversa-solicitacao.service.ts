@@ -78,7 +78,7 @@ export async function listarConversasDaSolicitacaoUsuario(
     where: { solicitacaoId },
     include: {
       company: {
-        include: { user: { select: { id: true, nome: true } } },
+        include: { user: { select: { id: true, nome: true, avatarUrl: true } } },
       },
       mensagens: {
         include: { remetente: { select: { id: true, nome: true, avatarUrl: true } } },

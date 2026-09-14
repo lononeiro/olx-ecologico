@@ -111,6 +111,7 @@ export interface PreAcceptConversation {
     user: {
       id: number;
       nome: string;
+      avatarUrl?: string | null;
     };
   };
   solicitacao?: SolicitacaoItem;
