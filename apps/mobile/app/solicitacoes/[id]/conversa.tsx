@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, MessageCircle } from "lucide-react-native";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   AppButton,
   AppScreen,
@@ -216,11 +216,7 @@ function PreAceiteConversa({
       />
 
       {ordenadas.length > 1 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsRow}
-        >
+        <View style={styles.chipsRow}>
           {ordenadas.map((conversa) => {
             const ativa = conversa.id === selected.id;
             return (
@@ -239,7 +235,7 @@ function PreAceiteConversa({
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
       ) : null}
 
       <ChatThread
@@ -274,10 +270,14 @@ function ultimaMensagemAt(conversa: PreAcceptConversation) {
 
 const styles = StyleSheet.create({
   chipsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
     gap: spacing.sm,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   chip: {
+    alignSelf: "flex-start",
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: radius.pill,
