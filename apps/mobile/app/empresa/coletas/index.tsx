@@ -45,6 +45,7 @@ export default function EmpresaColetasListScreen() {
   const query = useQuery({
     queryKey: ["empresa", "coletas", "list"],
     enabled: hasAccess && !isLoading,
+    refetchInterval: 15000,
     queryFn: async () =>
       withAutoRefresh(accessToken, refreshSession, (token) => getEmpresaColetas(token)),
   });

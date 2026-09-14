@@ -13,9 +13,14 @@ import {
 } from "@expo-google-fonts/inter";
 import * as SplashScreen from "expo-splash-screen";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { NotificationsProvider } from "@/contexts/NotificationsContext";
+import { configurarHandlerNotificacoes } from "@/lib/push";
 import { colors } from "@/theme/tokens";
 
 const queryClient = new QueryClient();
+
+// Banner de notificação também com o app em primeiro plano.
+configurarHandlerNotificacoes();
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -41,13 +46,15 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <StatusBar style="dark" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.canvas },
-          }}
-        />
+        <NotificationsProvider>
+          <StatusBar style="dark" />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.canvas },
+            }}
+          />
+        </NotificationsProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

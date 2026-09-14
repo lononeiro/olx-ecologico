@@ -8,6 +8,7 @@ import type { MaterialOption } from "@shared";
 import {
   Plus,
   ImagePlus,
+  Camera,
   Search,
   ArrowLeft,
   ArrowRight,
@@ -231,28 +232,9 @@ export default function NewSolicitacaoScreen() {
     }
   };
 
-  const escolherImagensDaGaleria = async () => {
-    const remainingSlots = MAX_IMAGES - imagens.length;
-    if (remainingSlots <= 0) {
-      fail(`Você pode adicionar no máximo ${MAX_IMAGES} imagens.`);
-      return;
-    }
-
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      fail("Permita o acesso às fotos para anexar imagens à solicitação.");
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsMultipleSelection: true,
-      selectionLimit: remainingSlots,
-      quality: 0.7,
-      base64: true,
-    });
-
-    if (result.canceled || result.assets.length === 0) return;
+  // Faz upload dos assets escolhidos (galeria ou câmera) para o Cloudinary.
+  const enviarImagens = async (assets: ImagePicker.ImagePickerAsset[]) => {
+    if (assets.length === 0) return;
 
     setMensagem("");
     setUploadingImagens(true);
@@ -261,7 +243,7 @@ export default function NewSolicitacaoScreen() {
     let falhas = 0;
     let primeiroErro = "";
 
-    for (const asset of result.assets) {
+    for (const asset of assets) {
       try {
         const url = await uploadImageToCloudinary({
           uri: asset.uri,
@@ -302,6 +284,55 @@ export default function NewSolicitacaoScreen() {
     }
 
     setUploadingImagens(false);
+  };
+
+  const escolherImagensDaGaleria = async () => {
+    const remainingSlots = MAX_IMAGES - imagens.length;
+    if (remainingSlots <= 0) {
+      fail(`Você pode adicionar no máximo ${MAX_IMAGES} imagens.`);
+      return;
+    }
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      fail("Permita o acesso às fotos para anexar imagens à solicitação.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      selectionLimit: remainingSlots,
+      quality: 0.7,
+      base64: true,
+    });
+
+    if (result.canceled || result.assets.length === 0) return;
+
+    await enviarImagens(result.assets);
+  };
+
+  const tirarFoto = async () => {
+    const remainingSlots = MAX_IMAGES - imagens.length;
+    if (remainingSlots <= 0) {
+      fail(`Você pode adicionar no máximo ${MAX_IMAGES} imagens.`);
+      return;
+    }
+
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      fail("Permita o acesso à câmera para tirar uma foto.");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 0.7,
+      base64: true,
+    });
+
+    if (result.canceled || result.assets.length === 0) return;
+
+    await enviarImagens(result.assets);
   };
 
   const removerImagem = (index: number) => {
@@ -421,13 +452,26 @@ export default function NewSolicitacaoScreen() {
               </View>
             )}
 
-            <AppButton
-              label={uploadingImagens ? "Enviando fotos..." : "Escolher da galeria"}
-              tone="secondary"
-              icon={ImagePlus}
-              onPress={escolherImagensDaGaleria}
-              disabled={uploadingImagens || imagens.length >= MAX_IMAGES}
-            />
+            <View style={styles.imageActionsRow}>
+              <View style={styles.imageActionButton}>
+                <AppButton
+                  label={uploadingImagens ? "Enviando..." : "Tirar foto"}
+                  tone="secondary"
+                  icon={Camera}
+                  onPress={tirarFoto}
+                  disabled={uploadingImagens || imagens.length >= MAX_IMAGES}
+                />
+              </View>
+              <View style={styles.imageActionButton}>
+                <AppButton
+                  label={uploadingImagens ? "Enviando..." : "Galeria"}
+                  tone="secondary"
+                  icon={ImagePlus}
+                  onPress={escolherImagensDaGaleria}
+                  disabled={uploadingImagens || imagens.length >= MAX_IMAGES}
+                />
+              </View>
+            </View>
             {uploadingImagens && (
               <View style={styles.uploadingRow}>
                 <ActivityIndicator size="small" color={colors.primary} />
@@ -834,6 +878,13 @@ const styles = StyleSheet.create({
   optionText: {
     ...typography.bodyStrong,
     color: colors.text,
+    flex: 1,
+  },
+  imageActionsRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  imageActionButton: {
     flex: 1,
   },
   imageGrid: {

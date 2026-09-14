@@ -35,6 +35,7 @@ export default function EmpresaSolicitacoesScreen() {
   const query = useQuery({
     queryKey: ["empresa", "solicitacoes", "disponiveis"],
     enabled: hasAccess && !isLoading,
+    refetchInterval: 15000,
     queryFn: async () =>
       withAutoRefresh(accessToken, refreshSession, (token) =>
         getEmpresaSolicitacoesDisponiveis(token)

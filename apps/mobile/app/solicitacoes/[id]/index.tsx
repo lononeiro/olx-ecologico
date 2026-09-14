@@ -49,6 +49,10 @@ const STATUS_COPY: Record<string, string> = {
   rejeitada: "Solicitação rejeitada na análise.",
 };
 
+// Coletas cujo popup de avaliação já abriu sozinho nesta sessão — evita que ele
+// reapareça a cada re-render/refetch ou ao voltar para a tela.
+const coletasAutoAvaliadas = new Set<number>();
+
 export default function SolicitacaoDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const { accessToken, hasAccess, isLoading, refreshSession, user } =
@@ -58,6 +62,7 @@ export default function SolicitacaoDetailScreen() {
   const query = useQuery({
     queryKey: ["detail", id],
     enabled: hasAccess && !isLoading && Number.isFinite(id),
+    refetchInterval: 15000,
     queryFn: async () =>
       withAutoRefresh(accessToken, refreshSession, (token) =>
         getSolicitacaoById(token, id)
@@ -93,14 +98,18 @@ export default function SolicitacaoDetailScreen() {
   const [avaliacaoModalAberta, setAvaliacaoModalAberta] = useState(false);
   const [avaliacaoDispensada, setAvaliacaoDispensada] = useState(false);
 
-  // Abre o popup automaticamente assim que a coleta é concluída e ainda não foi avaliada.
+  // Abre o popup automaticamente assim que a coleta é concluída e ainda não foi
+  // avaliada — mas apenas UMA vez por coleta (evita reabrir por re-render/refetch
+  // ou ao voltar para a tela).
   useEffect(() => {
     if (
       coletaConcluidaId &&
       avaliacaoQuery.isSuccess &&
       !jaAvaliou &&
-      !avaliacaoDispensada
+      !avaliacaoDispensada &&
+      !coletasAutoAvaliadas.has(coletaConcluidaId)
     ) {
+      coletasAutoAvaliadas.add(coletaConcluidaId);
       setAvaliacaoModalAberta(true);
     }
   }, [coletaConcluidaId, avaliacaoQuery.isSuccess, jaAvaliou, avaliacaoDispensada]);

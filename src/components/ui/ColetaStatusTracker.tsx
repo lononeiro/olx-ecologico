@@ -105,7 +105,12 @@ export function ColetaStatusTracker({ coletaId, statusAtual, isEmpresa }: Props)
   }
 
   async function cancelar() {
-    if (!confirm("Tem certeza que deseja cancelar esta coleta?")) return;
+    if (
+      !confirm(
+        "Cancelar esta coleta? A solicitação volta a ficar disponível para outras empresas aceitarem."
+      )
+    )
+      return;
     setLoading(true);
     setResultado(null);
     const res = await fetch(`/api/empresa/coletas/${coletaId}`, {
@@ -115,8 +120,9 @@ export function ColetaStatusTracker({ coletaId, statusAtual, isEmpresa }: Props)
     });
     setLoading(false);
     if (res.ok) {
-      setResultado({ ok: true, msg: "Coleta cancelada." });
-      router.refresh();
+      // A coleta foi removida (a solicitação voltou para a pool); esta página de
+      // detalhe não existe mais, então voltamos para a lista de coletas.
+      router.replace("/empresa/coletas");
     } else {
       const data = await res.json();
       setResultado({ ok: false, msg: data.error ?? "Erro ao cancelar." });
@@ -314,7 +320,7 @@ export function ColetaStatusTracker({ coletaId, statusAtual, isEmpresa }: Props)
                   >
                     {STEPS.find(s => s.key === proximoPrincipal)?.icon}
                   </span>
-                  <span style={{ display: "block", width: "100%", textAlign: "center" }}>
+                  <span style={{ display: "block", width: "100%", textAlign: "center", whiteSpace: "nowrap" }}>
                     {proximoEhConclusao ? "Confirmar conclusão" : `Avançar para ${STATUS_COLETA_LABEL[proximoPrincipal]}`}
                   </span>
                 </>

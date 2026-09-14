@@ -9,10 +9,10 @@ import {
   EmptyState,
   LoadingCard,
   MessageBanner,
-  MobileListItem,
   SectionHeader,
 } from "@/components/AppUI";
 import { STATUS_COLETA_LABEL, STATUS_SOLICITACAO_LABEL } from "@shared";
+import { ConversaListItem } from "@/components/ConversaListItem";
 import { Field } from "@/components/ui/Field";
 import {
   getEmpresaColetas,
@@ -70,28 +70,29 @@ export default function EmpresaMensagensScreen() {
       }
     }
 
-    const coletas = (coletasQuery.data ?? []).map((item) => ({
-      key: `coleta-${item.id}`,
-      title: item.solicitacao.titulo,
-      subtitle:
-        lastByColeta.get(item.id) ??
-        item.solicitacao.user?.nome ??
-        item.solicitacao.material.nome,
-      meta: STATUS_COLETA_LABEL[item.status] ?? item.status,
-      active: true,
-      onPress: () => router.push(`/empresa/coletas/${item.id}` as any),
-    }));
+    // Só aparecem coletas/solicitações que realmente tiveram alguma mensagem.
+    const coletas = (coletasQuery.data ?? [])
+      .filter((item) => lastByColeta.has(item.id))
+      .map((item) => ({
+        key: `coleta-${item.id}`,
+        title: item.solicitacao.titulo,
+        preview: lastByColeta.get(item.id) ?? "",
+        statusLabel: STATUS_COLETA_LABEL[item.status] ?? item.status,
+        active: true,
+        onPress: () => router.push(`/empresa/coletas/${item.id}` as any),
+      }));
 
-    const disponiveis = (disponiveisQuery.data ?? []).map((item) => ({
-      key: `solicitacao-${item.id}`,
-      title: item.titulo,
-      subtitle:
-        lastBySolicitacao.get(item.id) ?? item.user?.nome ?? item.material.nome,
-      meta: STATUS_SOLICITACAO_LABEL[item.status] ?? item.status,
-      active: false,
-      onPress: () =>
-        router.push(`/empresa/solicitacoes/${item.id}/conversa` as any),
-    }));
+    const disponiveis = (disponiveisQuery.data ?? [])
+      .filter((item) => lastBySolicitacao.has(item.id))
+      .map((item) => ({
+        key: `solicitacao-${item.id}`,
+        title: item.titulo,
+        preview: lastBySolicitacao.get(item.id) ?? "",
+        statusLabel: STATUS_SOLICITACAO_LABEL[item.status] ?? item.status,
+        active: false,
+        onPress: () =>
+          router.push(`/empresa/solicitacoes/${item.id}/conversa` as any),
+      }));
 
     return [...coletas, ...disponiveis];
   }, [coletasQuery.data, disponiveisQuery.data, inboxQuery.data]);
@@ -102,7 +103,7 @@ export default function EmpresaMensagensScreen() {
     return conversations.filter(
       (item) =>
         item.title.toLowerCase().includes(term) ||
-        item.subtitle.toLowerCase().includes(term)
+        item.preview.toLowerCase().includes(term)
     );
   }, [conversations, search]);
 
@@ -142,13 +143,12 @@ export default function EmpresaMensagensScreen() {
       ) : (
         <AppCard>
           {filtered.map((item) => (
-            <MobileListItem
+            <ConversaListItem
               key={item.key}
               icon={item.active ? MessageCircle : Clock}
-              tone="primary"
               title={item.title}
-              subtitle={item.subtitle}
-              meta={item.meta}
+              preview={item.preview}
+              statusLabel={item.statusLabel}
               onPress={item.onPress}
             />
           ))}

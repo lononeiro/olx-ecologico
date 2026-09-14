@@ -9,10 +9,10 @@ import {
   EmptyState,
   LoadingCard,
   MessageBanner,
-  MobileListItem,
   SectionHeader,
 } from "@/components/AppUI";
 import { STATUS_COLETA_LABEL, STATUS_SOLICITACAO_LABEL } from "@shared";
+import { ConversaListItem } from "@/components/ConversaListItem";
 import { Field } from "@/components/ui/Field";
 import {
   getMensagensInbox,
@@ -44,13 +44,6 @@ export default function MensagensScreen() {
       ),
   });
 
-  const conversations = useMemo(() => {
-    const items = query.data ?? [];
-    return items.filter(
-      (item) => !!item.coleta || item.status === "aprovada"
-    );
-  }, [query.data]);
-
   // Última mensagem por solicitação, para a prévia sob o título.
   const lastBySolicitacao = useMemo(() => {
     const mapa = new Map<number, string>();
@@ -61,6 +54,12 @@ export default function MensagensScreen() {
     }
     return mapa;
   }, [inboxQuery.data]);
+
+  // Só aparecem solicitações que realmente tiveram alguma mensagem.
+  const conversations = useMemo(() => {
+    const items = query.data ?? [];
+    return items.filter((item) => lastBySolicitacao.has(item.id));
+  }, [query.data, lastBySolicitacao]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -106,18 +105,12 @@ export default function MensagensScreen() {
       ) : (
         <AppCard>
           {filtered.map((item) => (
-            <MobileListItem
+            <ConversaListItem
               key={item.id}
               icon={item.coleta ? MessageCircle : Clock}
-              tone="primary"
               title={item.titulo}
-              subtitle={
-                lastBySolicitacao.get(item.id) ??
-                (item.coleta
-                  ? item.coleta.company.user.nome
-                  : "Aguardando conversa com empresas interessadas")
-              }
-              meta={
+              preview={lastBySolicitacao.get(item.id) ?? ""}
+              statusLabel={
                 item.coleta
                   ? STATUS_COLETA_LABEL[item.coleta.status] ?? item.coleta.status
                   : STATUS_SOLICITACAO_LABEL[item.status] ?? item.status

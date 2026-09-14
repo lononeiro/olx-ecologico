@@ -56,6 +56,7 @@ export default function EmpresaSolicitacaoDetailScreen() {
   const query = useQuery({
     queryKey: ["empresa", "solicitacao", id],
     enabled: hasAccess && !isLoading && Number.isFinite(id),
+    refetchInterval: 15000,
     queryFn: async () =>
       withAutoRefresh(accessToken, refreshSession, (token) =>
         getSolicitacaoById(token, id)

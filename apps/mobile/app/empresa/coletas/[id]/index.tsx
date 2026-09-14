@@ -74,6 +74,7 @@ export default function EmpresaColetaDetailScreen() {
   const query = useQuery({
     queryKey: ["detail", id],
     enabled: hasAccess && !isLoading && Number.isFinite(id),
+    refetchInterval: 15000,
     queryFn: async () =>
       withAutoRefresh(accessToken, refreshSession, (token) => getColetaById(token, id)),
   });
@@ -86,11 +87,21 @@ export default function EmpresaColetaDetailScreen() {
           codigoConfirmacao: codigoConfirmacao.trim().toUpperCase() || undefined,
         })
       ),
-    onSuccess: async () => {
-      setFeedbackTone("success");
-      setFeedback("Status atualizado com sucesso.");
+    onSuccess: async (data) => {
       setNovoStatus("");
       setCodigoConfirmacao("");
+
+      // Cancelar remove a coleta e devolve a solicitação para a pool; esta tela
+      // de detalhe deixa de existir, então voltamos para a lista de coletas.
+      if (data?.status === "cancelada") {
+        await queryClient.invalidateQueries({ queryKey: ["empresa"] });
+        await queryClient.invalidateQueries({ queryKey: ["solicitacoes"] });
+        router.replace("/empresa/coletas" as any);
+        return;
+      }
+
+      setFeedbackTone("success");
+      setFeedback("Status atualizado com sucesso.");
       await queryClient.invalidateQueries({ queryKey: ["detail", id] });
       await queryClient.invalidateQueries({ queryKey: ["empresa", "coletas"] });
     },
@@ -194,7 +205,7 @@ export default function EmpresaColetaDetailScreen() {
             </Text>
             <Text style={styles.confirmText}>
               {novoStatus === "cancelada"
-                ? "Essa ação encerra a coleta e não pode ser desfeita."
+                ? "A solicitação volta a ficar disponível para outras empresas aceitarem."
                 : "Confirme para atualizar o andamento da coleta."}
             </Text>
             {novoStatus === "concluida" && (

@@ -19,6 +19,7 @@ import {
 } from "@/components/AppUI";
 import { Icon } from "@/components/ui/Icon";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/contexts/NotificationsContext";
 import {
   getMyProfile,
   getReadableErrorMessage,
@@ -57,6 +58,7 @@ export default function MeScreen() {
   const queryClient = useQueryClient();
   const { accessToken, isLoading, refreshSession, signOut, updateUser, user } =
     useAuth();
+  const { desregistrarPush } = useNotifications();
   const [form, setForm] = useState<ProfileFormState>(emptyForm);
   const [feedback, setFeedback] = useState("");
   const [feedbackTone, setFeedbackTone] = useState<"success" | "error">("success");
@@ -418,6 +420,7 @@ export default function MeScreen() {
           tone="danger"
           icon={LogOut}
           onPress={async () => {
+            await desregistrarPush();
             await signOut();
             router.replace("/login");
           }}

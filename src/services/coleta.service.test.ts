@@ -10,7 +10,14 @@ const { prismaMock, randomBytesMock } = vi.hoisted(() => {
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
       findMany: vi.fn(),
+    },
+    avaliacao: {
+      deleteMany: vi.fn(),
+    },
+    mensagem: {
+      deleteMany: vi.fn(),
     },
     conversaSolicitacao: {
       updateMany: vi.fn(),
@@ -20,6 +27,9 @@ const { prismaMock, randomBytesMock } = vi.hoisted(() => {
     },
     notificacao: {
       create: vi.fn(),
+    },
+    pushToken: {
+      findMany: vi.fn(),
     },
     $transaction: vi.fn((callback) => callback(prismaMock)),
   };
@@ -52,6 +62,8 @@ describe("coleta.service", () => {
     vi.clearAllMocks();
     prismaMock.solicitacaoColeta.findFirst.mockResolvedValue({ id: 10 });
     prismaMock.company.findUnique.mockResolvedValue({ user: { nome: "EcoColeta" } });
+    // Sem devices registrados: o envio de push (best-effort) sai cedo e sem ruído.
+    prismaMock.pushToken.findMany.mockResolvedValue([]);
     randomBytesMock.mockReturnValue({
       toString: vi.fn().mockReturnValue("ab12cd34"),
     });
@@ -175,6 +187,37 @@ describe("coleta.service", () => {
         where: { id: 1 },
         data: { status: "a_caminho" },
       });
+    });
+
+    it("ao cancelar, apaga a coleta, reabre as conversas e devolve a solicitação à pool", async () => {
+      prismaMock.coleta.findFirst.mockResolvedValueOnce({
+        id: 1,
+        companyId: 2,
+        solicitacao: { id: 7, userId: 3, titulo: "Coleta de papel" },
+      });
+
+      const resultado = await atualizarStatusColeta(1, 2, "cancelada");
+
+      // Remove a coleta e o que depende dela.
+      expect(prismaMock.avaliacao.deleteMany).toHaveBeenCalledWith({
+        where: { coletaId: 1 },
+      });
+      expect(prismaMock.mensagem.deleteMany).toHaveBeenCalledWith({
+        where: { coletaId: 1 },
+      });
+      expect(prismaMock.coleta.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+
+      // Reabre as conversas pré-aceite: a solicitação (coleta: null) volta à pool.
+      expect(prismaMock.conversaSolicitacao.updateMany).toHaveBeenCalledWith({
+        where: { solicitacaoId: 7 },
+        data: { status: "aberta" },
+      });
+
+      // Não usa o caminho de update (não persiste "cancelada" na coleta).
+      expect(prismaMock.coleta.update).not.toHaveBeenCalled();
+
+      // A resposta reflete o cancelamento.
+      expect(resultado).toMatchObject({ status: "cancelada" });
     });
   });
 

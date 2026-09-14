@@ -14,6 +14,9 @@ const { prismaMock } = vi.hoisted(() => ({
   notificacao: {
     create: vi.fn(),
   },
+  pushToken: {
+    findMany: vi.fn().mockResolvedValue([]),
+  },
   },
 }));
 
@@ -35,6 +38,7 @@ import {
 describe("solicitacao.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.pushToken.findMany.mockResolvedValue([]);
   });
 
   describe("criarSolicitacao", () => {

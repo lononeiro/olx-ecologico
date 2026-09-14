@@ -25,6 +25,7 @@ import {
 import { useProtectedRoute } from "@/lib/navigation";
 import { resolveAccessToken } from "@/lib/session";
 import { EMPRESA_TABS } from "@/lib/tabs";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export default function EmpresaHomeScreen() {
   const { accessToken, hasAccess, isLoading, refreshSession, user } =
@@ -33,6 +34,7 @@ export default function EmpresaHomeScreen() {
   const disponiveisQuery = useQuery({
     queryKey: ["empresa", "disponiveis"],
     enabled: hasAccess && !isLoading,
+    refetchInterval: 15000,
     queryFn: async () => {
       const token = await resolveAccessToken(accessToken, refreshSession);
       if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
@@ -51,6 +53,7 @@ export default function EmpresaHomeScreen() {
   const coletasQuery = useQuery({
     queryKey: ["empresa", "coletas"],
     enabled: hasAccess && !isLoading,
+    refetchInterval: 15000,
     queryFn: async () => {
       const token = await resolveAccessToken(accessToken, refreshSession);
       if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
@@ -98,6 +101,7 @@ export default function EmpresaHomeScreen() {
         eyebrow="PAINEL DA EMPRESA"
         title={user.name}
         description="Aceite solicitações aprovadas, acompanhe coletas e converse com solicitantes."
+        right={<NotificationBell />}
       />
 
       {(disponiveisQuery.error || coletasQuery.error) && (

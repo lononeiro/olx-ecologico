@@ -48,6 +48,7 @@ export default function SolicitacoesListScreen() {
   const query = useQuery({
     queryKey: ["solicitacoes", "list"],
     enabled: hasAccess && !isLoading,
+    refetchInterval: 15000,
     queryFn: async () =>
       withAutoRefresh(accessToken, refreshSession, (token) => getSolicitacoes(token)),
   });

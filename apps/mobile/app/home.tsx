@@ -15,6 +15,7 @@ import { useProtectedRoute } from "@/lib/navigation";
 import { ApiError, getMyProfile, getReadableErrorMessage, getSolicitacoes } from "@/lib/api";
 import { resolveAccessToken } from "@/lib/session";
 import { USUARIO_TABS } from "@/lib/tabs";
+import { NotificationBell } from "@/components/NotificationBell";
 import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
 export default function HomeScreen() {
@@ -24,6 +25,7 @@ export default function HomeScreen() {
   const solicitacoesQuery = useQuery({
     queryKey: ["solicitacoes", "usuario"],
     enabled: hasAccess && !isLoading,
+    refetchInterval: 15000,
     queryFn: async () => {
       const token = await resolveAccessToken(accessToken, refreshSession);
       if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
@@ -89,6 +91,7 @@ export default function HomeScreen() {
           <Text style={styles.greeting}>Olá, {user.name.split(" ")[0]}</Text>
           <Text style={styles.subtitle}>Suas coletas em andamento</Text>
         </View>
+        <NotificationBell />
         <Pressable
           style={({ pressed }) => [styles.plus, pressed && styles.plusPressed]}
           onPress={() => router.push("/solicitacoes/new")}

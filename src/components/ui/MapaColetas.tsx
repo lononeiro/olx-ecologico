@@ -16,6 +16,8 @@ export interface MapaColetaItem {
 interface GeoPonto {
   lat: number;
   lon: number;
+  /** true quando o ponto veio de um fallback (CEP/cidade), não do endereço exato. */
+  aproximado?: boolean;
 }
 
 /** Conteúdo interno (paths) de ícones de traço 24x24 por categoria de material. */
@@ -96,29 +98,56 @@ function gravarCache(endereco: string, ponto: GeoPonto | null) {
   }
 }
 
-async function geocodificar(endereco: string): Promise<GeoPonto | null> {
-  const base = "https://nominatim.openstreetmap.org/search";
-  const tentativas = [
-    endereco,
-    endereco.replace(/,?\s*\d{5}-?\d{3}/, "").trim(),
-    endereco.split(",").slice(0, 2).join(",").trim(),
-    endereco.split(",").slice(-2).join(",").trim(),
-  ].filter((v, i, arr) => v && arr.indexOf(v) === i);
+const NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
 
-  for (const tentativa of tentativas) {
-    try {
-      const q = encodeURIComponent(tentativa);
-      const res = await fetch(`${base}?q=${q}&format=json&limit=1&countrycodes=br`, {
-        headers: { "Accept-Language": "pt-BR" },
-      });
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-      }
-    } catch {
-      // tenta a próxima variação
+async function buscarNominatim(query: string): Promise<{ lat: number; lon: number } | null> {
+  try {
+    const res = await fetch(`${NOMINATIM_BASE}?${query}&format=json&limit=1&countrycodes=br`, {
+      headers: { "Accept-Language": "pt-BR" },
+    });
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
     }
+  } catch {
+    // ignora e deixa o chamador tentar a próxima variação
   }
+  return null;
+}
+
+/**
+ * Geocodifica um endereço no Nominatim com fallback em cascata: primeiro tenta
+ * o endereço exato; se falhar, tenta variações mais amplas (CEP, bairro/cidade,
+ * cidade/UF). Um resultado de fallback vem marcado como `aproximado`, para o
+ * mapa sinalizar que o pino não é exato.
+ */
+async function geocodificar(endereco: string): Promise<GeoPonto | null> {
+  const semCep = endereco.replace(/,?\s*\d{5}-?\d{3}/, "").trim();
+  const cep = endereco.match(/\d{5}-?\d{3}/)?.[0]?.replace("-", "");
+  const partes = endereco.split(",").map((p) => p.trim()).filter(Boolean);
+
+  // Tentativas exatas (mesmo endereço, com/sem CEP, reforçando o país).
+  const exatas = [endereco, `${endereco}, Brasil`, semCep].filter(
+    (v, i, arr) => v && arr.indexOf(v) === i
+  );
+  for (const tentativa of exatas) {
+    const p = await buscarNominatim(`q=${encodeURIComponent(tentativa)}`);
+    if (p) return { ...p, aproximado: false };
+  }
+
+  // Fallbacks aproximados: CEP isolado e, por fim, as últimas partes (cidade/UF).
+  if (cep) {
+    const p = await buscarNominatim(`postalcode=${encodeURIComponent(cep)}`);
+    if (p) return { ...p, aproximado: true };
+  }
+  const amplas = [partes.slice(-3).join(", "), partes.slice(-2).join(", ")].filter(
+    (v, i, arr) => v && arr.indexOf(v) === i && !exatas.includes(v)
+  );
+  for (const tentativa of amplas) {
+    const p = await buscarNominatim(`q=${encodeURIComponent(tentativa)}`);
+    if (p) return { ...p, aproximado: true };
+  }
+
   return null;
 }
 
@@ -278,7 +307,9 @@ export function MapaColetas({ items }: { items: MapaColetaItem[] }) {
         let ponto = lerCache(item.endereco);
         if (ponto === undefined) {
           ponto = await geocodificar(item.endereco);
-          gravarCache(item.endereco, ponto);
+          // Só cacheia sucessos: endereços que falharam podem ser tentados de
+          // novo depois (corrigidos, ou reindexados no OSM).
+          if (ponto) gravarCache(item.endereco, ponto);
           // Respeita a política de uso do Nominatim (~1 req/s) só quando bateu na rede.
           if (isMounted) await wait(1100);
         }
@@ -310,19 +341,27 @@ export function MapaColetas({ items }: { items: MapaColetaItem[] }) {
             '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>';
           const iconChat =
             '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+          const iconMapa =
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>';
+          const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.endereco)}`;
+          const notaAprox = ponto.aproximado
+            ? `<div style="font-size:.72rem;color:#B4791F;background:#FDF3DC;border-radius:6px;padding:4px 7px;margin-top:6px">📍 Local aproximado — use o Google Maps para o endereço exato.</div>`
+            : "";
           const popup = `
             <div style="min-width:190px;max-width:220px">
               ${imagemHtml}
               <strong style="font-size:.86rem">${escapeHtml(item.titulo)}</strong>
               <div style="font-size:.78rem;color:#555;margin-top:2px;display:flex;align-items:center;gap:4px"><span style="display:inline-flex">${iconSvg(visual.icon, visual.color, 13)}</span>${escapeHtml(item.materialNome)} · ${escapeHtml(item.quantidade)}</div>
               <div style="font-size:.74rem;color:#777;margin-top:4px">${escapeHtml(item.endereco)}</div>
+              ${notaAprox}
               <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
                 <button type="button" data-popup-acao="detalhes" data-popup-id="${item.id}" style="${btnSecundario}">${iconOlho} Ver detalhes</button>
                 <button type="button" data-popup-acao="aceitar" data-popup-id="${item.id}" style="${btnPrimario}">${iconCheck} Aceitar coleta</button>
                 <button type="button" data-popup-acao="mensagem" data-popup-id="${item.id}" style="${btnSecundario}">${iconChat} Mandar mensagem</button>
+                <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="${btnSecundario}text-decoration:none">${iconMapa} Abrir no Google Maps</a>
               </div>
             </div>`;
-          const marker = L.marker([ponto.lat, ponto.lon], { icon }).addTo(map).bindPopup(popup);
+          const marker = L.marker([ponto.lat, ponto.lon], { icon, opacity: ponto.aproximado ? 0.75 : 1 }).addTo(map).bindPopup(popup);
           markersRef.current[item.id] = marker;
           grupo.push(marker);
           setLocalizadas((n) => n + 1);

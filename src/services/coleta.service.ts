@@ -92,6 +92,31 @@ export async function atualizarStatusColeta(
   });
   if (!coleta) throw new Error("Coleta não encontrada ou sem permissão.");
 
+  // Cancelar devolve a solicitação para a pool: como a disponibilidade depende
+  // de `coleta: null`, apagamos o registro de coleta (e o que depende dele) e
+  // reabrimos as conversas pré-aceite daquela solicitação.
+  if (novoStatus === "cancelada") {
+    await prisma.$transaction(async (tx) => {
+      await tx.avaliacao.deleteMany({ where: { coletaId } });
+      await tx.mensagem.deleteMany({ where: { coletaId } });
+      await tx.coleta.delete({ where: { id: coletaId } });
+      await tx.conversaSolicitacao.updateMany({
+        where: { solicitacaoId: coleta.solicitacao.id },
+        data: { status: "aberta" },
+      });
+    });
+
+    await notificarColetaStatus({
+      userId: coleta.solicitacao.userId,
+      solicitacaoId: coleta.solicitacao.id,
+      titulo: coleta.solicitacao.titulo,
+      status: "cancelada",
+    });
+
+    // A coleta deixou de existir; devolvemos os dados só para a resposta HTTP.
+    return { ...coleta, status: "cancelada", dataConclusao: null };
+  }
+
   const data: Record<string, unknown> = { status: novoStatus };
   if (novoStatus === "concluida") {
     data.dataConclusao = new Date();

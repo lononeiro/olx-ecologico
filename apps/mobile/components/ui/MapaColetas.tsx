@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Linking, StyleSheet, View } from "react-native";
 import { WebView } from "react-native-webview";
 import * as Location from "expo-location";
 import { colors, radius } from "@/theme/tokens";
@@ -63,20 +63,37 @@ function buildHtml(items: MapaColetaItem[], userLoc: UserLoc) {
   function lerCache(e){ try{ var raw=localStorage.getItem(CACHE_PREFIX+e); if(raw===null) return undefined; return JSON.parse(raw);}catch(x){return undefined;} }
   function gravarCache(e,p){ try{ localStorage.setItem(CACHE_PREFIX+e, JSON.stringify(p)); }catch(x){} }
   function wait(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
-  function geocodificar(endereco){
-    var base="https://nominatim.openstreetmap.org/search";
-    var tents=[endereco, endereco.replace(/,?\\s*\\d{5}-?\\d{3}/,"").trim(), endereco.split(",").slice(0,2).join(",").trim(), endereco.split(",").slice(-2).join(",").trim()];
-    var seen={}; var lista=[];
-    for(var i=0;i<tents.length;i++){ var t=tents[i]; if(t && !seen[t]){ seen[t]=1; lista.push(t);} }
-    return (function loop(idx){
-      if(idx>=lista.length) return Promise.resolve(null);
-      var q=encodeURIComponent(lista[idx]);
-      return fetch(base+"?q="+q+"&format=json&limit=1&countrycodes=br", { headers:{"Accept-Language":"pt-BR"} })
-        .then(function(r){ return r.json(); })
-        .then(function(data){ if(Array.isArray(data)&&data.length>0){ return {lat:parseFloat(data[0].lat),lon:parseFloat(data[0].lon)}; } return loop(idx+1); })
-        .catch(function(){ return loop(idx+1); });
-    })(0);
+  function buscar(qs){
+    return fetch("https://nominatim.openstreetmap.org/search?"+qs+"&format=json&limit=1&countrycodes=br", { headers:{"Accept-Language":"pt-BR"} })
+      .then(function(r){ return r.json(); })
+      .then(function(data){ return (Array.isArray(data)&&data.length>0) ? {lat:parseFloat(data[0].lat),lon:parseFloat(data[0].lon)} : null; })
+      .catch(function(){ return null; });
   }
+  // Geocodifica com fallback em cascata: endereço exato e, se falhar, CEP e
+  // por fim cidade/UF (marcados como aproximado).
+  function geocodificar(endereco){
+    var semCep = endereco.replace(/,?\\s*\\d{5}-?\\d{3}/,"").trim();
+    var cepM = endereco.match(/\\d{5}-?\\d{3}/);
+    var cep = cepM ? cepM[0].replace("-","") : null;
+    var partes = endereco.split(",").map(function(p){return p.trim();}).filter(Boolean);
+    var seen={}; var exatas=[]; var amplas=[];
+    [endereco, endereco+", Brasil", semCep].forEach(function(t){ if(t&&!seen[t]){seen[t]=1;exatas.push(t);} });
+    [partes.slice(-3).join(", "), partes.slice(-2).join(", ")].forEach(function(t){ if(t&&!seen[t]){seen[t]=1;amplas.push(t);} });
+    function exata(i){
+      if(i>=exatas.length) return porCep();
+      return buscar("q="+encodeURIComponent(exatas[i])).then(function(p){ if(p){p.aproximado=false;return p;} return exata(i+1); });
+    }
+    function porCep(){
+      if(!cep) return ampla(0);
+      return buscar("postalcode="+encodeURIComponent(cep)).then(function(p){ if(p){p.aproximado=true;return p;} return ampla(0); });
+    }
+    function ampla(i){
+      if(i>=amplas.length) return null;
+      return buscar("q="+encodeURIComponent(amplas[i])).then(function(p){ if(p){p.aproximado=true;return p;} return ampla(i+1); });
+    }
+    return exata(0);
+  }
+  function openMaps(url){ if(window.ReactNativeWebView){ window.ReactNativeWebView.postMessage(JSON.stringify({action:"openMaps",url:url})); } }
 
   var map = L.map("map", { zoomControl:true, scrollWheelZoom:false })
     .setView(USER ? [USER.lat, USER.lon] : [-14.235,-51.925], USER ? 13 : 4);
@@ -89,17 +106,22 @@ function buildHtml(items: MapaColetaItem[], userLoc: UserLoc) {
   }
 
   var grupo=[];
+  var btnMaps="display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:8px;padding:8px 10px;border-radius:8px;border:1.5px solid #d9e0d5;background:#fff;color:#2b3a2e;font-size:12px;font-weight:700;cursor:pointer;";
   (async function(){
     for(var i=0;i<ITEMS.length;i++){
       var item=ITEMS[i];
       var ponto=lerCache(item.endereco);
-      if(ponto===undefined){ ponto=await geocodificar(item.endereco); gravarCache(item.endereco,ponto); await wait(1100); }
+      // Só cacheia sucessos: endereços que falharam podem ser tentados de novo depois.
+      if(ponto===undefined){ ponto=await geocodificar(item.endereco); if(ponto) gravarCache(item.endereco,ponto); await wait(1100); }
       if(ponto){
         var vis=materialVisual(item.materialNome);
         var icon=L.divIcon({ className:"", html:'<div style="position:relative;width:34px;height:34px"><div style="width:34px;height:34px;border-radius:50% 50% 50% 0;background:'+vis.color+';border:3px solid #fff;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.35)"></div><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1">'+vis.emoji+'</span></div>', iconSize:[34,34], iconAnchor:[17,34] });
         var imagemHtml = item.imagemUrl ? '<img src="'+esc(item.imagemUrl)+'" alt="" style="width:100%;height:110px;object-fit:cover;border-radius:8px;margin-bottom:6px;display:block" />' : '';
-        var popup = '<div style="min-width:180px;max-width:210px">'+imagemHtml+'<strong style="font-size:13px">'+esc(item.titulo)+'</strong><div style="font-size:12px;color:#555;margin-top:2px">'+vis.emoji+' '+esc(item.materialNome)+' · '+esc(item.quantidade)+'</div><div style="font-size:11px;color:#777;margin-top:4px">'+esc(item.endereco)+'</div></div>';
-        var marker=L.marker([ponto.lat,ponto.lon],{icon:icon}).addTo(map).bindPopup(popup);
+        var mapsUrl = "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(item.endereco);
+        var notaAprox = ponto.aproximado ? '<div style="font-size:11px;color:#B4791F;background:#FDF3DC;border-radius:6px;padding:4px 7px;margin-top:6px">📍 Local aproximado — use o Google Maps para o endereço exato.</div>' : '';
+        var popup = '<div style="min-width:180px;max-width:210px">'+imagemHtml+'<strong style="font-size:13px">'+esc(item.titulo)+'</strong><div style="font-size:12px;color:#555;margin-top:2px">'+vis.emoji+' '+esc(item.materialNome)+' · '+esc(item.quantidade)+'</div><div style="font-size:11px;color:#777;margin-top:4px">'+esc(item.endereco)+'</div>'+notaAprox+'<button type="button" data-maps="'+esc(mapsUrl)+'" style="'+btnMaps+'">📍 Abrir no Google Maps</button></div>';
+        var marker=L.marker([ponto.lat,ponto.lon],{icon:icon, opacity: ponto.aproximado?0.75:1}).addTo(map).bindPopup(popup);
+        marker.on("popupopen", function(e){ var node=e.popup.getElement(); var b=node&&node.querySelector("[data-maps]"); if(b){ b.onclick=function(){ openMaps(b.getAttribute("data-maps")); }; } });
         grupo.push(marker);
         // Sem localização do usuário: ajusta o enquadramento aos marcadores.
         if(!USER){
@@ -197,6 +219,16 @@ export function MapaColetas({
           domStorageEnabled
           javaScriptEnabled
           nestedScrollEnabled
+          onMessage={(event) => {
+            try {
+              const data = JSON.parse(event.nativeEvent.data);
+              if (data?.action === "openMaps" && data.url) {
+                void Linking.openURL(data.url);
+              }
+            } catch {
+              // mensagem inesperada do WebView — ignora
+            }
+          }}
           startInLoadingState
           renderLoading={() => (
             <View style={styles.loading}>
