@@ -111,6 +111,7 @@ export interface PreAcceptConversation {
     user: {
       id: number;
       nome: string;
+      avatarUrl?: string | null;
     };
   };
   solicitacao?: SolicitacaoItem;
@@ -132,6 +133,8 @@ export interface SolicitacaoItem {
     nome: string;
   };
   imagens: SolicitacaoImage[];
+  /** Reputação do solicitante (média empresa→cidadão), disponível para a empresa antes de aceitar. */
+  reputacaoSolicitante?: { media: number; total: number };
   user?: {
     id: number;
     nome: string;
@@ -506,6 +509,55 @@ export function sendMensagemConversaSolicitacao(
     method: "POST",
     accessToken,
     body: JSON.stringify({ mensagem }),
+  });
+}
+
+export interface NotificacaoItem {
+  id: number;
+  tipo: string;
+  titulo: string;
+  descricao: string;
+  href: string | null;
+  lida: boolean;
+  createdAt: string;
+}
+
+export interface NotificacoesResponse {
+  notificacoes: NotificacaoItem[];
+  naoLidas: number;
+}
+
+export function getNotificacoes(accessToken: string) {
+  return apiFetch<NotificacoesResponse>("/api/notificacoes", {
+    method: "GET",
+    accessToken,
+  });
+}
+
+export function marcarNotificacoesLidas(accessToken: string) {
+  return apiFetch<{ atualizadas: number }>("/api/notificacoes", {
+    method: "PATCH",
+    accessToken,
+  });
+}
+
+export function registerPushToken(
+  accessToken: string,
+  token: string,
+  platform: string
+) {
+  return apiFetch<{ ok: boolean }>("/api/notificacoes/push-token", {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify({ token, platform }),
+  });
+}
+
+export function unregisterPushToken(accessToken: string, token: string) {
+  return apiFetch<{ ok: boolean }>("/api/notificacoes/push-token", {
+    method: "DELETE",
+    accessToken,
+    body: JSON.stringify({ token }),
   });
 }
 

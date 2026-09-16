@@ -20,7 +20,7 @@ export const STATUS_COLETA_LABEL: Record<string, string> = {
 
 export const STATUS_SOLICITACAO_LABEL: Record<string, string> = {
   pendente: "Pendente",
-  aprovada: "Aprovada",
+  aprovada: "Aguardando empresa",
   rejeitada: "Rejeitada",
   cancelada: "Cancelada",
   removida: "Removida pelo administrador",

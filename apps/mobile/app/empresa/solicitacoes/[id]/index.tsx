@@ -29,6 +29,7 @@ import {
   appColors,
 } from "@/components/AppUI";
 import { ImageGallery } from "@/components/ImageGallery";
+import { ReputacaoUsuario } from "@/components/ui/ReputacaoUsuario";
 import {
   acceptSolicitacao,
   getReadableErrorMessage,
@@ -55,6 +56,7 @@ export default function EmpresaSolicitacaoDetailScreen() {
   const query = useQuery({
     queryKey: ["empresa", "solicitacao", id],
     enabled: hasAccess && !isLoading && Number.isFinite(id),
+    refetchInterval: 15000,
     queryFn: async () =>
       withAutoRefresh(accessToken, refreshSession, (token) =>
         getSolicitacaoById(token, id)
@@ -147,7 +149,7 @@ export default function EmpresaSolicitacaoDetailScreen() {
 
       {/* Resumo enxuto */}
       <AppCard>
-        <SectionHeader eyebrow={`SOLICITAÇÃO #${item.id}`} title={item.titulo} />
+        <SectionHeader eyebrow="SOLICITAÇÃO" title={item.titulo} />
         <View style={styles.badgeRow}>
           <StatusBadge kind="solicitacao" value={item.status} />
           {!!coleta && <StatusBadge kind="coleta" value={coleta.status} />}
@@ -158,6 +160,15 @@ export default function EmpresaSolicitacaoDetailScreen() {
         <Text style={styles.statusCopy}>
           {STATUS_COPY[item.status] ?? "Acompanhe os dados desta solicitação."}
         </Text>
+        {item.reputacaoSolicitante ? (
+          <View style={styles.reputacaoRow}>
+            <Text style={styles.detailLabel}>REPUTAÇÃO DO SOLICITANTE</Text>
+            <ReputacaoUsuario
+              media={item.reputacaoSolicitante.media}
+              total={item.reputacaoSolicitante.total}
+            />
+          </View>
+        ) : null}
       </AppCard>
 
       {/* Localização da solicitação no mapa */}
@@ -306,6 +317,10 @@ const styles = StyleSheet.create({
   summaryLine: {
     ...typography.bodyStrong,
     color: appColors.text,
+  },
+  reputacaoRow: {
+    gap: 6,
+    marginTop: spacing.xs,
   },
   mapaEnderecoRow: {
     flexDirection: "row",

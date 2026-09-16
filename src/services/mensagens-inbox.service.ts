@@ -32,11 +32,14 @@ export async function listarInboxMensagens(userId: number, role: InboxRole) {
     listarConversasColeta(userId, role),
   ]);
 
-  return [...preAccept, ...coletas].sort((a, b) => {
-    const left = a.lastMessageAt ?? a.createdAt;
-    const right = b.lastMessageAt ?? b.createdAt;
-    return right.getTime() - left.getTime();
-  });
+  // Só entram conversas que realmente tiveram ao menos uma mensagem.
+  return [...preAccept, ...coletas]
+    .filter((conversa) => conversa.lastMessage !== null)
+    .sort((a, b) => {
+      const left = a.lastMessageAt ?? a.createdAt;
+      const right = b.lastMessageAt ?? b.createdAt;
+      return right.getTime() - left.getTime();
+    });
 }
 
 export async function buscarMensagensDaInbox(

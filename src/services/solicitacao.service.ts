@@ -7,7 +7,7 @@ import {
 } from "@/lib/privacy";
 import type { Prisma } from "@prisma/client";
 import { notificarSolicitacaoRemovida } from "@/services/notificacao.service";
-import { calcularMediasUsuarios } from "@/services/avaliacao.service";
+import { calcularMediaUsuario, calcularMediasUsuarios } from "@/services/avaliacao.service";
 
 const MAX_SOLICITACAO_IMAGENS = 5;
 
@@ -161,7 +161,13 @@ export async function buscarSolicitacaoEmpresaDTO(id: number, companyId: number)
   });
 
   if (!solicitacao) return null;
-  if (!solicitacao.coleta) return toEmpresaSolicitacaoDisponivelDTO(solicitacao);
+  if (!solicitacao.coleta) {
+    // Antes de aceitar, a empresa vê a reputação do solicitante (sem PII).
+    return {
+      ...toEmpresaSolicitacaoDisponivelDTO(solicitacao),
+      reputacaoSolicitante: await calcularMediaUsuario(solicitacao.userId),
+    };
+  }
 
   return solicitacao;
 }

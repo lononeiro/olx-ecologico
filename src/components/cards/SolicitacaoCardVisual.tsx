@@ -52,7 +52,7 @@ export function SolicitacaoCardVisual({
 
   return (
     <div className="card card-hover anim-fade-up" style={{
-      padding: 0, overflow: "hidden",
+      padding: 0, overflow: "hidden", height: "100%",
       display: "flex", flexDirection: "column",
     }}>
       {/* ── Image area (polaroid) ── */}
@@ -223,7 +223,7 @@ export function SolicitacaoCardVisual({
 
         {/* Actions */}
         {actions && (
-          <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap", paddingTop: ".5rem" }}>
+          <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap", paddingTop: ".5rem", marginTop: "auto" }}>
             {actions}
           </div>
         )}

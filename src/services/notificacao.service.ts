@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { enviarPushParaUsuario } from "@/services/push.service";
 
 export type NotificacaoTipo =
   | "solicitacao_aprovada"
@@ -32,7 +33,7 @@ function truncar(texto: string, max = 80) {
  */
 export async function criarNotificacao(input: CriarNotificacaoInput) {
   try {
-    return await prisma.notificacao.create({
+    const nova = await prisma.notificacao.create({
       data: {
         userId: input.userId,
         tipo: input.tipo,
@@ -41,6 +42,16 @@ export async function criarNotificacao(input: CriarNotificacaoInput) {
         href: input.href ?? null,
       },
     });
+
+    // Push mobile (best-effort). Todos os eventos passam por aqui, então isso
+    // cobre coleta_status, nova_mensagem, avaliacao_recebida, etc. de uma vez.
+    void enviarPushParaUsuario(input.userId, {
+      title: input.titulo,
+      body: input.descricao,
+      data: { href: input.href ?? null, tipo: input.tipo, notificacaoId: nova?.id },
+    });
+
+    return nova;
   } catch (err) {
     console.error("[notificacao] falha ao criar notificação:", err);
     return null;

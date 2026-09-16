@@ -55,7 +55,7 @@ export function ChatThread({
   onFetch?: (sinceId?: number) => Promise<MessageItem[]>;
   disabled?: boolean;
   disabledText?: string;
-  /** "card": embutido (bounded). "screen": ocupa a tela inteira estilo WhatsApp. */
+  /** "card": embutido (bounded). "screen": ocupa a tela inteira (conversa dedicada). */
   variant?: "card" | "screen";
   /** Mostra o nome do remetente nas bolhas recebidas (útil em conversas com várias empresas). */
   showSenderName?: boolean;
@@ -365,7 +365,8 @@ function mergeMessages(current: MessageItem[], incoming: MessageItem[]) {
   return [...current, ...novas].sort((a, b) => a.id - b.id);
 }
 
-const CHAT_BG = "#ECE5DD"; // tom de fundo estilo WhatsApp
+// Fundo com um tom verde bem suave, dentro da paleta ecológica do ECOnecta.
+const CHAT_BG = appColors.surfaceTint; // #F3F7F2
 
 const styles = StyleSheet.create({
   title: {
@@ -429,7 +430,7 @@ const styles = StyleSheet.create({
     marginVertical: spacing.sm,
   },
   datePill: {
-    backgroundColor: "rgba(255,255,255,0.85)",
+    backgroundColor: appColors.primarySoft,
     paddingHorizontal: spacing.md,
     paddingVertical: 4,
     borderRadius: radius.pill,
@@ -437,7 +438,7 @@ const styles = StyleSheet.create({
   dateText: {
     ...typography.meta,
     fontSize: 11,
-    color: appColors.textSoft,
+    color: appColors.primaryStrong,
   },
 
   row: {
@@ -481,31 +482,35 @@ const styles = StyleSheet.create({
 
   bubble: {
     maxWidth: "82%",
-    paddingHorizontal: 10,
-    paddingTop: 6,
-    paddingBottom: 5,
+    paddingHorizontal: 12,
+    paddingTop: 7,
+    paddingBottom: 6,
     borderRadius: radius.md,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 1,
+    shadowColor: "rgba(27, 67, 50, 0.12)",
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
     shadowOffset: { width: 0, height: 1 },
     elevation: 1,
   },
+  // Mensagem enviada: verde da marca, com texto branco (identidade ECOnecta).
   bubbleOwn: {
-    backgroundColor: "#DCF8C6", // verde claro estilo WhatsApp (mensagem enviada)
+    backgroundColor: appColors.primary,
   },
+  // Mensagem recebida: superfície branca com contorno suave.
   bubbleOther: {
     backgroundColor: appColors.surface,
+    borderWidth: 1,
+    borderColor: appColors.stroke,
   },
   bubbleGroupEnd: {
     marginBottom: 1,
   },
   // "Rabinho" no topo da primeira bolha de cada grupo
   tailOwn: {
-    borderTopRightRadius: 4,
+    borderTopRightRadius: 5,
   },
   tailOther: {
-    borderTopLeftRadius: 4,
+    borderTopLeftRadius: 5,
   },
 
   bubbleInner: {
@@ -526,7 +531,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   messageOwn: {
-    color: "#0B2E13",
+    color: appColors.white,
   },
   timestamp: {
     ...typography.meta,
@@ -536,7 +541,7 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
   timestampOwn: {
-    color: "rgba(11,46,19,0.45)",
+    color: "rgba(255,255,255,0.7)",
   },
 
   // Composer

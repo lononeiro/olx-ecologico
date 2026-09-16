@@ -92,6 +92,31 @@ export async function atualizarStatusColeta(
   });
   if (!coleta) throw new Error("Coleta não encontrada ou sem permissão.");
 
+  // Cancelar devolve a solicitação para a pool: como a disponibilidade depende
+  // de `coleta: null`, apagamos o registro de coleta (e o que depende dele) e
+  // reabrimos as conversas pré-aceite daquela solicitação.
+  if (novoStatus === "cancelada") {
+    await prisma.$transaction(async (tx) => {
+      await tx.avaliacao.deleteMany({ where: { coletaId } });
+      await tx.mensagem.deleteMany({ where: { coletaId } });
+      await tx.coleta.delete({ where: { id: coletaId } });
+      await tx.conversaSolicitacao.updateMany({
+        where: { solicitacaoId: coleta.solicitacao.id },
+        data: { status: "aberta" },
+      });
+    });
+
+    await notificarColetaStatus({
+      userId: coleta.solicitacao.userId,
+      solicitacaoId: coleta.solicitacao.id,
+      titulo: coleta.solicitacao.titulo,
+      status: "cancelada",
+    });
+
+    // A coleta deixou de existir; devolvemos os dados só para a resposta HTTP.
+    return { ...coleta, status: "cancelada", dataConclusao: null };
+  }
+
   const data: Record<string, unknown> = { status: novoStatus };
   if (novoStatus === "concluida") {
     data.dataConclusao = new Date();
@@ -110,7 +135,7 @@ export async function atualizarStatusColeta(
 }
 
 export async function listarColetasDaEmpresa(companyId: number) {
-  return prisma.coleta.findMany({
+  const coletas = await prisma.coleta.findMany({
     where: { companyId },
     include: {
       solicitacao: {
@@ -123,6 +148,18 @@ export async function listarColetasDaEmpresa(companyId: number) {
     },
     orderBy: { dataAceite: "desc" },
   });
+
+  // Coletas em andamento (não concluídas/canceladas) aparecem antes das
+  // finalizadas; dentro de cada grupo mantém a ordem por dataAceite desc.
+  const isFinalizada = (status: string) =>
+    status === "concluida" || status === "cancelada";
+  const ordenadas = coletas.sort(
+    (a, b) => Number(isFinalizada(a.status)) - Number(isFinalizada(b.status))
+  );
+
+  // A empresa não recebe o código de confirmação do solicitante (ver
+  // buscarColetaPorId): ele deve ser informado pelo cliente na coleta.
+  return ordenadas.map(({ codigoConfirmacao: _codigo, ...rest }) => rest);
 }
 
 export async function buscarColetaPorId(
@@ -158,6 +195,13 @@ export async function buscarColetaPorId(
   if (!coleta) return null;
   if (userId && coleta.solicitacao.userId !== userId) return null;
   if (companyId && coleta.companyId !== companyId) return null;
+
+  // O código de confirmação pertence ao solicitante: a empresa deve pedi-lo ao
+  // cliente no momento da coleta, então nunca é exposto no acesso da empresa.
+  if (companyId && !userId) {
+    const { codigoConfirmacao: _codigo, ...semCodigo } = coleta;
+    return semCodigo;
+  }
 
   return coleta;
 }

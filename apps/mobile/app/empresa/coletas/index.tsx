@@ -32,6 +32,11 @@ const FILTERS = [
   { key: "cancelada", label: "Canceladas" },
 ];
 
+// Uma coleta é "finalizada" quando já foi concluída ou cancelada.
+function isFinalizada(item: { status: string }) {
+  return item.status === "concluida" || item.status === "cancelada";
+}
+
 export default function EmpresaColetasListScreen() {
   const { accessToken, hasAccess, isLoading, refreshSession } =
     useProtectedRoute(["empresa"]);
@@ -40,14 +45,21 @@ export default function EmpresaColetasListScreen() {
   const query = useQuery({
     queryKey: ["empresa", "coletas", "list"],
     enabled: hasAccess && !isLoading,
+    refetchInterval: 15000,
     queryFn: async () =>
       withAutoRefresh(accessToken, refreshSession, (token) => getEmpresaColetas(token)),
   });
 
   const filtered = useMemo(() => {
-    const items = query.data ?? [];
-    if (filter === "todas") return items;
-    return items.filter((item) => item.status === filter);
+    const items =
+      filter === "todas"
+        ? query.data ?? []
+        : (query.data ?? []).filter((item) => item.status === filter);
+
+    // Não-finalizadas primeiro; mantém a ordem original dentro de cada grupo.
+    return [...items].sort(
+      (a, b) => Number(isFinalizada(a)) - Number(isFinalizada(b))
+    );
   }, [query.data, filter]);
 
   return (

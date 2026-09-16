@@ -2,6 +2,8 @@ import { listarSolicitacoesAprovadas } from "@/services/solicitacao.service";
 import { AceitarSolicitacaoButton } from "../solicitacoes/AceitarSolicitacaoButton";
 import { SolicitacaoCardVisual } from "@/components/cards/SolicitacaoCardVisual";
 import { MapaColetas, type MapaColetaItem } from "@/components/ui/MapaColetas";
+import { MapaFocusProvider } from "@/components/ui/MapaFocusContext";
+import { MostrarNoMapaButton } from "@/components/ui/MostrarNoMapaButton";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,17 @@ export default async function EmpresaMapaPage() {
 
   return (
     <div className="page-enter">
+      <style>{`
+        @keyframes coletaCardPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(47,141,71,0); }
+          25% { box-shadow: 0 0 0 4px rgba(47,141,71,.35); }
+        }
+        .coleta-card-destaque {
+          animation: coletaCardPulse 1.8s ease;
+          outline: 2px solid var(--green-mid, #2F8D47);
+          outline-offset: 2px;
+        }
+      `}</style>
       <div style={{ marginBottom: "1.5rem" }}>
         <p className="section-label">Empresa</p>
         <h1 style={{ fontSize: "clamp(1.3rem, 3vw, 1.65rem)", fontWeight: 800, color: "var(--text)", letterSpacing: "-.4px" }}>
@@ -33,6 +46,7 @@ export default async function EmpresaMapaPage() {
         </p>
       </div>
 
+      <MapaFocusProvider>
       {pontos.length > 0 ? (
         <div className="surface-card" style={{ marginBottom: "1.5rem" }}>
           <MapaColetas items={pontos} />
@@ -65,7 +79,12 @@ export default async function EmpresaMapaPage() {
           }}
         >
           {solicitacoes.map((s, i) => (
-            <div key={s.id} className="anim-fade-up" style={{ animationDelay: `${i * 0.06}s` }}>
+            <div
+              key={s.id}
+              id={`coleta-card-${s.id}`}
+              className="anim-fade-up"
+              style={{ animationDelay: `${i * 0.06}s`, scrollMarginTop: "1rem", borderRadius: "var(--radius-sm)" }}
+            >
               <SolicitacaoCardVisual
                 id={s.id}
                 titulo={s.titulo}
@@ -78,22 +97,28 @@ export default async function EmpresaMapaPage() {
                 imagens={s.imagens}
                 reputacao={s.reputacaoSolicitante}
                 actions={
-                  <AceitarSolicitacaoButton
-                    solicitacaoId={s.id}
-                    titulo={s.titulo}
-                    descricao={s.descricao}
-                    quantidade={s.quantidade}
-                    endereco={s.endereco ?? "Região não informada"}
-                    materialNome={s.material.nome}
-                    imagens={s.imagens}
-                    reputacao={s.reputacaoSolicitante}
-                  />
+                  <div data-aceitar-id={s.id} style={{ display: "grid", gap: ".55rem", width: "100%" }}>
+                    {pontos.some((p) => p.id === s.id) && (
+                      <MostrarNoMapaButton solicitacaoId={s.id} />
+                    )}
+                    <AceitarSolicitacaoButton
+                      solicitacaoId={s.id}
+                      titulo={s.titulo}
+                      descricao={s.descricao}
+                      quantidade={s.quantidade}
+                      endereco={s.endereco ?? "Região não informada"}
+                      materialNome={s.material.nome}
+                      imagens={s.imagens}
+                      reputacao={s.reputacaoSolicitante}
+                    />
+                  </div>
                 }
               />
             </div>
           ))}
         </div>
       )}
+      </MapaFocusProvider>
     </div>
   );
 }

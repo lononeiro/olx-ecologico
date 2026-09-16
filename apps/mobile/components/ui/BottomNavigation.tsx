@@ -43,7 +43,12 @@ export function BottomNavigation({
                 color={focused ? colors.primary : colors.textFaint}
               />
             </View>
-            <Text style={[styles.label, focused && styles.labelActive]}>
+            <Text
+              style={[styles.label, focused && styles.labelActive]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+            >
               {item.label}
             </Text>
           </Pressable>

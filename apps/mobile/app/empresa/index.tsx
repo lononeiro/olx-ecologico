@@ -14,8 +14,8 @@ import {
   MessageBanner,
   MobileListItem,
   SectionHeader,
-  StatRow,
 } from "@/components/AppUI";
+import { STATUS_COLETA_LABEL, STATUS_SOLICITACAO_LABEL } from "@shared";
 import {
   ApiError,
   getEmpresaColetas,
@@ -25,6 +25,7 @@ import {
 import { useProtectedRoute } from "@/lib/navigation";
 import { resolveAccessToken } from "@/lib/session";
 import { EMPRESA_TABS } from "@/lib/tabs";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export default function EmpresaHomeScreen() {
   const { accessToken, hasAccess, isLoading, refreshSession, user } =
@@ -33,6 +34,7 @@ export default function EmpresaHomeScreen() {
   const disponiveisQuery = useQuery({
     queryKey: ["empresa", "disponiveis"],
     enabled: hasAccess && !isLoading,
+    refetchInterval: 15000,
     queryFn: async () => {
       const token = await resolveAccessToken(accessToken, refreshSession);
       if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
@@ -51,6 +53,7 @@ export default function EmpresaHomeScreen() {
   const coletasQuery = useQuery({
     queryKey: ["empresa", "coletas"],
     enabled: hasAccess && !isLoading,
+    refetchInterval: 15000,
     queryFn: async () => {
       const token = await resolveAccessToken(accessToken, refreshSession);
       if (!token) throw new Error("Sua sessão expirou. Entre novamente.");
@@ -89,7 +92,6 @@ export default function EmpresaHomeScreen() {
   const ativas = coletas.filter(
     (item) => item.status !== "concluida" && item.status !== "cancelada"
   );
-  const concluidas = coletas.filter((item) => item.status === "concluida").length;
 
   return (
     <AppScreen
@@ -104,6 +106,7 @@ export default function EmpresaHomeScreen() {
         eyebrow="PAINEL DA EMPRESA"
         title={user.name}
         description="Aceite solicitações aprovadas, acompanhe coletas e converse com solicitantes."
+        right={<NotificationBell />}
       />
 
       {(disponiveisQuery.error || coletasQuery.error) && (
@@ -116,18 +119,10 @@ export default function EmpresaHomeScreen() {
         />
       )}
 
-      <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
-        <StatRow label="Disponíveis" value={disponiveis.length} />
-        <StatRow label="Em andamento" value={ativas.length} />
-        <StatRow label="Concluídas" value={concluidas} />
-        <StatRow label="Total" value={coletas.length} />
-      </View>
-
       <AppCard>
         <SectionHeader
           eyebrow="NO MAPA"
           title="Coletas disponíveis"
-          description="Solicitações aprovadas com endereço, localizadas no mapa."
         />
         {disponiveisQuery.isLoading ? (
           <LoadingCard text="Carregando mapa..." />
@@ -160,7 +155,7 @@ export default function EmpresaHomeScreen() {
               tone="primary"
               title={item.solicitacao.titulo}
               subtitle={item.solicitacao.user?.nome ?? item.solicitacao.material.nome}
-              meta={item.status}
+              meta={STATUS_COLETA_LABEL[item.status] ?? item.status}
               onPress={() => router.push(`/empresa/coletas/${item.id}` as any)}
             />
           ))
@@ -191,7 +186,7 @@ export default function EmpresaHomeScreen() {
               tone="primary"
               title={item.titulo}
               subtitle={`${item.quantidade} · ${item.material.nome}`}
-              meta={item.status}
+              meta={STATUS_SOLICITACAO_LABEL[item.status] ?? item.status}
               onPress={() => router.push("/empresa/solicitacoes" as any)}
             />
           ))

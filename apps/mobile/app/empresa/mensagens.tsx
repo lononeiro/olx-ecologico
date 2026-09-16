@@ -9,9 +9,10 @@ import {
   EmptyState,
   LoadingCard,
   MessageBanner,
-  MobileListItem,
   SectionHeader,
 } from "@/components/AppUI";
+import { STATUS_COLETA_LABEL, STATUS_SOLICITACAO_LABEL } from "@shared";
+import { ConversaListItem } from "@/components/ConversaListItem";
 import { Field } from "@/components/ui/Field";
 import {
   getEmpresaColetas,
@@ -54,45 +55,56 @@ export default function EmpresaMensagensScreen() {
   });
 
   const conversations = useMemo(() => {
-    // Última mensagem por coleta / solicitação, para prévia sob o título.
-    const lastByColeta = new Map<number, string>();
-    const lastBySolicitacao = new Map<number, string>();
+    // Última mensagem por coleta / solicitação (texto + data), para prévia sob o
+    // título e para ordenar pelas conversas mais recentes.
+    const lastByColeta = new Map<number, { message: string; at: number }>();
+    const lastBySolicitacao = new Map<number, { message: string; at: number }>();
     for (const conversa of inboxQuery.data ?? []) {
       if (!conversa.lastMessage) continue;
+      const at = conversa.lastMessageAt
+        ? new Date(conversa.lastMessageAt).getTime()
+        : 0;
       if (conversa.type === "coleta") {
-        if (!lastByColeta.has(conversa.dbId))
-          lastByColeta.set(conversa.dbId, conversa.lastMessage);
+        const atual = lastByColeta.get(conversa.dbId);
+        if (!atual || at > atual.at)
+          lastByColeta.set(conversa.dbId, { message: conversa.lastMessage, at });
       } else {
         const sid = solicitacaoIdFromHref(conversa.detailHref);
-        if (sid != null && !lastBySolicitacao.has(sid))
-          lastBySolicitacao.set(sid, conversa.lastMessage);
+        if (sid == null) continue;
+        const atual = lastBySolicitacao.get(sid);
+        if (!atual || at > atual.at)
+          lastBySolicitacao.set(sid, { message: conversa.lastMessage, at });
       }
     }
 
-    const coletas = (coletasQuery.data ?? []).map((item) => ({
-      key: `coleta-${item.id}`,
-      title: item.solicitacao.titulo,
-      subtitle:
-        lastByColeta.get(item.id) ??
-        item.solicitacao.user?.nome ??
-        item.solicitacao.material.nome,
-      meta: item.status,
-      active: true,
-      onPress: () => router.push(`/empresa/coletas/${item.id}` as any),
-    }));
+    // Só aparecem coletas/solicitações que realmente tiveram alguma mensagem.
+    const coletas = (coletasQuery.data ?? [])
+      .filter((item) => lastByColeta.has(item.id))
+      .map((item) => ({
+        key: `coleta-${item.id}`,
+        title: item.solicitacao.titulo,
+        preview: lastByColeta.get(item.id)?.message ?? "",
+        at: lastByColeta.get(item.id)?.at ?? 0,
+        statusLabel: STATUS_COLETA_LABEL[item.status] ?? item.status,
+        active: true,
+        onPress: () => router.push(`/empresa/coletas/${item.id}` as any),
+      }));
 
-    const disponiveis = (disponiveisQuery.data ?? []).map((item) => ({
-      key: `solicitacao-${item.id}`,
-      title: item.titulo,
-      subtitle:
-        lastBySolicitacao.get(item.id) ?? item.user?.nome ?? item.material.nome,
-      meta: item.status,
-      active: false,
-      onPress: () =>
-        router.push(`/empresa/solicitacoes/${item.id}/conversa` as any),
-    }));
+    const disponiveis = (disponiveisQuery.data ?? [])
+      .filter((item) => lastBySolicitacao.has(item.id))
+      .map((item) => ({
+        key: `solicitacao-${item.id}`,
+        title: item.titulo,
+        preview: lastBySolicitacao.get(item.id)?.message ?? "",
+        at: lastBySolicitacao.get(item.id)?.at ?? 0,
+        statusLabel: STATUS_SOLICITACAO_LABEL[item.status] ?? item.status,
+        active: false,
+        onPress: () =>
+          router.push(`/empresa/solicitacoes/${item.id}/conversa` as any),
+      }));
 
-    return [...coletas, ...disponiveis];
+    // Ordena pela última mensagem recebida/enviada (mais recente primeiro).
+    return [...coletas, ...disponiveis].sort((a, b) => b.at - a.at);
   }, [coletasQuery.data, disponiveisQuery.data, inboxQuery.data]);
 
   const filtered = useMemo(() => {
@@ -101,7 +113,7 @@ export default function EmpresaMensagensScreen() {
     return conversations.filter(
       (item) =>
         item.title.toLowerCase().includes(term) ||
-        item.subtitle.toLowerCase().includes(term)
+        item.preview.toLowerCase().includes(term)
     );
   }, [conversations, search]);
 
@@ -146,13 +158,12 @@ export default function EmpresaMensagensScreen() {
       ) : (
         <AppCard>
           {filtered.map((item) => (
-            <MobileListItem
+            <ConversaListItem
               key={item.key}
               icon={item.active ? MessageCircle : Clock}
-              tone="primary"
               title={item.title}
-              subtitle={item.subtitle}
-              meta={item.meta}
+              preview={item.preview}
+              statusLabel={item.statusLabel}
               onPress={item.onPress}
             />
           ))}

@@ -551,9 +551,14 @@ export default function Home() {
         <span style={{ fontFamily: "var(--font-display)", color: "var(--landing-soft)", fontSize: "1rem" }}>
           ♻ ECOnecta
         </span>
-        <span style={{ color: "var(--landing-soft)", fontSize: ".8rem" }}>
-          Feito com 💚 para um planeta mais sustentável
-        </span>
+        <div style={{ display: "flex", gap: "1.4rem", alignItems: "center", flexWrap: "wrap" }}>
+          <TransitionLink href="/privacidade" style={{ color: "var(--landing-soft)", fontSize: ".8rem", textDecoration: "none" }}>
+            Política de Privacidade
+          </TransitionLink>
+          <span style={{ color: "var(--landing-soft)", fontSize: ".8rem" }}>
+            Feito com 💚 para um planeta mais sustentável
+          </span>
+        </div>
       </footer>
     </main>
   );

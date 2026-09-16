@@ -29,13 +29,20 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "O ECOnecta precisa acessar suas fotos para anexar imagens à solicitação."
+          "photosPermission": "O ECOnecta precisa acessar suas fotos para anexar imagens à solicitação.",
+          "cameraPermission": "O ECOnecta precisa acessar sua câmera para você tirar uma foto do material."
         }
       ],
       [
         "expo-location",
         {
           "locationWhenInUsePermission": "O ECOnecta usa sua localização para centralizar o mapa de coletas na sua região."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#2D6A4F"
         }
       ]
     ]
