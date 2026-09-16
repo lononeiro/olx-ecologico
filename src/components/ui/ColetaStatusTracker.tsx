@@ -309,21 +309,9 @@ export function ColetaStatusTracker({ coletaId, statusAtual, isEmpresa }: Props)
                   <span style={{ display: "block", width: "100%", textAlign: "center" }}>Atualizando...</span>
                 </>
               ) : (
-                <>
-                  <span
-                    style={{
-                      position: "absolute",
-                      left: "1rem",
-                      display: "inline-flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    {STEPS.find(s => s.key === proximoPrincipal)?.icon}
-                  </span>
-                  <span style={{ display: "block", width: "100%", textAlign: "center", whiteSpace: "nowrap" }}>
-                    {proximoEhConclusao ? "Confirmar conclusão" : `Avançar para ${STATUS_COLETA_LABEL[proximoPrincipal]}`}
-                  </span>
-                </>
+                <span style={{ display: "block", width: "100%", textAlign: "center" }}>
+                  {proximoEhConclusao ? "Confirmar conclusão" : `Avançar para ${STATUS_COLETA_LABEL[proximoPrincipal]}`}
+                </span>
               )}
             </button>
             <button
