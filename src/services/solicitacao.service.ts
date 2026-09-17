@@ -282,6 +282,7 @@ export async function listarSolicitacoesAprovadas(filtros: FiltrosSolicitacao = 
     include: {
       material: true,
       imagens: true,
+      user: { select: { nome: true } },
     },
     orderBy: { createdAt: "desc" },
   });

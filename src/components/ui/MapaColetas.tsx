@@ -274,12 +274,6 @@ export function MapaColetas({ items }: { items: MapaColetaItem[] }) {
             } else if (acao === "aceitar") {
               // Reaproveita o modal de aceitação já renderizado no card abaixo.
               document.querySelector<HTMLElement>(`[data-aceitar-id="${id}"] .btn-blue`)?.click();
-            } else if (acao === "detalhes") {
-              const card = document.getElementById(`coleta-card-${id}`);
-              if (!card) return;
-              card.scrollIntoView({ behavior: "smooth", block: "center" });
-              card.classList.add("coleta-card-destaque");
-              setTimeout(() => card.classList.remove("coleta-card-destaque"), 1800);
             }
           };
         });
@@ -335,8 +329,6 @@ export function MapaColetas({ items }: { items: MapaColetaItem[] }) {
             "display:flex;align-items:center;justify-content:center;gap:5px;width:100%;padding:7px 10px;border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;line-height:1;";
           const btnSecundario = `${btnBase}border:1.5px solid #d9e0d5;background:#fff;color:#2b3a2e;`;
           const btnPrimario = `${btnBase}border:none;background:#1D6FA8;color:#fff;`;
-          const iconOlho =
-            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
           const iconCheck =
             '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>';
           const iconChat =
@@ -355,7 +347,6 @@ export function MapaColetas({ items }: { items: MapaColetaItem[] }) {
               <div style="font-size:.74rem;color:#777;margin-top:4px">${escapeHtml(item.endereco)}</div>
               ${notaAprox}
               <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
-                <button type="button" data-popup-acao="detalhes" data-popup-id="${item.id}" style="${btnSecundario}">${iconOlho} Ver detalhes</button>
                 <button type="button" data-popup-acao="aceitar" data-popup-id="${item.id}" style="${btnPrimario}">${iconCheck} Aceitar coleta</button>
                 <button type="button" data-popup-acao="mensagem" data-popup-id="${item.id}" style="${btnSecundario}">${iconChat} Mandar mensagem</button>
                 <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" style="${btnSecundario}text-decoration:none">${iconMapa} Abrir no Google Maps</a>

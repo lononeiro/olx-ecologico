@@ -3,6 +3,14 @@ import { useEffect, useRef, useState } from "react";
 
 interface Props {
   endereco: string;
+  /**
+   * Quando true, o mapa "vaza" até a borda do card que o envolve,
+   * cancelando o padding lateral de 1rem herdado do container pai e
+   * removendo a borda/raio próprios do mapa. Evita o "quadro branco duplo"
+   * (fundo do card + padding + borda do próprio mapa) — mais visível no
+   * tema claro, onde o contraste com as tiles coloridas do OSM é maior.
+   */
+  bleed?: boolean;
 }
 
 interface GeoResult {
@@ -17,12 +25,17 @@ async function geocodificar(endereco: string): Promise<GeoResult | null> {
   const base = "https://nominatim.openstreetmap.org/search";
   const headers = { "Accept-Language": "pt-BR", "User-Agent": "ReciclaFacil/1.0" };
 
-  const tentativas = [
-    endereco,                                          // endereço completo
-    endereco.replace(/,?\s*\d{5}-?\d{3}/, "").trim(), // sem CEP
-    endereco.split(",").slice(0, 2).join(",").trim(),  // só rua + número
-    endereco.split(",").slice(-2).join(",").trim(),    // só cidade + estado
-  ].filter((v, i, arr) => arr.indexOf(v) === i);      // deduplica
+  // Ex.: buildAddressString() gera "..., CEP 01305-000" — a palavra "CEP"
+  // (não só os dígitos) precisa ser removida, senão o Nominatim não acha
+  // nada e a busca cai pro fallback de rua+número sem cidade, que pode
+  // resolver pra outro município com rua de mesmo nome.
+  const semCep = endereco.replace(/,?\s*(CEP\s*)?\d{5}-?\d{3}/i, "").trim();
+
+  // Só endereço completo e sem CEP. Cair pra "rua + número" (sem cidade) pode
+  // casar com uma rua de mesmo nome em outro município, e "só cidade + estado"
+  // é vago demais pra ajudar quem vai buscar o material — nesses casos é
+  // melhor assumir "não encontrado" e deixar o usuário abrir no Google Maps.
+  const tentativas = [endereco, semCep].filter((v, i, arr) => v && arr.indexOf(v) === i);
 
   for (let i = 0; i < tentativas.length; i++) {
     const q = encodeURIComponent(tentativas[i]);
@@ -44,10 +57,13 @@ async function geocodificar(endereco: string): Promise<GeoResult | null> {
   return null;
 }
 
-export function MapaEndereco({ endereco }: Props) {
+export function MapaEndereco({ endereco, bleed = false }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const removeWheelRef = useRef<(() => void) | null>(null);
+  const dicaTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [status, setStatus] = useState<"carregando" | "ok" | "aproximado" | "erro">("carregando");
+  const [dicaZoom, setDicaZoom] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -111,6 +127,26 @@ export function MapaEndereco({ endereco }: Props) {
         maxZoom: 19,
       }).addTo(map);
 
+      // Zoom só com Ctrl + scroll: sem Ctrl a página (ou o modal) rola normalmente
+      // e mostramos uma dica. Com Ctrl, dá/tira zoom em torno do ponto sob o cursor.
+      const container = mapRef.current;
+      const onWheel = (e: WheelEvent) => {
+        if (!e.ctrlKey) {
+          setDicaZoom(true);
+          if (dicaTimeoutRef.current) clearTimeout(dicaTimeoutRef.current);
+          dicaTimeoutRef.current = setTimeout(() => setDicaZoom(false), 1400);
+          return;
+        }
+        e.preventDefault();
+        setDicaZoom(false);
+        const rect = container.getBoundingClientRect();
+        const point = L.point(e.clientX - rect.left, e.clientY - rect.top);
+        const latlng = map.containerPointToLatLng(point);
+        map.setZoomAround(latlng, map.getZoom() + (e.deltaY < 0 ? 1 : -1));
+      };
+      container.addEventListener("wheel", onWheel, { passive: false });
+      removeWheelRef.current = () => container.removeEventListener("wheel", onWheel);
+
       // Ícone diferente para localização aproximada
       const icon = result.precisao === "aproximada"
         ? L.divIcon({
@@ -141,7 +177,12 @@ export function MapaEndereco({ endereco }: Props) {
     }
 
     init();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+      removeWheelRef.current?.();
+      removeWheelRef.current = null;
+      if (dicaTimeoutRef.current) clearTimeout(dicaTimeoutRef.current);
+    };
   }, [endereco]);
 
   return (
@@ -164,24 +205,46 @@ export function MapaEndereco({ endereco }: Props) {
         </div>
       )}
       {status === "erro" && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: ".5rem",
-          padding: ".55rem .85rem",
-          background: "var(--red-light)",
-          border: "1.5px solid rgba(184,50,40,.2)",
-          borderRadius: "var(--radius-xs)",
-          fontSize: ".78rem", color: "var(--red)", fontWeight: 600,
-        }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
-          </svg>
-          Nao foi possivel localizar o endereco no mapa
+        <div style={{ display: "flex", flexDirection: "column", gap: ".6rem" }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: ".5rem",
+            padding: ".55rem .85rem",
+            background: "var(--red-light)",
+            border: "1.5px solid rgba(184,50,40,.2)",
+            borderRadius: "var(--radius-xs)",
+            fontSize: ".78rem", color: "var(--red)", fontWeight: 600,
+          }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
+            </svg>
+            Nao foi possivel localizar o endereco no mapa
+          </div>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-secondary"
+            style={{ justifyContent: "center" }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            Abrir no Google Maps
+          </a>
         </div>
       )}
 
       {/* Mapa */}
       {status !== "erro" && (
-        <div style={{ position: "relative", borderRadius: "var(--radius-sm)", overflow: "hidden", border: "1.5px solid var(--border)" }}>
+        <div
+          style={{
+            position: "relative",
+            overflow: "hidden",
+            ...(bleed
+              ? { margin: "0 -1rem" }
+              : { borderRadius: "var(--radius-sm)", border: "1.5px solid var(--border)" }),
+          }}
+        >
           {status === "carregando" && (
             <div style={{
               position: "absolute", inset: 0, zIndex: 10,
@@ -196,11 +259,65 @@ export function MapaEndereco({ endereco }: Props) {
           )}
           {/* CSS do Leaflet injetado inline para evitar import global */}
           <style>{`
-            .leaflet-container { font-family: var(--font); }
+            .leaflet-container { font-family: var(--font); background: var(--surface-2); }
             .leaflet-popup-content-wrapper { border-radius: 10px; box-shadow: var(--shadow); }
             .leaflet-popup-content { font-size: .82rem; font-weight: 600; color: var(--text); margin: .5rem .75rem; }
+
+            /* No tema escuro as tiles claras do OSM viravam um "quadro branco".
+               Inverte/reajusta as tiles para um mapa escuro e adapta os
+               controles, popup e atribuição do Leaflet ao tema. */
+            html.dark .leaflet-tile {
+              filter: invert(1) hue-rotate(180deg) brightness(.95) contrast(.9);
+            }
+            html.dark .leaflet-container { background: var(--surface-3); }
+            html.dark .leaflet-popup-content-wrapper,
+            html.dark .leaflet-popup-tip {
+              background: var(--surface);
+              color: var(--text);
+            }
+            html.dark .leaflet-bar a,
+            html.dark .leaflet-bar a:hover {
+              background: var(--surface);
+              color: var(--text);
+              border-color: var(--border);
+            }
+            html.dark .leaflet-control-attribution {
+              background: rgba(12,19,15,.75) !important;
+              color: var(--text-muted);
+            }
+            html.dark .leaflet-control-attribution a { color: var(--green); }
           `}</style>
           <div ref={mapRef} style={{ height: 340, width: "100%" }} />
+          {dicaZoom && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(15,23,42,.35)",
+                backdropFilter: "blur(1px)",
+                pointerEvents: "none",
+                transition: "opacity .2s ease",
+              }}
+            >
+              <span
+                style={{
+                  background: "rgba(15,23,42,.82)",
+                  color: "#fff",
+                  fontSize: ".85rem",
+                  fontWeight: 600,
+                  padding: ".55rem .95rem",
+                  borderRadius: 999,
+                  boxShadow: "0 4px 16px rgba(0,0,0,.3)",
+                }}
+              >
+                Use Ctrl + scroll para dar zoom
+              </span>
+            </div>
+          )}
         </div>
       )}
 

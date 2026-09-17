@@ -220,6 +220,7 @@ describe("solicitacao.service", () => {
       include: {
         material: true,
         imagens: true,
+        user: { select: { nome: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -236,7 +237,7 @@ describe("solicitacao.service", () => {
         endereco: "Rua Verde, 10, Bairro Centro, Campinas, SP",
         material: { id: 1, nome: "Papel" },
         imagens: [],
-        user: { nome: "Nao deveria sair", email: "a@b.com", telefone: "11999999999" },
+        user: { nome: "Fernanda Souza Lima", email: "a@b.com", telefone: "11999999999" },
       },
     ]);
     prismaMock.avaliacao.findMany.mockResolvedValueOnce([]);
@@ -246,10 +247,13 @@ describe("solicitacao.service", () => {
     expect(JSON.stringify(result)).not.toContain("a@b.com");
     expect(JSON.stringify(result)).not.toContain("11999999999");
     expect(JSON.stringify(result)).not.toContain("Rua Verde");
+    // Só o primeiro nome é liberado antes do aceite; sobrenome fica de fora.
+    expect(JSON.stringify(result)).not.toContain("Souza Lima");
     expect(result[0]).toMatchObject({
       id: 1,
       endereco: "Bairro Centro, Campinas",
       regiao: "Bairro Centro, Campinas",
+      solicitanteNome: "Fernanda",
     });
   });
 

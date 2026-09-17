@@ -16,6 +16,9 @@ interface Props {
   endereco: string;
   materialNome: string;
   imagens: { id: number; url: string }[];
+  /** Primeiro nome do solicitante. Nome completo, telefone e email só são
+   * liberados depois que a empresa aceita a solicitação. */
+  solicitanteNome?: string;
   reputacao?: { media: number; total: number };
 }
 
@@ -27,6 +30,7 @@ export function AceitarSolicitacaoButton({
   endereco,
   materialNome,
   imagens,
+  solicitanteNome,
   reputacao,
 }: Props) {
   const router = useRouter();
@@ -188,17 +192,29 @@ export function AceitarSolicitacaoButton({
                   >
                     Confirmar aceitação
                   </p>
-                  <p
-                    style={{
-                      fontWeight: 800,
-                      fontSize: "1.2rem",
-                      color: "var(--text)",
-                      lineHeight: 1.2,
-                      maxWidth: 620,
-                    }}
-                  >
-                    {titulo}
-                  </p>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: ".5rem", flexWrap: "wrap", maxWidth: 620 }}>
+                    <p
+                      style={{
+                        fontWeight: 800,
+                        fontSize: "1.2rem",
+                        color: "var(--text)",
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {titulo}
+                    </p>
+                    {solicitanteNome && (
+                      <span
+                        className="badge badge-blue"
+                        style={{ fontSize: ".78rem", fontWeight: 700 }}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <circle cx="12" cy="8" r="4" /><path d="M20 21a8 8 0 1 0-16 0" />
+                        </svg>
+                        {solicitanteNome}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <button
@@ -248,7 +264,7 @@ export function AceitarSolicitacaoButton({
                     </p>
                   </div>
                   <div style={{ padding: "0 1rem 1rem" }}>
-                    <MapaEndereco endereco={endereco} />
+                    <MapaEndereco endereco={endereco} bleed />
                   </div>
                 </div>
 
@@ -267,6 +283,7 @@ export function AceitarSolicitacaoButton({
                     <InfoField
                       label="Reputação do solicitante"
                       value={<ReputacaoUsuario media={reputacao.media} total={reputacao.total} starSize={15} />}
+                      full
                     />
                   )}
                   <InfoField label="Região aproximada" value={endereco} full />

@@ -23,17 +23,6 @@ export default async function EmpresaMapaPage() {
 
   return (
     <div className="page-enter">
-      <style>{`
-        @keyframes coletaCardPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(47,141,71,0); }
-          25% { box-shadow: 0 0 0 4px rgba(47,141,71,.35); }
-        }
-        .coleta-card-destaque {
-          animation: coletaCardPulse 1.8s ease;
-          outline: 2px solid var(--green-mid, #2F8D47);
-          outline-offset: 2px;
-        }
-      `}</style>
       <div style={{ marginBottom: "1.5rem" }}>
         <p className="section-label">Empresa</p>
         <h1 style={{ fontSize: "clamp(1.3rem, 3vw, 1.65rem)", fontWeight: 800, color: "var(--text)", letterSpacing: "-.4px" }}>
@@ -95,6 +84,7 @@ export default async function EmpresaMapaPage() {
                 createdAt={s.createdAt}
                 material={s.material}
                 imagens={s.imagens}
+                solicitanteNome={s.solicitanteNome ?? undefined}
                 reputacao={s.reputacaoSolicitante}
                 actions={
                   <div data-aceitar-id={s.id} style={{ display: "grid", gap: ".55rem", width: "100%" }}>
@@ -109,6 +99,7 @@ export default async function EmpresaMapaPage() {
                       endereco={s.endereco ?? "Região não informada"}
                       materialNome={s.material.nome}
                       imagens={s.imagens}
+                      solicitanteNome={s.solicitanteNome ?? undefined}
                       reputacao={s.reputacaoSolicitante}
                     />
                   </div>

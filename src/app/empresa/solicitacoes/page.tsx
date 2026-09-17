@@ -84,6 +84,7 @@ export default async function EmpresaSolicitacoesPage({
                 createdAt={s.createdAt}
                 material={s.material}
                 imagens={s.imagens}
+                solicitanteNome={s.solicitanteNome ?? undefined}
                 reputacao={s.reputacaoSolicitante}
                 actions={
                   <AceitarSolicitacaoButton
@@ -94,6 +95,7 @@ export default async function EmpresaSolicitacoesPage({
                     endereco={s.endereco ?? "Região não informada"}
                     materialNome={s.material.nome}
                     imagens={s.imagens}
+                    solicitanteNome={s.solicitanteNome ?? undefined}
                     reputacao={s.reputacaoSolicitante}
                   />
                 }

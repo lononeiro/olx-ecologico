@@ -38,7 +38,7 @@ export default async function EmpresaDashboardPage() {
       quantidade: item.quantidade,
       endereco: item.endereco ?? "Região não informada",
       materialNome: item.material.nome,
-      solicitanteNome: "Disponível após aceite",
+      solicitanteNome: item.solicitanteNome ?? "Não informado",
       status: "pendente" as const,
       createdAt: item.createdAt.toISOString(),
       dataPrevisaoColeta: null,

@@ -19,6 +19,16 @@ export function maskPhone(phone: string | null | undefined) {
   return `${"*".repeat(Math.max(4, digits.length - 4))}${digits.slice(-4)}`;
 }
 
+/**
+ * Primeiro nome de um nome completo. Usado quando a empresa precisa saber
+ * "quem" pediu a coleta sem expor o nome completo (que só é liberado, junto
+ * do endereço exato e contato, depois que ela aceita a solicitação).
+ */
+export function primeiroNome(nome: string | null | undefined) {
+  if (!nome) return null;
+  return nome.trim().split(/\s+/)[0] || null;
+}
+
 export function summarizeAddress(address: AddressLike) {
   if (!address) return null;
 
@@ -49,14 +59,17 @@ export function toAdminSolicitacaoListDTO<T extends { endereco?: string | null; 
 }
 
 export function toEmpresaSolicitacaoDisponivelDTO<
-  T extends { endereco?: string | null; user?: unknown }
+  T extends { endereco?: string | null; user?: { nome?: string | null } | null }
 >(solicitacao: T) {
-  const { user: _user, endereco, ...rest } = solicitacao;
+  const { user, endereco, ...rest } = solicitacao;
   const regiao = summarizeAddress(endereco);
 
   return {
     ...rest,
     endereco: regiao,
     regiao,
+    // Só o primeiro nome — endereço exato, telefone e email do solicitante
+    // continuam escondidos até a empresa aceitar a solicitação.
+    solicitanteNome: primeiroNome(user?.nome),
   };
 }
