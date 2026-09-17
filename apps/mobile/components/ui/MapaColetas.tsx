@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Linking, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
 import * as Location from "expo-location";
-import { colors, radius } from "@/theme/tokens";
+import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 export interface MapaColetaItem {
   id: number;
@@ -106,6 +106,7 @@ function buildHtml(items: MapaColetaItem[], userLoc: UserLoc) {
   }
 
   var grupo=[];
+  var naoLocalizados=[];
   var btnMaps="display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:8px;padding:8px 10px;border-radius:8px;border:1.5px solid #d9e0d5;background:#fff;color:#2b3a2e;font-size:12px;font-weight:700;cursor:pointer;";
   (async function(){
     for(var i=0;i<ITEMS.length;i++){
@@ -113,6 +114,7 @@ function buildHtml(items: MapaColetaItem[], userLoc: UserLoc) {
       var ponto=lerCache(item.endereco);
       // Só cacheia sucessos: endereços que falharam podem ser tentados de novo depois.
       if(ponto===undefined){ ponto=await geocodificar(item.endereco); if(ponto) gravarCache(item.endereco,ponto); await wait(1100); }
+      if(!ponto){ naoLocalizados.push({id:item.id, titulo:item.titulo, endereco:item.endereco}); }
       if(ponto){
         var vis=materialVisual(item.materialNome);
         var icon=L.divIcon({ className:"", html:'<div style="position:relative;width:34px;height:34px"><div style="width:34px;height:34px;border-radius:50% 50% 50% 0;background:'+vis.color+';border:3px solid #fff;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.35)"></div><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1">'+vis.emoji+'</span></div>', iconSize:[34,34], iconAnchor:[17,34] });
@@ -130,6 +132,7 @@ function buildHtml(items: MapaColetaItem[], userLoc: UserLoc) {
         }
       }
     }
+    if(window.ReactNativeWebView){ window.ReactNativeWebView.postMessage(JSON.stringify({action:"naoLocalizados", items:naoLocalizados})); }
   })();
 </script>
 </body>
@@ -148,6 +151,9 @@ export function MapaColetas({
 }) {
   const [userLoc, setUserLoc] = useState<UserLoc>(null);
   const [locResolved, setLocResolved] = useState(false);
+  const [naoLocalizados, setNaoLocalizados] = useState<
+    { id: number; titulo: string; endereco: string }[]
+  >([]);
   const resolvedRef = useRef(false);
 
   useEffect(() => {
@@ -207,41 +213,71 @@ export function MapaColetas({
     [items, userLoc]
   );
 
+  // Reseta a lista de endereços não localizados sempre que o mapa é
+  // reconstruído (novos itens ou nova localização do usuário).
+  useEffect(() => {
+    setNaoLocalizados([]);
+  }, [webviewKey]);
+
   if (items.length === 0) return null;
 
   return (
-    <View style={[styles.mapBox, { height }]}>
-      {locResolved ? (
-        <WebView
-          key={webviewKey}
-          originWhitelist={["*"]}
-          source={{ html }}
-          domStorageEnabled
-          javaScriptEnabled
-          nestedScrollEnabled
-          onMessage={(event) => {
-            try {
-              const data = JSON.parse(event.nativeEvent.data);
-              if (data?.action === "openMaps" && data.url) {
-                void Linking.openURL(data.url);
+    <View>
+      <View style={[styles.mapBox, { height }]}>
+        {locResolved ? (
+          <WebView
+            key={webviewKey}
+            originWhitelist={["*"]}
+            source={{ html }}
+            domStorageEnabled
+            javaScriptEnabled
+            nestedScrollEnabled
+            onMessage={(event) => {
+              try {
+                const data = JSON.parse(event.nativeEvent.data);
+                if (data?.action === "openMaps" && data.url) {
+                  void Linking.openURL(data.url);
+                } else if (data?.action === "naoLocalizados" && Array.isArray(data.items)) {
+                  setNaoLocalizados(data.items);
+                }
+              } catch {
+                // mensagem inesperada do WebView — ignora
               }
-            } catch {
-              // mensagem inesperada do WebView — ignora
+            }}
+            startInLoadingState
+            renderLoading={() => (
+              <View style={styles.loading}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            )}
+            style={styles.webview}
+          />
+        ) : (
+          <View style={styles.loading}>
+            <ActivityIndicator size="small" color={colors.primary} />
+          </View>
+        )}
+      </View>
+
+      {/* Endereços que a geocodificação não achou: sem pino no mapa, oferece
+          abrir no Google Maps em vez de simplesmente sumir sem explicação. */}
+      {naoLocalizados.map((item) => (
+        <View key={item.id} style={styles.avisoNaoLocalizado}>
+          <Text style={styles.avisoTexto}>
+            Não foi possível localizar "{item.titulo}" no mapa.
+          </Text>
+          <Pressable
+            onPress={() =>
+              Linking.openURL(
+                `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.endereco)}`
+              )
             }
-          }}
-          startInLoadingState
-          renderLoading={() => (
-            <View style={styles.loading}>
-              <ActivityIndicator size="small" color={colors.primary} />
-            </View>
-          )}
-          style={styles.webview}
-        />
-      ) : (
-        <View style={styles.loading}>
-          <ActivityIndicator size="small" color={colors.primary} />
+            style={({ pressed }) => [styles.avisoBotao, pressed && { opacity: 0.75 }]}
+          >
+            <Text style={styles.avisoBotaoTexto}>Abrir no Google Maps</Text>
+          </Pressable>
         </View>
-      )}
+      ))}
     </View>
   );
 }
@@ -263,5 +299,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.canvasMuted,
+  },
+  avisoNaoLocalizado: {
+    marginTop: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.stroke,
+    backgroundColor: colors.dangerBg,
+    gap: spacing.xs,
+  },
+  avisoTexto: {
+    ...typography.body,
+    color: colors.dangerText,
+  },
+  avisoBotao: {
+    alignSelf: "flex-start",
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.strokeStrong,
+    backgroundColor: colors.surface,
+  },
+  avisoBotaoTexto: {
+    ...typography.meta,
+    color: colors.text,
   },
 });

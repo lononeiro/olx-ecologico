@@ -275,8 +275,22 @@ export default function SolicitacaoDetailScreen() {
             icon={Calendar}
             label="Data do aceite"
             value={new Date(coleta.dataAceite).toLocaleDateString("pt-BR")}
-            last
+            last={!coleta.dataPrevisaoColeta}
           />
+          {coleta.dataPrevisaoColeta ? (
+            <DetailRow
+              icon={Calendar}
+              label="Data prevista da coleta"
+              value={new Date(coleta.dataPrevisaoColeta).toLocaleString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              last
+            />
+          ) : null}
         </Collapsible>
       ) : null}
 

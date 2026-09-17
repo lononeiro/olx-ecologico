@@ -54,6 +54,7 @@ async function geocodificar(endereco: string): Promise<GeoResult | null> {
       // tenta próxima
     }
   }
+
   return null;
 }
 

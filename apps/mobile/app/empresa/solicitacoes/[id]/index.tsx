@@ -28,6 +28,7 @@ import {
   StatusBadge,
   appColors,
 } from "@/components/AppUI";
+import { AceitarSolicitacaoModal } from "@/components/AceitarSolicitacaoModal";
 import { ImageGallery } from "@/components/ImageGallery";
 import { ReputacaoUsuario } from "@/components/ui/ReputacaoUsuario";
 import {
@@ -52,6 +53,7 @@ export default function EmpresaSolicitacaoDetailScreen() {
   const id = Number(params.id);
   const [message, setMessage] = useState("");
   const [tone, setTone] = useState<"success" | "error">("success");
+  const [modalAberto, setModalAberto] = useState(false);
 
   const query = useQuery({
     queryKey: ["empresa", "solicitacao", id],
@@ -64,15 +66,16 @@ export default function EmpresaSolicitacaoDetailScreen() {
   });
 
   const acceptMutation = useMutation({
-    mutationFn: async () =>
+    mutationFn: async (dataPrevisaoColeta: string) =>
       withAutoRefresh(accessToken, refreshSession, (token) =>
-        acceptSolicitacao(token, id)
+        acceptSolicitacao(token, id, dataPrevisaoColeta)
       ),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({
         queryKey: ["empresa", "solicitacoes", "disponiveis"],
       });
       void queryClient.invalidateQueries({ queryKey: ["empresa", "coletas"] });
+      setModalAberto(false);
       router.push(`/empresa/coletas/${data.id}` as any);
     },
     onError: (error) => {
@@ -234,16 +237,20 @@ export default function EmpresaSolicitacaoDetailScreen() {
 
       {disponivel ? (
         <AppButton
-          label={
-            acceptMutation.isPending
-              ? "Aceitando solicitação..."
-              : "Aceitar solicitação"
-          }
+          label="Aceitar solicitação"
           icon={PackageCheck}
-          onPress={() => acceptMutation.mutate()}
-          disabled={acceptMutation.isPending}
+          onPress={() => setModalAberto(true)}
         />
       ) : null}
+
+      <AceitarSolicitacaoModal
+        visible={modalAberto}
+        titulo={item.titulo}
+        onClose={() => !acceptMutation.isPending && setModalAberto(false)}
+        onSubmit={(dataPrevisaoColeta) =>
+          acceptMutation.mutateAsync(dataPrevisaoColeta)
+        }
+      />
     </AppScreen>
   );
 }

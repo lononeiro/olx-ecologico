@@ -146,6 +146,7 @@ export interface SolicitacaoItem {
     id: number;
     status: string;
     dataAceite: string;
+    dataPrevisaoColeta?: string | null;
     dataConclusao?: string | null;
     updatedAt: string;
     codigoConfirmacao?: string | null;
@@ -167,6 +168,7 @@ export interface ColetaItem {
   id: number;
   status: string;
   dataAceite: string;
+  dataPrevisaoColeta: string | null;
   dataConclusao: string | null;
   updatedAt: string;
   codigoConfirmacao: string | null;
@@ -394,11 +396,15 @@ export function getColetaById(accessToken: string, id: number) {
   });
 }
 
-export function acceptSolicitacao(accessToken: string, solicitacaoId: number) {
+export function acceptSolicitacao(
+  accessToken: string,
+  solicitacaoId: number,
+  dataPrevisaoColeta: string
+) {
   return apiFetch<ColetaItem>("/api/empresa/coletas", {
     method: "POST",
     accessToken,
-    body: JSON.stringify({ solicitacaoId }),
+    body: JSON.stringify({ solicitacaoId, dataPrevisaoColeta }),
   });
 }
 

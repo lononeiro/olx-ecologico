@@ -215,8 +215,8 @@ export default function PrivacidadePage() {
           <p style={paragraph}>
             Para dúvidas sobre privacidade ou para exercer seus direitos, entre em contato pelo
             e-mail{" "}
-            <a href="mailto:contato@econecta.com.br" style={link}>
-              contato@econecta.com.br
+            <a href="mailto:lucas.gama@aedb.br" style={link}>
+              lucas.gama@aedb.br
             </a>
             .
           </p>
