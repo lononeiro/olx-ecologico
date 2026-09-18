@@ -9,15 +9,20 @@ import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 export function DataRow({
   label,
   value,
+  highlight = false,
 }: {
   label: string;
   value: ReactNode;
+  /** Destaca a linha (fundo e texto azuis) para chamar atenção, ex.: data prevista da coleta. */
+  highlight?: boolean;
 }) {
   return (
-    <View style={styles.row}>
-      <Text style={styles.label}>{label.toUpperCase()}</Text>
+    <View style={[styles.row, highlight && styles.rowHighlight]}>
+      <Text style={[styles.label, highlight && styles.labelHighlight]}>
+        {label.toUpperCase()}
+      </Text>
       {typeof value === "string" ? (
-        <Text style={styles.value}>{value}</Text>
+        <Text style={[styles.value, highlight && styles.valueHighlight]}>{value}</Text>
       ) : (
         value
       )}
@@ -87,6 +92,16 @@ const styles = StyleSheet.create({
   value: {
     ...typography.bodyStrong,
     color: colors.text,
+  },
+  rowHighlight: {
+    backgroundColor: colors.infoBg,
+    borderColor: colors.infoBg,
+  },
+  labelHighlight: {
+    color: colors.infoText,
+  },
+  valueHighlight: {
+    color: colors.infoText,
   },
   pill: {
     alignSelf: "flex-start",

@@ -244,6 +244,13 @@ export default async function SolicitacaoDetailPage({
                       label="Data do aceite"
                       value={formatarData(s.coleta.dataAceite)}
                     />
+                    {s.coleta.dataPrevisaoColeta && (
+                      <DocumentField
+                        label="Data prevista da coleta"
+                        value={formatarDataHora(s.coleta.dataPrevisaoColeta)}
+                        highlight
+                      />
+                    )}
                     {s.coleta.codigoConfirmacao && (
                       <div style={{
                         gridColumn: "1 / -1",
@@ -500,12 +507,15 @@ function DocumentField({
   full,
   muted,
   mono,
+  highlight,
 }: {
   label: string;
   value: string;
   full?: boolean;
   muted?: boolean;
   mono?: boolean;
+  /** Destaca o campo (fundo e texto azuis) para chamar atenção, ex.: data prevista da coleta. */
+  highlight?: boolean;
 }) {
   return (
     <div
@@ -513,8 +523,8 @@ function DocumentField({
         gridColumn: full ? "1 / -1" : undefined,
         padding: "1rem 1.05rem",
         borderRadius: 20,
-        border: "1px solid var(--border)",
-        background: muted ? "var(--surface-3)" : "var(--surface)",
+        border: highlight ? "1px solid rgba(29,111,168,.25)" : "1px solid var(--border)",
+        background: highlight ? "var(--blue-light)" : muted ? "var(--surface-3)" : "var(--surface)",
       }}
     >
       <p
@@ -522,7 +532,7 @@ function DocumentField({
           fontSize: ".7rem",
           textTransform: "uppercase",
           letterSpacing: "1.5px",
-          color: "var(--text-faint)",
+          color: highlight ? "var(--blue)" : "var(--text-faint)",
           fontWeight: 700,
           marginBottom: ".45rem",
         }}
@@ -533,8 +543,8 @@ function DocumentField({
         style={{
           fontSize: mono ? "1rem" : ".95rem",
           lineHeight: 1.6,
-          color: muted ? "var(--text-muted)" : "var(--text)",
-          fontWeight: muted ? 400 : 600,
+          color: highlight ? "var(--blue)" : muted ? "var(--text-muted)" : "var(--text)",
+          fontWeight: highlight ? 700 : muted ? 400 : 600,
           whiteSpace: "pre-line",
           fontFamily: mono ? "ui-monospace, SFMono-Regular, Menlo, monospace" : undefined,
           letterSpacing: mono ? "2px" : undefined,

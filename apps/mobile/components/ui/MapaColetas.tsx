@@ -32,6 +32,10 @@ function buildHtml(items: MapaColetaItem[], userLoc: UserLoc) {
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
+  /* Sem reset global (like web's globals.css), a borda dos pinos somava ao
+     tamanho (34px + 6px de borda = 40px), desalinhando o icone/rotacao do
+     pino em relacao ao iconAnchor calculado para 34px. */
+  *, *::before, *::after { box-sizing: border-box; }
   html, body, #map { margin:0; padding:0; height:100%; width:100%; }
   body { background:#F1F5F0; -webkit-tap-highlight-color: transparent; }
   .leaflet-container { font-family: -apple-system, Roboto, "Segoe UI", sans-serif; }

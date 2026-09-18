@@ -27,6 +27,7 @@ import {
   StatusBadge,
   appColors,
 } from "@/components/AppUI";
+import { EtapaIndicator } from "@/components/EtapaIndicator";
 import { STATUS_COLETA_LABEL } from "@shared";
 import {
   getColetaById,
@@ -42,14 +43,6 @@ const NEXT_STATUS: Record<string, string[]> = {
   a_caminho: ["em_coleta", "cancelada"],
   em_coleta: ["concluida", "cancelada"],
 };
-
-// Etapas do fluxo normal de uma coleta, em ordem.
-const ETAPAS = [
-  { key: "aceita", label: "Aceita" },
-  { key: "a_caminho", label: "A caminho" },
-  { key: "em_coleta", label: "Em coleta" },
-  { key: "concluida", label: "Concluída" },
-] as const;
 
 // Abre o Google Maps com a rota até o endereço da coleta.
 function abrirRotaNoMapa(endereco: string) {
@@ -267,6 +260,19 @@ export default function EmpresaColetaDetailScreen() {
           }
         />
         <InfoRow label="Quantidade" value={coleta.solicitacao.quantidade} />
+        {coleta.dataPrevisaoColeta && (
+          <InfoRow
+            label="Data prevista da coleta"
+            value={new Date(coleta.dataPrevisaoColeta).toLocaleString("pt-BR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+            highlight
+          />
+        )}
       </AppCard>
 
       <AppCard>
@@ -338,38 +344,6 @@ function ChatHighlightCard({
   );
 }
 
-function EtapaIndicator({ status }: { status: string }) {
-  if (status === "cancelada") {
-    return (
-      <View style={styles.canceladaBox}>
-        <Text style={styles.canceladaText}>Coleta cancelada</Text>
-      </View>
-    );
-  }
-
-  const currentIndex = ETAPAS.findIndex((etapa) => etapa.key === status);
-
-  return (
-    <View style={styles.etapaRow}>
-      {ETAPAS.map((etapa, index) => {
-        const done = currentIndex >= 0 && index <= currentIndex;
-        const isCurrent = index === currentIndex;
-        return (
-          <View key={etapa.key} style={styles.etapaItem}>
-            <View style={[styles.etapaBar, done && styles.etapaBarDone]} />
-            <Text
-              style={[styles.etapaLabel, isCurrent && styles.etapaLabelCurrent]}
-              numberOfLines={1}
-            >
-              {etapa.label}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
 function IconText({ icon, text }: { icon: LucideIcon; text: string }) {
   return (
     <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
@@ -384,44 +358,6 @@ function IconText({ icon, text }: { icon: LucideIcon; text: string }) {
 }
 
 const styles = StyleSheet.create({
-  // Indicador horizontal das etapas da coleta.
-  etapaRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  etapaItem: {
-    flex: 1,
-    gap: 6,
-  },
-  etapaBar: {
-    height: 6,
-    borderRadius: radius.pill,
-    backgroundColor: appColors.stroke,
-  },
-  etapaBarDone: {
-    backgroundColor: appColors.primary,
-  },
-  etapaLabel: {
-    ...typography.meta,
-    fontSize: 12,
-    color: appColors.textFaint,
-    textAlign: "center",
-  },
-  etapaLabelCurrent: {
-    color: appColors.primary,
-    fontWeight: "700",
-  },
-  canceladaBox: {
-    backgroundColor: appColors.dangerBg,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  canceladaText: {
-    ...typography.bodyStrong,
-    color: appColors.dangerText,
-    textAlign: "center",
-  },
   // Bloco de confirmação inline (confirmar/voltar) ao avançar ou cancelar.
   confirmBox: {
     gap: spacing.sm,

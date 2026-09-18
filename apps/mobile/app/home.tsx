@@ -16,6 +16,7 @@ import { ApiError, getMyProfile, getReadableErrorMessage, getSolicitacoes } from
 import { resolveAccessToken } from "@/lib/session";
 import { USUARIO_TABS } from "@/lib/tabs";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ETAPAS } from "@/components/EtapaIndicator";
 import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
 export default function HomeScreen() {
@@ -61,6 +62,8 @@ export default function HomeScreen() {
 
   const avatarUrl = profileQuery.data?.avatarUrl ?? null;
 
+  const etapaIndex = (status: string) => ETAPAS.findIndex((e) => e.key === status);
+
   const solicitacoes = solicitacoesQuery.data ?? [];
   const emAndamento = solicitacoes
     .filter(
@@ -69,12 +72,16 @@ export default function HomeScreen() {
         item.coleta.status !== "concluida" &&
         item.coleta.status !== "cancelada"
     )
-    // Coletas com alteração mais recente (mudança de status, etc.) primeiro.
-    .sort(
-      (a, b) =>
+    // Etapa mais avançada primeiro (mais perto de concluir); dentro da mesma
+    // etapa, a alteração mais recente primeiro.
+    .sort((a, b) => {
+      const porEtapa = etapaIndex(b.coleta!.status) - etapaIndex(a.coleta!.status);
+      if (porEtapa !== 0) return porEtapa;
+      return (
         new Date(b.coleta!.updatedAt).getTime() -
         new Date(a.coleta!.updatedAt).getTime()
-    );
+      );
+    });
   // Solicitações publicadas que ainda não foram aceitas por nenhuma empresa.
   const aguardandoEmpresa = solicitacoes.filter(
     (item) => item.status === "aprovada" && !item.coleta

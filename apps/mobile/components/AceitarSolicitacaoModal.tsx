@@ -8,7 +8,9 @@ import {
   Text,
   View,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+  type DateTimePickerChangeEvent,
+} from "@react-native-community/datetimepicker";
 import { CalendarClock } from "lucide-react-native";
 import { appColors } from "@/components/AppUI";
 import { getReadableErrorMessage } from "@/lib/api";
@@ -66,15 +68,13 @@ export function AceitarSolicitacaoModal({
     }
   }
 
-  function handlePickerChange(evento: { type: string }, valor?: Date) {
-    if (Platform.OS === "android") setPickerAberto(null);
-    if (evento.type === "dismissed" || !valor) return;
-
+  function handleValueChange(_evento: DateTimePickerChangeEvent, valor: Date) {
     setErro("");
+    const eraDataPicker = pickerAberto === "date";
     setData((atual) => {
       const base = atual ?? new Date();
       const proxima = new Date(base);
-      if (pickerAberto === "date") {
+      if (eraDataPicker) {
         proxima.setFullYear(valor.getFullYear(), valor.getMonth(), valor.getDate());
       } else {
         proxima.setHours(valor.getHours(), valor.getMinutes());
@@ -82,9 +82,18 @@ export function AceitarSolicitacaoModal({
       return proxima;
     });
 
-    if (Platform.OS === "ios" && pickerAberto === "date") {
+    // Depois de escolher a data, abre o seletor de horário em seguida — no
+    // Android o diálogo nativo fecha sozinho a cada seleção, então sem isso
+    // nunca era possível escolher o horário. No iOS o spinner só troca de modo.
+    if (eraDataPicker) {
       setPickerAberto("time");
+    } else if (Platform.OS === "android") {
+      setPickerAberto(null);
     }
+  }
+
+  function handleDismiss() {
+    setPickerAberto(null);
   }
 
   return (
@@ -122,7 +131,8 @@ export function AceitarSolicitacaoModal({
               mode={pickerAberto}
               minimumDate={minDate}
               is24Hour
-              onChange={handlePickerChange}
+              onValueChange={handleValueChange}
+              onDismiss={handleDismiss}
               {...(Platform.OS === "ios" ? { display: "spinner" } : {})}
             />
           )}

@@ -226,6 +226,13 @@ export default async function EmpresaColetaDetailPage({
                   label="Aceita em"
                   value={formatarData(coleta.dataAceite)}
                 />
+                {coleta.dataPrevisaoColeta && (
+                  <DocumentField
+                    label="Data prevista da coleta"
+                    value={formatarDataHora(coleta.dataPrevisaoColeta)}
+                    highlight
+                  />
+                )}
                 <DocumentField label="Status operacional" value={statusCopy.title} />
                 {coleta.dataConclusao && (
                   <DocumentField
@@ -233,7 +240,22 @@ export default async function EmpresaColetaDetailPage({
                     value={formatarData(coleta.dataConclusao)}
                   />
                 )}
-                <DocumentField label="Endereço da coleta" value={s.endereco} full />
+                <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: ".6rem" }}>
+                  <DocumentField label="Endereço da coleta" value={s.endereco} />
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.endereco)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary"
+                    style={{ alignSelf: "flex-start" }}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    Abrir no Google Maps
+                  </a>
+                </div>
                 {s.descricao && (
                   <DocumentField label="Descrição do material" value={s.descricao} full muted />
                 )}
@@ -378,11 +400,14 @@ function DocumentField({
   value,
   full,
   muted,
+  highlight,
 }: {
   label: string;
   value: string;
   full?: boolean;
   muted?: boolean;
+  /** Destaca o campo (fundo e texto azuis) para chamar atenção, ex.: data prevista da coleta. */
+  highlight?: boolean;
 }) {
   return (
     <div
@@ -390,8 +415,8 @@ function DocumentField({
         gridColumn: full ? "1 / -1" : undefined,
         padding: "1rem 1.05rem",
         borderRadius: 20,
-        border: "1px solid var(--border)",
-        background: muted ? "var(--surface-3)" : "var(--surface)",
+        border: highlight ? "1px solid rgba(29,111,168,.25)" : "1px solid var(--border)",
+        background: highlight ? "var(--blue-light)" : muted ? "var(--surface-3)" : "var(--surface)",
       }}
     >
       <p
@@ -399,7 +424,7 @@ function DocumentField({
           fontSize: ".7rem",
           textTransform: "uppercase",
           letterSpacing: "1.5px",
-          color: "var(--text-faint)",
+          color: highlight ? "var(--blue)" : "var(--text-faint)",
           fontWeight: 700,
           marginBottom: ".45rem",
         }}
@@ -410,8 +435,8 @@ function DocumentField({
         style={{
           fontSize: ".95rem",
           lineHeight: 1.6,
-          color: muted ? "var(--text-muted)" : "var(--text)",
-          fontWeight: muted ? 400 : 600,
+          color: highlight ? "var(--blue)" : muted ? "var(--text-muted)" : "var(--text)",
+          fontWeight: highlight ? 700 : muted ? 400 : 600,
           whiteSpace: "pre-line",
         }}
       >

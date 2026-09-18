@@ -32,6 +32,7 @@ import {
 } from "@/components/AppUI";
 import { ImageGallery } from "@/components/ImageGallery";
 import { AvaliacaoModal } from "@/components/AvaliacaoModal";
+import { EtapaIndicator } from "@/components/EtapaIndicator";
 import {
   criarAvaliacao,
   getAvaliacaoColeta,
@@ -265,7 +266,10 @@ export default function SolicitacaoDetailScreen() {
 
       {/* Acompanhamento da coleta */}
       {coleta ? (
-        <Collapsible icon={Truck} eyebrow="COLETA" title="Acompanhamento">
+        <Collapsible icon={Truck} eyebrow="COLETA" title="Acompanhamento" defaultOpen>
+          <View style={{ marginBottom: 16 }}>
+            <EtapaIndicator status={coleta.status} />
+          </View>
           <DetailRow
             icon={Building2}
             label="Empresa responsável"
@@ -288,6 +292,7 @@ export default function SolicitacaoDetailScreen() {
                 hour: "2-digit",
                 minute: "2-digit",
               })}
+              highlight
               last
             />
           ) : null}
@@ -434,12 +439,29 @@ function DetailRow({
   label,
   value,
   last = false,
+  highlight = false,
 }: {
   icon?: LucideIcon;
   label: string;
   value: string;
   last?: boolean;
+  /** Destaca a linha (fundo e texto azuis) para chamar atenção, ex.: data prevista da coleta. */
+  highlight?: boolean;
 }) {
+  if (highlight) {
+    return (
+      <View style={[styles.detailRow, !last && styles.detailRowDivider]}>
+        <View style={styles.detailHighlightBox}>
+          <Text style={styles.detailLabelHighlight}>{label.toUpperCase()}</Text>
+          <View style={styles.detailValueRow}>
+            {!!icon && <Icon icon={icon} size={16} color={appColors.infoText} />}
+            <Text style={styles.detailValueHighlight}>{value}</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.detailRow, !last && styles.detailRowDivider]}>
       <Text style={styles.detailLabel}>{label.toUpperCase()}</Text>
@@ -630,6 +652,24 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontWeight: "600",
     color: appColors.text,
+    flex: 1,
+  },
+  detailHighlightBox: {
+    flex: 1,
+    gap: 4,
+    backgroundColor: appColors.infoBg,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  detailLabelHighlight: {
+    ...typography.eyebrow,
+    color: appColors.infoText,
+  },
+  detailValueHighlight: {
+    ...typography.body,
+    fontWeight: "700",
+    color: appColors.infoText,
     flex: 1,
   },
 });
