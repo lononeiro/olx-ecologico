@@ -64,6 +64,11 @@ export function AceitarSolicitacaoButton({
       return;
     }
 
+    if (new Date(dataPrevisaoColeta).getTime() < Date.now()) {
+      setErro("A data prevista da coleta não pode estar no passado.");
+      return;
+    }
+
     setLoading(true);
     setErro("");
 

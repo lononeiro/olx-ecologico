@@ -44,6 +44,14 @@ export async function POST(req: NextRequest) {
       if (Number.isNaN(previsao.getTime())) {
         return NextResponse.json({ error: "dataPrevisaoColeta inválida" }, { status: 400 });
       }
+      // O front-end já restringe o seletor, mas isso é só UX — a validação
+      // que realmente impede uma data passada precisa estar aqui.
+      if (previsao.getTime() < Date.now()) {
+        return NextResponse.json(
+          { error: "A data prevista da coleta não pode estar no passado." },
+          { status: 400 }
+        );
+      }
     }
 
     const company = await prisma.company.findUnique({ where: { userId } });

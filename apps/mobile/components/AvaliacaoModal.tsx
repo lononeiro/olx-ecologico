@@ -24,12 +24,13 @@ const NOTA_LABEL: Record<number, string> = {
 
 export function AvaliacaoModal({
   visible,
-  empresaNome,
+  nomeContraparte,
   onClose,
   onSubmit,
 }: {
   visible: boolean;
-  empresaNome?: string;
+  /** Nome de quem está sendo avaliado (empresa, se for o usuário avaliando; ou o solicitante, se for a empresa). */
+  nomeContraparte?: string;
   onClose: () => void;
   onSubmit: (nota: number, comentario?: string) => Promise<unknown>;
 }) {
@@ -74,8 +75,8 @@ export function AvaliacaoModal({
         <View style={styles.card}>
           <Text style={styles.title}>Como foi a coleta?</Text>
           <Text style={styles.subtitle}>
-            {empresaNome
-              ? `Sua coleta com ${empresaNome} foi concluída. Conte como foi a experiência.`
+            {nomeContraparte
+              ? `Sua coleta com ${nomeContraparte} foi concluída. Conte como foi a experiência.`
               : "Sua coleta foi concluída. Conte como foi a experiência."}
           </Text>
 

@@ -6,6 +6,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/images/icon.png",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -18,10 +19,18 @@
       "cloudinaryUploadPreset": "solicitacoes_imagens"
     },
     "android": {
-      "package": "com.econecta.mobile"
+      "package": "com.econecta.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#2D6A4F"
+      }
     },
     "ios": {
-      "bundleIdentifier": "com.econecta.mobile"
+      "bundleIdentifier": "com.econecta.mobile",
+      "icon": "./assets/images/icon.png"
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-secure-store",
@@ -42,7 +51,17 @@
       [
         "expo-notifications",
         {
+          "icon": "./assets/images/notification-icon.png",
           "color": "#2D6A4F"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#E3EFE8"
         }
       ],
       "@react-native-community/datetimepicker"

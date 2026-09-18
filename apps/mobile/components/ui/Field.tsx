@@ -23,6 +23,8 @@ export const Field = forwardRef<
     keyboardType?: "default" | "email-address" | "numeric";
     autoCapitalize?: "none" | "sentences" | "words" | "characters";
     autoComplete?: any;
+    autoCorrect?: boolean;
+    maxLength?: number;
     textContentType?: any;
     returnKeyType?: "done" | "go" | "next" | "search" | "send";
     onSubmitEditing?: () => void;

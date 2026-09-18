@@ -340,6 +340,7 @@ export default function RegisterScreen() {
       <AppButton
         label={registerMutation.isPending ? "Criando conta..." : "Criar conta"}
         onPress={() => registerMutation.mutate()}
+        loading={registerMutation.isPending}
         disabled={registerMutation.isPending}
       />
       <AppButton label="Já tenho conta" tone="ghost" onPress={() => router.push("/login")} />

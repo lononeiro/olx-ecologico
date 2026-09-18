@@ -51,6 +51,19 @@ const STATUS_COPY: Record<string, string> = {
   rejeitada: "Solicitação rejeitada na análise.",
 };
 
+// `item.status` fica em "aprovada" mesmo depois de uma empresa aceitar (é o
+// status de moderação da solicitação, não o andamento da coleta) — por isso
+// o texto abaixo do badge precisa olhar `coleta.status` quando já existe
+// coleta, senão continua mostrando "aguardando empresa" com a coleta a
+// caminho ou já concluída.
+const COLETA_STATUS_COPY: Record<string, string> = {
+  aceita: "Empresa confirmou a coleta.",
+  a_caminho: "A equipe está a caminho do endereço.",
+  em_coleta: "O material está sendo coletado agora.",
+  concluida: "Coleta finalizada com sucesso.",
+  cancelada: "A coleta foi cancelada. A solicitação pode ser aceita por outra empresa.",
+};
+
 // Coletas cujo popup de avaliação já abriu sozinho nesta sessão — evita que ele
 // reapareça a cada re-render/refetch ou ao voltar para a tela.
 const coletasAutoAvaliadas = new Set<number>();
@@ -218,7 +231,9 @@ export default function SolicitacaoDetailScreen() {
           {item.material.nome} · {item.quantidade}
         </Text>
         <Text style={styles.statusCopy}>
-          {STATUS_COPY[item.status] ?? "Acompanhe os dados desta solicitação."}
+          {coleta
+            ? (COLETA_STATUS_COPY[coleta.status] ?? "Acompanhe o andamento da coleta.")
+            : (STATUS_COPY[item.status] ?? "Acompanhe os dados desta solicitação.")}
         </Text>
       </AppCard>
 
@@ -323,7 +338,7 @@ export default function SolicitacaoDetailScreen() {
       {coletaConcluidaId ? (
         <AvaliacaoModal
           visible={avaliacaoModalAberta}
-          empresaNome={coleta?.company.user.nome}
+          nomeContraparte={coleta?.company.user.nome}
           onClose={dispensarAvaliacao}
           onSubmit={async (nota, comentario) => {
             await withAutoRefresh(accessToken, refreshSession, (token) =>

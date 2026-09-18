@@ -1,15 +1,25 @@
+import { useEffect, useState } from "react";
 import { Redirect } from "expo-router";
-import { View } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { getHomeRouteForRole } from "@/lib/navigation";
-import { colors } from "@/theme/tokens";
+import { IntroScreen } from "@/components/IntroScreen";
+
+// Duração mínima da intro, mesmo que a sessão já tenha restaurado antes
+// disso — evita um "flash" da animação que mal dá tempo de aparecer.
+const INTRO_MIN_MS = 1400;
 
 export default function IndexScreen() {
   const { isLoading, user } = useAuth();
+  const [introElapsed, setIntroElapsed] = useState(false);
 
-  // Enquanto restaura a sessão, evita piscar a tela de login.
-  if (isLoading) {
-    return <View style={{ flex: 1, backgroundColor: colors.canvas }} />;
+  useEffect(() => {
+    const timer = setTimeout(() => setIntroElapsed(true), INTRO_MIN_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Mostra a intro enquanto restaura a sessão E até o tempo mínimo passar.
+  if (isLoading || !introElapsed) {
+    return <IntroScreen />;
   }
 
   // Logado: vai direto pro painel do perfil. Deslogado: abre no login moderno.

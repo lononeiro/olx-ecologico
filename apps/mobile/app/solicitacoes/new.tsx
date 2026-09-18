@@ -1,13 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { router } from "expo-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { solicitacaoCreateSchema } from "@shared";
 import type { MaterialOption } from "@shared";
 import {
-  Plus,
   ImagePlus,
   Camera,
   Search,
@@ -64,29 +62,6 @@ const STEP_TITLES = ["Informações", "Detalhes", "Endereço"];
 const TOTAL_STEPS = STEP_TITLES.length;
 const MAX_IMAGES = 5;
 
-// Chave do rascunho salvo localmente. Existe porque tirar foto abre a câmera
-// nativa em outro processo, e o Android pode encerrar o app em segundo plano
-// por falta de memória enquanto ela está aberta (mais comum na primeira vez).
-// Isso derruba todo o estado em memória — sem rascunho, o usuário perde a
-// solicitação inteira e precisa recomeçar do zero.
-const DRAFT_KEY = "solicitacao_nova_rascunho_v1";
-
-type DraftFormState = {
-  step: number;
-  form: { titulo: string; materialId: string; quantidade: string; descricao: string };
-  modoEndereco: "perfil" | "novo";
-  endereco: typeof EMPTY_ADDRESS_FIELDS;
-  imagens: string[];
-};
-
-function draftTemEmAndamento(draft: Pick<DraftFormState, "form" | "imagens">) {
-  return (
-    draft.form.titulo.trim().length > 0 ||
-    draft.form.descricao.trim().length > 0 ||
-    draft.imagens.length > 0
-  );
-}
-
 export default function NewSolicitacaoScreen() {
   const { accessToken, hasAccess, isLoading, refreshSession } =
     useProtectedRoute(["usuario"]);
@@ -104,34 +79,6 @@ export default function NewSolicitacaoScreen() {
   const [mensagem, setMensagem] = useState("");
   const [mensagemTone, setMensagemTone] = useState<"success" | "error">("error");
   const [criada, setCriada] = useState<SolicitacaoItem | null>(null);
-  const [rascunhoRestaurado, setRascunhoRestaurado] = useState(false);
-  const rascunhoCarregadoRef = useRef(false);
-
-  // Restaura um rascunho salvo (se houver) assim que a tela abre — antes
-  // disso, o efeito de salvar abaixo fica em espera pra não sobrescrever o
-  // rascunho salvo com o estado inicial vazio.
-  useEffect(() => {
-    (async () => {
-      try {
-        const raw = await AsyncStorage.getItem(DRAFT_KEY);
-        if (raw) {
-          const draft = JSON.parse(raw) as DraftFormState;
-          if (draftTemEmAndamento(draft)) {
-            setStep(draft.step ?? 1);
-            setForm(draft.form);
-            setModoEndereco(draft.modoEndereco ?? "perfil");
-            setEndereco(draft.endereco ?? EMPTY_ADDRESS_FIELDS);
-            setImagens(draft.imagens ?? []);
-            setRascunhoRestaurado(true);
-          }
-        }
-      } catch {
-        // rascunho corrompido/ilegível — ignora e segue com o formulário vazio
-      } finally {
-        rascunhoCarregadoRef.current = true;
-      }
-    })();
-  }, []);
 
   const materialsQuery = useQuery({
     queryKey: ["materiais"],
@@ -145,20 +92,6 @@ export default function NewSolicitacaoScreen() {
     queryFn: async () =>
       withAutoRefresh(accessToken, refreshSession, (token) => getMyProfile(token)),
   });
-
-  // Salva o progresso a cada mudança, para sobreviver a um fechamento
-  // inesperado do app (ex.: Android encerrando o processo enquanto a câmera
-  // nativa está aberta). Só grava depois que o rascunho salvo já foi
-  // carregado (ou confirmado inexistente) pelo efeito acima.
-  useEffect(() => {
-    if (!rascunhoCarregadoRef.current) return;
-    const draft: DraftFormState = { step, form, modoEndereco, endereco, imagens };
-    if (draftTemEmAndamento(draft)) {
-      AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(draft)).catch(() => {});
-    } else {
-      AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
-    }
-  }, [step, form, modoEndereco, endereco, imagens]);
 
   const enderecoPreview = useMemo(() => buildAddressString(endereco), [endereco]);
   const enderecoFinal =
@@ -197,7 +130,6 @@ export default function NewSolicitacaoScreen() {
     onSuccess: (data) => {
       setMensagem("");
       setCriada(data);
-      AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
     },
     onError: (error) => {
       setMensagemTone("error");
@@ -392,12 +324,8 @@ export default function NewSolicitacaoScreen() {
       return;
     }
 
-    // Qualidade mais baixa que a da galeria: fotos de câmera costumam vir em
-    // resolução alta, e converter isso pra base64 (necessário pro upload,
-    // veja lib/cloudinary.ts) pode gerar uma string de vários MB — pico de
-    // memória que contribui pro Android encerrar o app em segundo plano.
     const result = await ImagePicker.launchCameraAsync({
-      quality: 0.5,
+      quality: 0.7,
       base64: true,
     });
 
@@ -408,16 +336,6 @@ export default function NewSolicitacaoScreen() {
 
   const removerImagem = (index: number) => {
     setImagens((current) => current.filter((_, currentIndex) => currentIndex !== index));
-  };
-
-  const descartarRascunho = () => {
-    setRascunhoRestaurado(false);
-    setStep(1);
-    setForm({ titulo: "", materialId: "", quantidade: "", descricao: "" });
-    setModoEndereco("perfil");
-    setEndereco(EMPTY_ADDRESS_FIELDS);
-    setImagens([]);
-    AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
   };
 
   if (criada) {
@@ -440,8 +358,9 @@ export default function NewSolicitacaoScreen() {
         ) : (
           <AppButton
             label={createMutation.isPending ? "Criando..." : "Criar solicitação"}
-            icon={createMutation.isPending ? Plus : Check}
+            icon={Check}
             onPress={submit}
+            loading={createMutation.isPending}
             disabled={createMutation.isPending}
           />
         )}
@@ -456,18 +375,6 @@ export default function NewSolicitacaoScreen() {
       {(materialsQuery.isLoading || profileQuery.isLoading) && (
         <LoadingCard text="Carregando materiais e endereço..." />
       )}
-
-      {rascunhoRestaurado && (
-        <View style={styles.rascunhoBox}>
-          <Text style={styles.rascunhoTexto}>
-            Continuando de onde você parou — recuperamos o rascunho desta solicitação.
-          </Text>
-          <Pressable onPress={descartarRascunho} hitSlop={8}>
-            <Text style={styles.rascunhoBotao}>Começar do zero</Text>
-          </Pressable>
-        </View>
-      )}
-
       {!!mensagem && <MessageBanner message={mensagem} tone={mensagemTone} />}
 
       {/* ── Etapa 1: Informações ──────────────────────────────── */}
@@ -846,27 +753,6 @@ function SuccessScreen({ solicitacao }: { solicitacao: SolicitacaoItem }) {
 }
 
 const styles = StyleSheet.create({
-  rascunhoBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.sm,
-    backgroundColor: colors.infoBg,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  rascunhoTexto: {
-    ...typography.meta,
-    fontWeight: "500",
-    color: colors.infoText,
-    flex: 1,
-  },
-  rascunhoBotao: {
-    ...typography.meta,
-    color: colors.infoText,
-    textDecorationLine: "underline",
-  },
   stepper: {
     gap: spacing.xs,
   },

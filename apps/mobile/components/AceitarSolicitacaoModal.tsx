@@ -58,6 +58,10 @@ export function AceitarSolicitacaoModal({
       setErro("Informe a data prevista para a coleta.");
       return;
     }
+    if (data.getTime() < Date.now()) {
+      setErro("A data prevista da coleta não pode estar no passado.");
+      return;
+    }
     setLoading(true);
     setErro("");
     try {

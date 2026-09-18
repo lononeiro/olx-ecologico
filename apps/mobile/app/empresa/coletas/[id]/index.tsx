@@ -1,6 +1,7 @@
 import { useLocalSearchParams, router } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   ArrowLeft,
   ChevronRight,
@@ -10,6 +11,7 @@ import {
   Navigation,
   Package,
   Phone,
+  Star,
   User as UserIcon,
   type LucideIcon,
 } from "lucide-react-native";
@@ -23,13 +25,17 @@ import {
   InfoRow,
   LoadingCard,
   MessageBanner,
+  MobileListItem,
   SectionHeader,
   StatusBadge,
   appColors,
 } from "@/components/AppUI";
+import { AvaliacaoModal } from "@/components/AvaliacaoModal";
 import { EtapaIndicator } from "@/components/EtapaIndicator";
 import { STATUS_COLETA_LABEL } from "@shared";
 import {
+  criarAvaliacao,
+  getAvaliacaoColeta,
   getColetaById,
   getReadableErrorMessage,
   updateColetaStatus,
@@ -37,6 +43,9 @@ import {
 import { useProtectedRoute } from "@/lib/navigation";
 import { withAutoRefresh } from "@/lib/session";
 import { radius, shadows, spacing, typography } from "@/theme/tokens";
+
+// Evita reabrir o popup de avaliação sozinho toda vez que a tela remonta.
+const coletasAutoAvaliadas = new Set<number>();
 
 const NEXT_STATUS: Record<string, string[]> = {
   aceita: ["a_caminho", "cancelada"],
@@ -71,6 +80,68 @@ export default function EmpresaColetaDetailScreen() {
     queryFn: async () =>
       withAutoRefresh(accessToken, refreshSession, (token) => getColetaById(token, id)),
   });
+
+  // Avaliação do solicitante: só faz sentido quando a coleta foi concluída.
+  const coletaConcluidaId = query.data?.status === "concluida" ? id : undefined;
+
+  const avaliacaoQuery = useQuery({
+    queryKey: ["avaliacao-empresa", coletaConcluidaId],
+    enabled: hasAccess && !isLoading && !!accessToken && !!coletaConcluidaId,
+    queryFn: async () =>
+      withAutoRefresh(accessToken, refreshSession, (token) =>
+        getAvaliacaoColeta(token, coletaConcluidaId!)
+      ),
+  });
+
+  const jaAvaliou = !!avaliacaoQuery.data;
+  const [avaliacaoModalAberta, setAvaliacaoModalAberta] = useState(false);
+  const [avaliacaoDispensada, setAvaliacaoDispensada] = useState(false);
+  const [dispensaCarregada, setDispensaCarregada] = useState(false);
+
+  useEffect(() => {
+    if (!coletaConcluidaId) {
+      setDispensaCarregada(true);
+      return;
+    }
+    let ativo = true;
+    setDispensaCarregada(false);
+    AsyncStorage.getItem(`avaliacao_empresa_dispensada_${coletaConcluidaId}`)
+      .then((valor) => {
+        if (!ativo) return;
+        setAvaliacaoDispensada(valor === "1");
+      })
+      .finally(() => {
+        if (ativo) setDispensaCarregada(true);
+      });
+    return () => {
+      ativo = false;
+    };
+  }, [coletaConcluidaId]);
+
+  // Abre o popup automaticamente assim que a coleta é concluída e ainda não
+  // foi avaliada — apenas uma vez por coleta (evita reabrir sozinho por
+  // re-render/refetch ou ao voltar para a tela).
+  useEffect(() => {
+    if (
+      coletaConcluidaId &&
+      dispensaCarregada &&
+      avaliacaoQuery.isSuccess &&
+      !jaAvaliou &&
+      !avaliacaoDispensada &&
+      !coletasAutoAvaliadas.has(coletaConcluidaId)
+    ) {
+      coletasAutoAvaliadas.add(coletaConcluidaId);
+      setAvaliacaoModalAberta(true);
+    }
+  }, [coletaConcluidaId, dispensaCarregada, avaliacaoQuery.isSuccess, jaAvaliou, avaliacaoDispensada]);
+
+  function dispensarAvaliacao() {
+    setAvaliacaoModalAberta(false);
+    setAvaliacaoDispensada(true);
+    if (coletaConcluidaId) {
+      AsyncStorage.setItem(`avaliacao_empresa_dispensada_${coletaConcluidaId}`, "1").catch(() => {});
+    }
+  }
 
   const statusMutation = useMutation({
     mutationFn: async () =>
@@ -207,9 +278,20 @@ export default function EmpresaColetaDetailScreen() {
               <AppField
                 label="Código de confirmação"
                 value={codigoConfirmacao}
-                onChangeText={setCodigoConfirmacao}
+                // autoCapitalize só sugere maiúscula pro teclado, não força o
+                // valor — e não impede espaço. O código gerado no backend é
+                // sempre 8 caracteres hexadecimais maiúsculos (sem espaço), e
+                // a comparação lá é exata, então filtramos aqui pra sempre
+                // bater com esse formato.
+                onChangeText={(value) =>
+                  setCodigoConfirmacao(
+                    value.toUpperCase().replace(/[^0-9A-F]/g, "").slice(0, 8)
+                  )
+                }
                 placeholder="Informe o código do solicitante"
                 autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={8}
               />
             )}
             <View style={{ gap: 10 }}>
@@ -223,6 +305,7 @@ export default function EmpresaColetaDetailScreen() {
                 }
                 tone={novoStatus === "cancelada" ? "danger" : "primary"}
                 onPress={() => statusMutation.mutate()}
+                loading={statusMutation.isPending}
                 disabled={
                   statusMutation.isPending ||
                   (novoStatus === "concluida" && !codigoConfirmacao.trim())
@@ -244,6 +327,39 @@ export default function EmpresaColetaDetailScreen() {
       </AppCard>
 
       {!!feedback && <MessageBanner message={feedback} tone={feedbackTone} />}
+
+      {/* Avaliação do solicitante, quando a coleta foi concluída */}
+      {coletaConcluidaId ? (
+        jaAvaliou ? (
+          <AppCard>
+            <Text style={styles.avaliacaoDoneLabel}>SUA AVALIAÇÃO DO SOLICITANTE</Text>
+            <View style={styles.avaliacaoStarsRow}>
+              {[1, 2, 3, 4, 5].map((valor) => (
+                <Star
+                  key={valor}
+                  size={22}
+                  color="#F5B301"
+                  strokeWidth={1.8}
+                  fill={valor <= (avaliacaoQuery.data?.nota ?? 0) ? "#F5B301" : "transparent"}
+                />
+              ))}
+            </View>
+            {!!avaliacaoQuery.data?.comentario && (
+              <Text style={styles.avaliacaoComentario}>“{avaliacaoQuery.data.comentario}”</Text>
+            )}
+          </AppCard>
+        ) : (
+          <AppCard>
+            <MobileListItem
+              icon={Star}
+              tone="primary"
+              title="Avaliar solicitante"
+              subtitle={`Conte como foi o atendimento de ${coleta.solicitacao.user?.nome ?? "o solicitante"}`}
+              onPress={() => setAvaliacaoModalAberta(true)}
+            />
+          </AppCard>
+        )
+      ) : null}
 
       {/* Conversa com o solicitante — em destaque */}
       <ChatHighlightCard
@@ -311,6 +427,20 @@ export default function EmpresaColetaDetailScreen() {
         ) : null}
       </AppCard>
 
+      {coletaConcluidaId ? (
+        <AvaliacaoModal
+          visible={avaliacaoModalAberta}
+          nomeContraparte={coleta.solicitacao.user?.nome}
+          onClose={dispensarAvaliacao}
+          onSubmit={async (nota, comentario) => {
+            await withAutoRefresh(accessToken, refreshSession, (token) =>
+              criarAvaliacao(token, { coletaId: coletaConcluidaId, nota, comentario })
+            );
+            setAvaliacaoModalAberta(false);
+            await queryClient.invalidateQueries({ queryKey: ["avaliacao-empresa", coletaConcluidaId] });
+          }}
+        />
+      ) : null}
     </AppScreen>
   );
 }
@@ -358,6 +488,21 @@ function IconText({ icon, text }: { icon: LucideIcon; text: string }) {
 }
 
 const styles = StyleSheet.create({
+  avaliacaoDoneLabel: {
+    ...typography.eyebrow,
+    color: appColors.textFaint,
+    marginBottom: spacing.xs,
+  },
+  avaliacaoStarsRow: {
+    flexDirection: "row",
+    gap: spacing.xs,
+  },
+  avaliacaoComentario: {
+    ...typography.body,
+    fontStyle: "italic",
+    color: appColors.textSoft,
+    marginTop: spacing.sm,
+  },
   // Bloco de confirmação inline (confirmar/voltar) ao avançar ou cancelar.
   confirmBox: {
     gap: spacing.sm,

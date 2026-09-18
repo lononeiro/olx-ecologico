@@ -375,6 +375,7 @@ export default function MeScreen() {
               <AppButton
                 label={saveProfileMutation.isPending ? "Salvando..." : "Salvar alterações"}
                 onPress={() => saveProfileMutation.mutate()}
+                loading={saveProfileMutation.isPending}
                 disabled={saveProfileMutation.isPending}
               />
               <AppButton

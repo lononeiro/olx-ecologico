@@ -78,6 +78,7 @@ export default function ResetPasswordScreen() {
         <AppButton
           label={mutation.isPending ? "Atualizando..." : "Atualizar senha"}
           onPress={() => mutation.mutate()}
+          loading={mutation.isPending}
           disabled={mutation.isPending}
         />
       </AppCard>

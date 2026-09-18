@@ -58,6 +58,7 @@ export default function ForgotPasswordScreen() {
         <AppButton
           label={mutation.isPending ? "Enviando..." : "Solicitar recuperação"}
           onPress={() => mutation.mutate()}
+          loading={mutation.isPending}
           disabled={mutation.isPending}
         />
         <AppButton
