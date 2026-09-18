@@ -8,6 +8,17 @@ import { SolicitacaoBadge } from "@/components/ui/StatusBadge";
 import { ReputacaoUsuario } from "@/components/ui/ReputacaoUsuario";
 import { Portal } from "@/components/ui/Portal";
 
+// `toISOString()` é sempre UTC — usar isso como valor mínimo de um
+// <input type="datetime-local"> (que opera em hora local do navegador) faz
+// o piso ficar adiantado em relação a agora para fusos atrás de UTC, como
+// Brasília (UTC-3): o "agora" apareceria ~3h no futuro. Esta função monta a
+// string local corretamente, a partir dos componentes de data/hora locais.
+function agoraLocalParaInput() {
+  const agora = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}-${pad(agora.getDate())}T${pad(agora.getHours())}:${pad(agora.getMinutes())}`;
+}
+
 interface Props {
   solicitacaoId: number;
   titulo: string;
@@ -64,7 +75,16 @@ export function AceitarSolicitacaoButton({
       return;
     }
 
-    if (new Date(dataPrevisaoColeta).getTime() < Date.now()) {
+    // O <input type="datetime-local"> devolve uma string sem fuso horário
+    // (ex.: "2026-09-19T14:30"). `new Date(...)` nessa string usa o fuso de
+    // quem interpreta: no navegador vira hora local (Brasília) corretamente,
+    // mas se essa mesma string fosse mandada crua pro servidor (que roda em
+    // UTC), a reinterpretação lá geraria um horário ~3h errado. Convertendo
+    // pra ISO com fuso explícito aqui, o instante absoluto fica correto em
+    // qualquer lugar que o leia depois.
+    const dataPrevisaoISO = new Date(dataPrevisaoColeta).toISOString();
+
+    if (new Date(dataPrevisaoISO).getTime() < Date.now()) {
       setErro("A data prevista da coleta não pode estar no passado.");
       return;
     }
@@ -75,7 +95,7 @@ export function AceitarSolicitacaoButton({
     const res = await fetch("/api/empresa/coletas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ solicitacaoId, dataPrevisaoColeta }),
+      body: JSON.stringify({ solicitacaoId, dataPrevisaoColeta: dataPrevisaoISO }),
     });
 
     const data = await res.json();
@@ -328,7 +348,7 @@ export function AceitarSolicitacaoButton({
                       setDataPrevisaoColeta(event.target.value);
                       if (erro) setErro("");
                     }}
-                    min={new Date().toISOString().slice(0, 16)}
+                    min={agoraLocalParaInput()}
                     disabled={loading}
                     required
                   />
