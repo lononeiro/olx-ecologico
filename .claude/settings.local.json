@@ -90,7 +90,9 @@
       "PowerShell(git *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code} -> %{redirect_url}\\\\n\" -X POST https://olx-ecologico.vercel.app/api/auth/mobile/login -H \"Content-Type: application/json\" -d '{\"email\":\"x\",\"senha\":\"y\"}')",
       "Bash(curl -s -o /dev/null -w \"%{http_code} -> %{redirect_url}\\\\n\" -X POST \"https://olx-ecologico.vercel.app//api/auth/mobile/login\" -H \"Content-Type: application/json\" -d '{\"email\":\"x\",\"senha\":\"y\"}')",
-      "Bash(curl -s https://raw.githubusercontent.com/expo/expo/sdk-57/packages/expo/bundledNativeModules.json)"
+      "Bash(curl -s https://raw.githubusercontent.com/expo/expo/sdk-57/packages/expo/bundledNativeModules.json)",
+      "Bash(git rev-list *)",
+      "WebFetch(domain:nominatim.openstreetmap.org)"
     ]
   }
 }

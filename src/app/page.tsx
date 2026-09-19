@@ -284,7 +284,7 @@ export default function Home() {
           {[
             {
               num: "01",
-              icon: "📦",
+              icon: "",
               title: "Solicite a coleta",
               desc: "Crie uma solicitação com tipo de material, quantidade e endereço. Nossa equipe revisa e aprova em até 24h.",
               color: "rgba(47,141,71,.09)",
@@ -292,7 +292,7 @@ export default function Home() {
             },
             {
               num: "02",
-              icon: "🏭",
+              icon: "",
               title: "Empresa aceita",
               desc: "Empresas parceiras visualizam sua solicitação e aceitam a coleta. Você recebe um código de confirmação.",
               color: "rgba(29,111,168,.09)",
@@ -300,7 +300,7 @@ export default function Home() {
             },
             {
               num: "03",
-              icon: "🚛",
+              icon: "",
               title: "Coleta realizada",
               desc: "Acompanhe o status em tempo real: 'A caminho', 'Em coleta', 'Concluída'. Troque mensagens com a empresa.",
               color: "rgba(107,63,168,.09)",
